@@ -9,7 +9,7 @@ This project uses the LUFA library and reverse-engineering of the HORIPAD for Ni
 
   The client takes input from a real controller, keyboard or a Discord bot and sends it to the server over UDP.
   
-  The server receives the input and sends it to an AVR microcontroller which acts as a controller. The MCU is plugged into the Switch dock and the console recognizes it as a HORIPAD S controller.
+  The server receives the input and sends it to an AVR microcontroller which acts as a controller. The MCU is plugged into the Switch dock and the console recognizes it as a HORIPAD S controller. If you have a USB-C adapter, you should also be able to use this in handheld mode/Switch Lite.
   
 * Firmware: firmware that runs on the microcontroller. The server PC sends the received commands to the microcontroller via UART. When the Switch requests HID reports, the microcontroller sends them. It uses the LUFA library.
 
