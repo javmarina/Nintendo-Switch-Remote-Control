@@ -324,12 +324,7 @@ public final class Server {
             }
             System.out.println("Closing socket server!!");
             socket.close();
-
-            // Update buffer values to send empty state (no presses, centered sticks)
-            serialAdapter.sendPacket(Controller.EMPTY_PACKET);
-            GeneralUtils.sleep(10);
             serialAdapter.closePort();
-
             connectionFrame.setVisible(false);
             showInitialFrame();
         }
