@@ -21,6 +21,9 @@ A complete diagram is shown below:
 __NOTE__: if you're using a FTDI-based serial adapter, yo need to [reduce the latency timer value](https://projectgus.com/2011/10/notes-on-ftdi-latency-with-arduino/).
 
 Additional information can be found on the specific README files.
+* The [README](/gui/README.md) inside the `gui` folder contains information about the Java project, required setup and steps, and instructions for configuring a Discord bot.
+
+* Inside `firmware` folder [there are](/firmware/README.md) instructions for compiling and flashing the firmware for different boards, as well as a list of changes made to the original code.
 
 ### Prerequisites
 * A LUFA-compatible microcontroller such as the Teensy 2.0++, Arduino UNO R3, or the Arduino Micro

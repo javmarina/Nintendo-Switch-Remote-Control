@@ -16,7 +16,11 @@ Please follow the instructions in the exact same order as below.
  5. Open server program, configure port and serial baudrate, and wait for the MCU to sync.
  6. Open client program, configure address, port and service (controller, keyboard, Discord) and start connection.
  
- If you want to configure your own Discord bot, go to gui/client/src/main/resources and create a `discord.properties` file. The format is as follows:
+If you can't get the setup running, [this issue](https://github.com/javmarina/Nintendo-Switch-Remote-Control/issues/2) might be helpful. Remember to set the correct baudrate for serial communication, which is 1 Mbps by default and is saved inside the compiled firmware. You can edit `BAUD` in [avr.h](/firmware/include/avr.h), recompile and reflash.
+
+# Discord bot configuration
+ 
+If you want to configure your own Discord bot, go to gui/client/src/main/resources and create a `discord.properties` file. The format is as follows:
 
     # Discord Switch key (see DiscordService.java)
     DiscordBotToken=YOUR_BOT_TOKEN
