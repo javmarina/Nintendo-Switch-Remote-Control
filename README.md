@@ -2,14 +2,14 @@
 
 # Nintendo-Switch-Remote-Control
 
-Remote control for the Nintendo Switch via UDP or with a single computer.
+Remote control for the Nintendo Switch via UDP or with a single computer. **Pro Controller** emulation in AVR firmware
 
-This project uses the LUFA library and reverse-engineering of the HORIPAD for Nintendo Switch for remote control of the console. It consists on two main parts:
+This project uses the LUFA library and reverse-engineering of the Pro Controller for Nintendo Switch for remote control of the console. It consists on two main parts:
 * GUI: Java project with two programs, client and server.
 
   The client takes input from a real controller, keyboard or a Discord bot and sends it to the server over UDP.
   
-  The server receives the input and sends it to an AVR microcontroller which acts as a controller. The MCU is plugged into the Switch dock and the console recognizes it as a HORIPAD S controller. If you have a USB-C adapter, you should also be able to use this in handheld mode/Switch Lite.
+  The server receives the input and sends it to an AVR microcontroller which acts as a controller. The MCU is plugged into the Switch dock and the console recognizes it as a Pro Controller. If you have a USB-C adapter, you should also be able to use this in handheld mode/Switch Lite.
   
 * Firmware: firmware that runs on the microcontroller. The server PC sends the received commands to the microcontroller via UART. When the Switch requests HID reports, the microcontroller sends them. It uses the LUFA library.
 
@@ -45,7 +45,8 @@ List of things that I might do in the future, no guarantee. Pull requests are we
 
 ### Acknowledgments
 
-* __wchill__ for the [SwitchInputEmulator](https://github.com/wchill/SwitchInputEmulator) project. My firmware is heavily based on his work.
-* __progmem__ for the [Switch-Fightstick](https://github.com/progmem/Switch-Fightstick) repository, which itself is the base of __wchill__ work and created the opportunity to control the Switch with a Lufa-compatible MCU.
+* __mzyy94__ for its [work](https://mzyy94.com/blog/2020/03/20/nintendo-switch-pro-controller-usb-gadget/) on Pro Controller emulation using a Raspberry Pi.
+* __wchill__ for the [SwitchInputEmulator](https://github.com/wchill/SwitchInputEmulator) project. My firmware was initially based on his work.
+* __progmem__ for the [Switch-Fightstick](https://github.com/progmem/Switch-Fightstick) repository, which itself is the base of __wchill__ work and created the opportunity to control the Switch with a LUFA-compatible MCU.
 * __ItsDeidara__ author of the [CommunityController](https://github.com/ItsDeidara/CommunityController) repository and host of the namesake Twitch [channel](https://www.twitch.tv/communitycontroller). Gave some tips for hardware configuration and some of the serial port code is based on his work.
 * __abcminiuser__, who created the [LUFA](https://github.com/abcminiuser/lufa) library (Lightweight USB Framework for AVRs).

@@ -3,11 +3,7 @@
 
 /* Includes: */
 #include <avr/wdt.h> /* wdt_disable() */
-#include <avr/power.h> /* clock_prescale_set() */
-#include <util/crc16.h> /* _crc8_ccitt_update() */
-
 #include <LUFA/Drivers/USB/USB.h>
-#include <LUFA/Drivers/Board/LEDS.h>
 
 // Macro for calculating the baud value from a given baud rate when the U2X (double speed) bit is
 // not set.
@@ -21,13 +17,14 @@ void USART_Init(void) {
 #define BAUD		1000000
 #define BAUD_TOL	0 // 0.0% error. A warning will appear if not achievable
 #include <util/setbaud.h>
-	UBRR1 = UBRR_VALUE; // set baud rate
+    UBRR1 = UBRR_VALUE; // set baud rate
 #if USE_2X
-	UCSR1A |= (1 << U2X1); // enable double speed mode
+    UCSR1A |= (1 << U2X1); // enable double speed mode
 #else
-	UCSR1A &= ~(1 << U2X1); // double speed mode is not needed
+    UCSR1A &= ~(1 << U2X1); // double speed mode is not needed
 #endif
 
+// TODO: implement with a library instead of manually writing to registers
     UCSR1C = _BV(UCSZ11) | _BV(UCSZ10); // no parity, 8 data bits, 1 stop bit, asynchronous USART
     UCSR1D = 0;                         // no cts, no rts
     UCSR1B = _BV(RXEN1) | _BV(TXEN1);   // enable RX and TX

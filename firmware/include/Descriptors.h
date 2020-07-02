@@ -29,7 +29,7 @@ enum StringDescriptors_t {
 // Macros
 // Endpoint Addresses
 #define JOYSTICK_IN_EPADDR  (ENDPOINT_DIR_IN  | 1)
-#define JOYSTICK_OUT_EPADDR (ENDPOINT_DIR_OUT | 1)
+#define JOYSTICK_OUT_EPADDR (ENDPOINT_DIR_OUT | 2)
 // HID Endpoint Size
 // The Switch -needs- this to be 64.
 #define JOYSTICK_EPSIZE           64
@@ -45,13 +45,11 @@ uint16_t CALLBACK_USB_GetDescriptor(
     const void** const DescriptorAddress
 ) ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
-// HID Descriptors.
-
-// Pro Controller descriptor
+// Pro Controller HID descriptor
 // https://gist.github.com/ToadKing/b883a8ccfa26adcc6ba9905e75aeb4f2
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] = {
     HID_RI_USAGE_PAGE(8,1),                         // Generic desktop controls
-    HID_RI_LOGICAL_MINIMUM(8,0),                    // Logical Minimum (0) /////////////////////////////////////
+    HID_RI_LOGICAL_MINIMUM(8,0),                    // Logical Minimum (0)
     HID_RI_USAGE(8,4),                              // Joystick
     HID_RI_COLLECTION(8,1),                         // Application
 
@@ -63,7 +61,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] = {
     HID_RI_LOGICAL_MINIMUM(8,0),                    // button off state
     HID_RI_LOGICAL_MAXIMUM(8,1),                    // button on state
     HID_RI_REPORT_SIZE(8,1),                        // 1 bit per report field
-    HID_RI_REPORT_COUNT(8,10),                      // ///////////////////////////////// 10 report fields (10 buttons)
+    HID_RI_REPORT_COUNT(8,10),                      // 10 report fields (10 buttons)
     HID_RI_UNIT_EXPONENT(8,0),                      //
     HID_RI_UNIT(8,0),                               // no unit
     HID_RI_INPUT(8,2),                              // Variable input
@@ -73,18 +71,21 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] = {
     HID_RI_LOGICAL_MINIMUM(8,0),                    // button off state
     HID_RI_LOGICAL_MAXIMUM(8,1),                    // button on state
     HID_RI_REPORT_SIZE(8,1),                        // 1 bit per report field
-    HID_RI_REPORT_COUNT(8,4),                       // ///////////////////////////////// 4 report fields (4 buttons)
+    HID_RI_REPORT_COUNT(8,4),                       // 4 report fields (4 buttons)
     HID_RI_INPUT(8,2),                              // Variable input
     HID_RI_REPORT_SIZE(8,1),                        //
-    HID_RI_REPORT_COUNT(8,2),                       // ///////////////////////////////// empty bits?
+    HID_RI_REPORT_COUNT(8,2),                       // 2 empty bits?
     HID_RI_INPUT(8,3),                              // Abs input?
 
-    HID_RI_USAGE(32,0x010001),                      // Generic Desktop:Pointer
+    /*
+     * Probably joystick data (16 bits per axis)
+     */
+    HID_RI_USAGE(32,0x010001),                      // Generic Desktop: Pointer
     HID_RI_COLLECTION(8,0),                         // Physical
-    HID_RI_USAGE(32,0x010030),
-    HID_RI_USAGE(32,0x010031),
-    HID_RI_USAGE(32,0x010032),
-    HID_RI_USAGE(32,0x010035),
+    HID_RI_USAGE(32,0x010030),                      // Axis 0
+    HID_RI_USAGE(32,0x010031),                      // Axis 1
+    HID_RI_USAGE(32,0x010032),                      // Axis 2
+    HID_RI_USAGE(32,0x010035),                      // Axis 3
     HID_RI_LOGICAL_MINIMUM(8,0),
     HID_RI_LOGICAL_MAXIMUM(32,65535),
     HID_RI_REPORT_SIZE(8,16),
@@ -92,7 +93,9 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] = {
     HID_RI_INPUT(8,2),                              // Variable input
     HID_RI_END_COLLECTION(0),
 
-    // HAT switch (maybe)
+    /*
+     * DPAD (HAT)
+     */
     HID_RI_USAGE(32,0x010039),
     HID_RI_LOGICAL_MINIMUM(8,0),
     HID_RI_LOGICAL_MAXIMUM(8,7),                    // 8 valid HAT states, sending 0x08 = nothing pressed
@@ -103,6 +106,9 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] = {
     HID_RI_REPORT_COUNT(8,1),                       // 1 report field (a nibble containing entire HAT state)
     HID_RI_INPUT(8,2),                              // Variable input
 
+    /*
+     * Four unrecognized buttons
+     */
     HID_RI_USAGE_PAGE(8,9),                         // Button
     HID_RI_USAGE_MINIMUM(8,0x0F),                   // Usage Minimum (0x0F)
     HID_RI_USAGE_MAXIMUM(8,0x12),                   // Usage Maximum (0x12)
@@ -113,45 +119,48 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] = {
     HID_RI_INPUT(8,2),                              // Variable input
     HID_RI_REPORT_SIZE(8,8),                        //
     HID_RI_REPORT_COUNT(8,52),                      //
-    HID_RI_INPUT(8,3),                              // Abs? input
+    HID_RI_INPUT(8,3),                              // Input
 
-    HID_RI_USAGE_PAGE(16,0xFF00),                   // Vendor defined
+    /*
+     * Vendor defined
+     */
+    HID_RI_USAGE_PAGE(16,0xFF00),
 
     HID_RI_REPORT_ID(8,33),                         // Report ID (33)
-    HID_RI_USAGE(8,1),                              // Vendor defined - 1
+    HID_RI_USAGE(8,1),                              // Vendor defined: 1
     HID_RI_REPORT_SIZE(8,8),
     HID_RI_REPORT_COUNT(8,63),
-    HID_RI_INPUT(8,3),                              // Abs? input
+    HID_RI_INPUT(8,3),                              // Input
 
     HID_RI_REPORT_ID(8,0x81),                       // Report ID (-127)
-    HID_RI_USAGE(8,2),                              // Vendor defined - 2
+    HID_RI_USAGE(8,2),                              // Vendor defined: 2
     HID_RI_REPORT_SIZE(8,8),
     HID_RI_REPORT_COUNT(8,63),
-    HID_RI_INPUT(8,3),                              // Abs? input
+    HID_RI_INPUT(8,3),                              // Input
 
     HID_RI_REPORT_ID(8,1),                          // Report ID (1)
-    HID_RI_USAGE(8,3),                              // Vendor defined - 3
+    HID_RI_USAGE(8,3),                              // Vendor defined: 3
     HID_RI_REPORT_SIZE(8,8),
     HID_RI_REPORT_COUNT(8,63),
-    HID_RI_OUTPUT(8,0x83),                          //
+    HID_RI_OUTPUT(8,0x83),                          // Output
 
     HID_RI_REPORT_ID(8,16),                         // Report ID (16)
-    HID_RI_USAGE(8,4),                              // Vendor defined - 4
+    HID_RI_USAGE(8,4),                              // Vendor defined: 4
     HID_RI_REPORT_SIZE(8,8),
     HID_RI_REPORT_COUNT(8,63),
-    HID_RI_OUTPUT(8,0x83),                          //
+    HID_RI_OUTPUT(8,0x83),                          // Output
 
     HID_RI_REPORT_ID(8,0x80),                       // Report ID (-128)
-    HID_RI_USAGE(8,5),                              // Vendor defined - 5
+    HID_RI_USAGE(8,5),                              // Vendor defined: 5
     HID_RI_REPORT_SIZE(8,8),
     HID_RI_REPORT_COUNT(8,63),
-    HID_RI_OUTPUT(8,0x83),                          //
+    HID_RI_OUTPUT(8,0x83),                          // Output
 
     HID_RI_REPORT_ID(8,0x82),                       // Report ID (-126)
-    HID_RI_USAGE(8,6),                              // Vendor defined - 6
+    HID_RI_USAGE(8,6),                              // Vendor defined: 6
     HID_RI_REPORT_SIZE(8,8),
     HID_RI_REPORT_COUNT(8,63),
-    HID_RI_OUTPUT(8,0x83),                          //
+    HID_RI_OUTPUT(8,0x83),                          // Output
 
     HID_RI_END_COLLECTION(0),
 };
@@ -169,7 +178,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor = {
 
     .VendorID               = 0x057E,
     .ProductID              = 0x2009,
-    .ReleaseNumber          = VERSION_BCD(2,0,0),
+    .ReleaseNumber          = VERSION_BCD(2,1,0),
 
     .ManufacturerStrIndex   = STRING_ID_Manufacturer,
     .ProductStrIndex        = STRING_ID_Product,
@@ -211,10 +220,6 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor = {
             .InterfaceStrIndex      = NO_DESCRIPTOR
         },
 
-    /*
-        Reference:
-        hid_descriptor = b'\x09\x21\x11\x01\x00\x01\x22\x50\x00'
-    */
     .HID_JoystickHID =
         {
             .Header                 = {.Size = sizeof(USB_HID_Descriptor_HID_t), .Type = HID_DTYPE_HID},
