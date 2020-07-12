@@ -39,7 +39,7 @@ static USB_JoystickReport_Input_t buffer;
 static USB_JoystickReport_Input_t defaultBuf;
 static USB_JoystickReport_Input_t homeBuf;
 static State_t state = OUT_OF_SYNC;
-static uint16_t count = 0;
+static uint16_t millis = 0;
 
 // Delay since last valid packet from UART:
 // 0                          120 ms                        800 ms               1 second
@@ -47,10 +47,9 @@ static uint16_t count = 0;
 // Connection lost detection: if 120 milliseconds elapse without a new packet from UART, stop Switch input (send empty
 // commands). If delay grows to 800 ms, a HOME command is sent during 200 ms in order to open the HOME menu and pause the
 // game. Note that the Switch might not accept the HOME command if the duration is less than 200 ms.
-// Formula: macro = period/8
-#define FAILS_UNTIL_PAUSE 15 // 120 ms
-#define FAILS_UNTIL_HOME 100 // 0.8 sec
-#define HOME_PACKET_TIMES 25 // 200 ms (from 0.8 seconds to 1 second)
+#define MILLIS_UNTIL_PAUSE		120 // ms
+#define MILLIS_UNTIL_HOME		800 // 0.8 sec
+#define MILLIS_HOME_PRESSED		200 // ms (from 0.8 seconds to 1 second)
 
 /*
  * Receive byte from UART. Reads the byte and acts depending on the current state. Includes synchronization logic and
@@ -93,8 +92,8 @@ ISR(USART1_RX_vect) {
 				buffer.RX = usbInput.input[5];
 				buffer.RY = usbInput.input[6];
 				buffer.VendorSpec = usbInput.input[7];
-				// Reset counter
-				count = 0;
+				// Reset timer
+				millis = 0;
 			}
 			usbInput.received_bytes = 0;
 			usbInput.crc8_ccitt = 0;
@@ -242,11 +241,11 @@ void HID_Task(void) {
         // We'll then populate this report with what we want to send to the host.
         disable_rx_isr();
         if (state == SYNCED) {
-            if (count >= FAILS_UNTIL_PAUSE) {
+            if (millis >= MILLIS_UNTIL_PAUSE) {
                 // Trigger "connection lost" mode
 				// The same controller state was sent too many times to the Switch. That means we're not
 				// receiving from UART or the CRC is incorrect (host not synced).
-                if (count >= FAILS_UNTIL_HOME && count < FAILS_UNTIL_HOME + HOME_PACKET_TIMES) {
+                if (millis >= MILLIS_UNTIL_HOME && millis < MILLIS_UNTIL_HOME + MILLIS_HOME_PRESSED) {
 					// Send HOME command and change LEDs
 					LEDs_SetAllLEDs(LEDMASK_PAUSE_HOME_BUFFER);
                     memcpy(&JoystickInputData, &homeBuf, sizeof(USB_JoystickReport_Input_t));
@@ -256,15 +255,15 @@ void HID_Task(void) {
                     memcpy(&JoystickInputData, &defaultBuf, sizeof(USB_JoystickReport_Input_t));
                 }
 				
-				// Prevent overflow, there is no need to increment count if we're in the last state
-                if (count <= FAILS_UNTIL_HOME + HOME_PACKET_TIMES) {
-                    count++;
-                }                
+                // Prevent overflow, there is no need to increment timer if we're in the last state
+                if (millis < MILLIS_UNTIL_HOME+MILLIS_HOME_PRESSED) {
+                    millis += 8;
+                }
             } else {
 				LEDs_SetAllLEDs(LEDMASK_SYNCED);
-                // Send last controller state (from UART) to console and increment "times sent" counter
+                // Send last controller state (from UART) to console and increment timer
                 memcpy(&JoystickInputData, &buffer, sizeof(USB_JoystickReport_Input_t));
-                count++;
+                millis += 8;
             }
 			//send_byte(RESP_USB_ACK);
         } else {
