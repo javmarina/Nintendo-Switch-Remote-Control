@@ -10,6 +10,6 @@ dependencies {
     //testCompile group: 'junit', name: 'junit', version: '4.11'
     compile 'com.github.WilliamAHartman:Jamepad:1.4.0'
     compile "uk.co.electronstudio.sdl2gdx:sdl2gdx:1.0.4"
-    implementation 'com.discord4j:discord4j-core:3.0.14'
+    implementation 'com.discord4j:discord4j-core:3.0.15'
     compile project(':util')
 }
