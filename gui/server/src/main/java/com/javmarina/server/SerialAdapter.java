@@ -246,7 +246,7 @@ public class SerialAdapter {
         return b == RESP_UPDATE_ACK;
     }
 
-    public String testSpeed(final int samples) {
+    public TestResults testSpeed(final int samples) {
         long sum = 0;
         long min = Long.MAX_VALUE;
         long max = 0;
@@ -255,7 +255,7 @@ public class SerialAdapter {
         try {
             sync(false);
         } catch (final IOException e) {
-            return "Sync error, test aborted";
+            return TestResults.syncError();
         }
 
         for (int i = 0; i < samples; i++) {
@@ -280,9 +280,46 @@ public class SerialAdapter {
         final int validSamples = samples-errorCount;
         if (validSamples > 0) {
             final double avg = (double) sum / validSamples;
-            return String.format("Minimum: %d ms\r\nMaximum: %d ms\r\nAverage: %.3f ms\r\nError count: %d", min, max, avg, errorCount);
+            return TestResults.successful(min, max, avg, errorCount);
         } else {
-            return "No packets were sent correctly";
+            return TestResults.noValidSamples();
+        }
+    }
+
+    public static final class TestResults {
+
+        enum ErrorType {
+            NONE,
+            NO_ACKS,
+            SYNC_ERROR
+        }
+
+        public long min;
+        public long max;
+        public double avg;
+        public int errorCount;
+        public ErrorType errorType;
+
+        private TestResults(final long min, final long max, final double avg,
+                            final int errorCount, final ErrorType errorType) {
+            this.min = min;
+            this.max = max;
+            this.avg = avg;
+            this.errorCount = errorCount;
+            this.errorType = errorType;
+        }
+
+        private static TestResults syncError() {
+            return new TestResults(0, 0, 0.0, 0, ErrorType.SYNC_ERROR);
+        }
+
+        private static TestResults noValidSamples() {
+            return new TestResults(0, 0, 0.0, 0, ErrorType.NO_ACKS);
+        }
+
+        private static TestResults successful(final long min, final long max, final double avg,
+                                              final int errorCount) {
+            return new TestResults(min, max, avg, errorCount, ErrorType.NONE);
         }
     }
 }
