@@ -70,16 +70,9 @@ public final class GeneralUtils {
      */
     public static boolean isStringInteger(@Nullable final String str) {
         // null or empty
-        if (str == null || str.length() == 0) {
+        if (str == null || str.isEmpty()) {
             return false;
         }
-
-        for (final char c : str.toCharArray()) {
-            if (!Character.isDigit(c)) {
-                return false;
-            }
-        }
-
-        return true;
+        return str.chars().mapToObj(i -> (char) i).allMatch(Character::isDigit);
     }
 }
