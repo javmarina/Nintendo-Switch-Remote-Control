@@ -22,12 +22,7 @@ public class DelayGraphPanel extends JPanel {
 
     @Override
     public Dimension getPreferredSize() {
-        long max = -1;
-        for (final long delay : delays) {
-            if (delay > max) {
-                max = delay;
-            }
-        }
+        // final int max = delays.stream().reduce(-1, Integer::max);
         return new Dimension(delays.size(), 260);
     }
 
@@ -52,9 +47,9 @@ public class DelayGraphPanel extends JPanel {
         g2.drawLine(0, yZero, getWidth(), yZero);
 
         double sum = 0;
-        long min = Long.MAX_VALUE;
-        long max = -1;
-        for (final long delay : delays) {
+        int min = Integer.MAX_VALUE;
+        int max = -1;
+        for (final int delay : delays) {
             sum += delay;
             if (delay > max) {
                 max = delay;
@@ -63,10 +58,10 @@ public class DelayGraphPanel extends JPanel {
                 min = delay;
             }
         }
-        final long maxx = max > 0 ? max : 1;
+        max = max > 0 ? max : 1;
 
         g2.setColor(Color.GRAY);
-        final int yAverage = getHeight() - 10 - (int) ((160/maxx) * sum/length);
+        final int yAverage = getHeight() - 10 - (int) ((160.0/max) * sum/length);
         g2.drawLine(0, yAverage, getWidth(), yAverage);
 
         final int[] x = new int[length];
@@ -74,8 +69,8 @@ public class DelayGraphPanel extends JPanel {
         final int[] yEstimated = new int[length];
         for (int i = 0; i < length; i++) {
             x[i] = (int) Math.ceil(getWidth()*(i+1.0)/(MAX_ITEMS+2));
-            y[i] = getHeight() - 10 - (int) (160/maxx) * delays.get(i);
-            yEstimated[i] = getHeight() - 10 - (int) ((160/maxx) * estimated.get(i));
+            y[i] = getHeight() - 10 - (int) (160.0/max) * delays.get(i);
+            yEstimated[i] = getHeight() - 10 - (int) ((160.0/max) * estimated.get(i));
         }
 
         g2.setColor(Color.RED);
