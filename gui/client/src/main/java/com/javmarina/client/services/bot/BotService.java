@@ -9,7 +9,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -112,17 +113,14 @@ public abstract class BotService extends ControllerService {
             }
         }
         if (!extractedCommands.isEmpty()) {
-            // Convert Map<String, Float> to ArrayList<Command>
-            final ArrayList<Command> temp = new ArrayList<>(extractedCommands.size());
-            for (final Map.Entry<String, Float> entry : extractedCommands.entrySet()) {
-                final List<Command> list =
-                        createCommandList(entry.getKey(), (long) (entry.getValue() * 1000));
-                if (list != null) {
-                    temp.addAll(list);
-                }
-            }
+            // Convert Map<String, Float> to List<Command>
+            final List<Command> newCommands = extractedCommands.entrySet().stream()
+                    .map(entry -> createCommandList(entry.getKey(), (long) (entry.getValue() * 1000)))
+                    .filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
             // Add all commands at the same time, so that buffer is recomputed only once
-            currentCommands.addAll(temp);
+            currentCommands.addAll(newCommands);
         }
     }
 
@@ -133,23 +131,23 @@ public abstract class BotService extends ControllerService {
         final String text = message.toLowerCase();
 
         // First check if custom command providers have the specified command
-        for (final CommandProvider commandProvider : customCommandProviders) {
-            final List<Command> commandList = commandProvider.createCommandList(emptyBuffer, text, millis);
-            if (commandList != null) {
-                return commandList;
-            }
+        final Optional<List<Command>> optional = customCommandProviders.stream()
+                .map(commandProvider -> commandProvider.createCommandList(emptyBuffer, text, millis))
+                .filter(Objects::nonNull)
+                .findFirst();
+
+        //noinspection OptionalIsPresent
+        if (optional.isPresent()) {
+            return optional.get();
         }
 
         // At this point, no custom command provider had the specified command
         // Check with default providers
-        for (final CommandProvider commandProvider : defaultCommandProvidersList) {
-            final List<Command> commandList = commandProvider.createCommandList(emptyBuffer, text, millis);
-            if (commandList != null) {
-                return commandList;
-            }
-        }
-
-        return null;
+        return defaultCommandProvidersList.stream()
+                .map(commandProvider -> commandProvider.createCommandList(emptyBuffer, text, millis))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
     }
 
     /**
