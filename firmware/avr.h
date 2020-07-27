@@ -3,7 +3,6 @@
 
 /* Includes: */
 #include <avr/wdt.h> /* wdt_disable() */
-#include <LUFA/Drivers/USB/USB.h>
 
 // Macro for calculating the baud value from a given baud rate when the U2X (double speed) bit is
 // not set.
