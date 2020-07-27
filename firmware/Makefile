@@ -45,7 +45,7 @@ TARGET       = Joystick
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC          = $(TARGET).c $(LUFA_SRC_USB)
+SRC          = $(TARGET).c Descriptors.c $(LUFA_SRC_USB)
 
 
 # Path to the LUFA library
