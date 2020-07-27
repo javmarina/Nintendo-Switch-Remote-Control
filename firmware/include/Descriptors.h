@@ -1,17 +1,6 @@
 #ifndef _DESCRIPTORS_H_
 #define _DESCRIPTORS_H_
 
-
-// Differences between SwitchInputEmulator (Horipad) and Pokken Controller
-// 14 -> 16
-// Removed separate empty 2 bits
-// Changed vendorSpec part
-// Added output
-// Max mAmps: 250 (Horipad) -> 500 (Pokken)
-// .ReleaseNumber VERSION_BCD(5,7,2) (Horipad), VERSION_BCD(1,0,0) (Pokken)
-// Product ID: 0x00C1 (Horipad) -> 0x0092 (Pokken)
-// Name: HORIPAD S -> POKKEN CONTROLLER
-
 // Type Defines
 // Device Configuration Descriptor Structure
 typedef struct {
@@ -34,6 +23,7 @@ enum StringDescriptors_t {
     STRING_ID_Language     = 0, // Supported Languages string descriptor ID (must be zero)
     STRING_ID_Manufacturer = 1, // Manufacturer string ID
     STRING_ID_Product      = 2, // Product string ID
+    STRING_ID_Serial       = 3, // Serial number string ID
 };
 
 // Macros
@@ -42,7 +32,6 @@ enum StringDescriptors_t {
 #define JOYSTICK_OUT_EPADDR (ENDPOINT_DIR_OUT | 2)
 // HID Endpoint Size
 // The Switch -needs- this to be 64.
-// The Wii U is flexible, allowing us to use the default of 8 (which did not match the original Hori descriptors).
 #define JOYSTICK_EPSIZE           64
 // Descriptor Header Type - HID Class HID Descriptor
 #define DTYPE_HID                 0x21
@@ -56,102 +45,122 @@ uint16_t CALLBACK_USB_GetDescriptor(
     const void** const DescriptorAddress
 ) ATTR_WARN_UNUSED_RESULT ATTR_NON_NULL_PTR_ARG(3);
 
-// HID Descriptors.
-
+// Pro Controller HID descriptor
+// https://gist.github.com/ToadKing/b883a8ccfa26adcc6ba9905e75aeb4f2
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] = {
     HID_RI_USAGE_PAGE(8,1),                         // Generic desktop controls
-    HID_RI_USAGE(8,5),                              // Joystick
+    HID_RI_LOGICAL_MINIMUM(8,0),                    // Logical Minimum (0)
+    HID_RI_USAGE(8,4),                              // Joystick
     HID_RI_COLLECTION(8,1),                         // Application
 
-    // Buttons (2 bytes)
+    HID_RI_REPORT_ID(8,48),                         // Report ID (48)
+    HID_RI_USAGE_PAGE(8,1),                         // Generic desktop controls
+    HID_RI_USAGE_PAGE(8,9),                         // Button
+    HID_RI_USAGE_MINIMUM(8,1),                      // Usage Minimum (0x01)
+    HID_RI_USAGE_MAXIMUM(8,0x0A),                   // Usage Maximum (0x0A)
     HID_RI_LOGICAL_MINIMUM(8,0),                    // button off state
     HID_RI_LOGICAL_MAXIMUM(8,1),                    // button on state
-    HID_RI_PHYSICAL_MINIMUM(8,0),                   // button off state
-    HID_RI_PHYSICAL_MAXIMUM(8,1),                   // button on state
     HID_RI_REPORT_SIZE(8,1),                        // 1 bit per report field
-    HID_RI_REPORT_COUNT(8,14),                      // 14 report fields (14 buttons)
-    HID_RI_USAGE_PAGE(8,9),                         // Buttons (section 12)
-    HID_RI_USAGE_MINIMUM(8,1),
-    HID_RI_USAGE_MAXIMUM(8,14),
+    HID_RI_REPORT_COUNT(8,10),                      // 10 report fields (10 buttons)
+    HID_RI_UNIT_EXPONENT(8,0),                      //
+    HID_RI_UNIT(8,0),                               // no unit
     HID_RI_INPUT(8,2),                              // Variable input
-    HID_RI_REPORT_COUNT(8,2),                       // 2 report fields (empty 2 bits)
-    HID_RI_INPUT(8,1),                              // Array input
+    HID_RI_USAGE_PAGE(8,9),                         // Button
+    HID_RI_USAGE_MINIMUM(8,0x0B),                   // Usage Minimum (0x0B)
+    HID_RI_USAGE_MAXIMUM(8,0x0E),                   // Usage Maximum (0x0E)
+    HID_RI_LOGICAL_MINIMUM(8,0),                    // button off state
+    HID_RI_LOGICAL_MAXIMUM(8,1),                    // button on state
+    HID_RI_REPORT_SIZE(8,1),                        // 1 bit per report field
+    HID_RI_REPORT_COUNT(8,4),                       // 4 report fields (4 buttons)
+    HID_RI_INPUT(8,2),                              // Variable input
+    HID_RI_REPORT_SIZE(8,1),                        //
+    HID_RI_REPORT_COUNT(8,2),                       // 2 empty bits?
+    HID_RI_INPUT(8,3),                              // Abs input?
 
-    // HAT switch
-    HID_RI_USAGE_PAGE(8,1),                         // Generic desktop controls
+    /*
+     * Probably joystick data (16 bits per axis)
+     */
+    HID_RI_USAGE(32,0x010001),                      // Generic Desktop: Pointer
+    HID_RI_COLLECTION(8,0),                         // Physical
+    HID_RI_USAGE(32,0x010030),                      // Axis 0
+    HID_RI_USAGE(32,0x010031),                      // Axis 1
+    HID_RI_USAGE(32,0x010032),                      // Axis 2
+    HID_RI_USAGE(32,0x010035),                      // Axis 3
+    HID_RI_LOGICAL_MINIMUM(8,0),
+    HID_RI_LOGICAL_MAXIMUM(32,65535),
+    HID_RI_REPORT_SIZE(8,16),
+    HID_RI_REPORT_COUNT(8,4),
+    HID_RI_INPUT(8,2),                              // Variable input
+    HID_RI_END_COLLECTION(0),
+
+    /*
+     * DPAD (HAT)
+     */
+    HID_RI_USAGE(32,0x010039),
+    HID_RI_LOGICAL_MINIMUM(8,0),
     HID_RI_LOGICAL_MAXIMUM(8,7),                    // 8 valid HAT states, sending 0x08 = nothing pressed
+    HID_RI_PHYSICAL_MINIMUM(8,0),
     HID_RI_PHYSICAL_MAXIMUM(16,315),                // HAT "rotation"
+    HID_RI_UNIT(8,0x14),                            // System: English Rotation, Length: Centimeter
     HID_RI_REPORT_SIZE(8,4),                        // 4 bits per report field
     HID_RI_REPORT_COUNT(8,1),                       // 1 report field (a nibble containing entire HAT state)
-    HID_RI_UNIT(8,20),                              // unit degrees
-    HID_RI_USAGE(8,57),                             // Hat switch (section 4.3)
-    HID_RI_INPUT(8,66),                             // Variable input, null state
-    HID_RI_UNIT(8,0),                               // No units
-    HID_RI_REPORT_COUNT(8,1),                       // 1 report field (empty upper nibble)
-    HID_RI_INPUT(8,1),                              // Array input
-
-    // Joystick (4 bytes)
-    HID_RI_LOGICAL_MAXIMUM(16,255),                 // 0-255 for analog sticks
-    HID_RI_PHYSICAL_MAXIMUM(16,255),
-    HID_RI_USAGE(8,48),                             // X (left X)
-    HID_RI_USAGE(8,49),                             // Y (left Y)
-    HID_RI_USAGE(8,50),                             // Z (right X)
-    HID_RI_USAGE(8,53),                             // Rz (right Y)
-    HID_RI_REPORT_SIZE(8,8),                        // 1 byte per report field
-    HID_RI_REPORT_COUNT(8,4),                       // 4 report fields (left X, left Y, right X, right Y)
     HID_RI_INPUT(8,2),                              // Variable input
 
-    // I think this is the vendor spec byte.
-    // On the Pokken pad this is usage page 0xFF00 which is vendor defined.
-    // Usage is 0x20 on the Pokken pad, but since the usage page is vendor defined this is kind of meaningless.
-    // Seems fine to just leave this byte set to 0.
-    HID_RI_REPORT_SIZE(8,8),                        // 1 byte per report field
-    HID_RI_REPORT_COUNT(8,1),                       // 1 report field
-    HID_RI_INPUT(8,1),                              // Array input
+    /*
+     * Four unrecognized buttons
+     */
+    HID_RI_USAGE_PAGE(8,9),                         // Button
+    HID_RI_USAGE_MINIMUM(8,0x0F),                   // Usage Minimum (0x0F)
+    HID_RI_USAGE_MAXIMUM(8,0x12),                   // Usage Maximum (0x12)
+    HID_RI_LOGICAL_MINIMUM(8,0),                    // button off state
+    HID_RI_LOGICAL_MAXIMUM(8,1),                    // button on state
+    HID_RI_REPORT_SIZE(8,1),                        // 1 bit per report field
+    HID_RI_REPORT_COUNT(8,4),                       // 4 report fields (4 buttons)
+    HID_RI_INPUT(8,2),                              // Variable input
+    HID_RI_REPORT_SIZE(8,8),                        //
+    HID_RI_REPORT_COUNT(8,52),                      //
+    HID_RI_INPUT(8,3),                              // Input
 
-    // On the Pokken pad apparently we also receive a mirror image of the sent inputs,
-    // but according to the Hori pad USB descriptors this isn't necessary.
-    // The usage page is still vendor defined, so the usage 0x2621 is meaningless to us.
-    // On the Pokken pad this is an 8 byte report of dynamic output.
+    /*
+     * Vendor defined
+     */
+    HID_RI_USAGE_PAGE(16,0xFF00),
 
-    /* This is where the Hori pad and modified Pokken pad diverge. Commenting out for future reference.
-    // HAT Switch (1 nibble)
-    HID_RI_USAGE_PAGE(8,1),
-    HID_RI_LOGICAL_MAXIMUM(8,7),
-    HID_RI_PHYSICAL_MAXIMUM(16,315),
-    HID_RI_REPORT_SIZE(8,4),
-    HID_RI_REPORT_COUNT(8,1),
-    HID_RI_UNIT(8,20),
-    HID_RI_USAGE(8,57),
-    HID_RI_INPUT(8,66),
-    // There's an additional nibble here that's utilized as part of the Switch Pro Controller.
-    // I believe this -might- be separate U/D/L/R bits on the Switch Pro Controller, as they're utilized as four button descriptors on the Switch Pro Controller.
-    HID_RI_UNIT(8,0),
-    HID_RI_REPORT_COUNT(8,1),
-    HID_RI_INPUT(8,1),
-    // Joystick (4 bytes)
-    HID_RI_LOGICAL_MAXIMUM(16,255),
-    HID_RI_PHYSICAL_MAXIMUM(16,255),
-    HID_RI_USAGE(8,48),
-    HID_RI_USAGE(8,49),
-    HID_RI_USAGE(8,50),
-    HID_RI_USAGE(8,53),
+    HID_RI_REPORT_ID(8,33),                         // Report ID (33)
+    HID_RI_USAGE(8,1),                              // Vendor defined: 1
     HID_RI_REPORT_SIZE(8,8),
-    HID_RI_REPORT_COUNT(8,4),
-    HID_RI_INPUT(8,2),
-    // ??? Vendor Specific (1 byte)
-    // This byte requires additional investigation.
-    HID_RI_USAGE_PAGE(16,65280),
-    HID_RI_USAGE(8,32),
-    HID_RI_REPORT_COUNT(8,1),
-    HID_RI_INPUT(8,2),
-    // Output (8 bytes)
-    // Original observation of this suggests it to be a mirror of the inputs that we sent.
-    // The Switch requires us to have these descriptors available.
-    HID_RI_USAGE(16,9761),
-    HID_RI_REPORT_COUNT(8,8),
-    HID_RI_OUTPUT(8,2),
-    */
+    HID_RI_REPORT_COUNT(8,63),
+    HID_RI_INPUT(8,3),                              // Input
+
+    HID_RI_REPORT_ID(8,0x81),                       // Report ID (-127)
+    HID_RI_USAGE(8,2),                              // Vendor defined: 2
+    HID_RI_REPORT_SIZE(8,8),
+    HID_RI_REPORT_COUNT(8,63),
+    HID_RI_INPUT(8,3),                              // Input
+
+    HID_RI_REPORT_ID(8,1),                          // Report ID (1)
+    HID_RI_USAGE(8,3),                              // Vendor defined: 3
+    HID_RI_REPORT_SIZE(8,8),
+    HID_RI_REPORT_COUNT(8,63),
+    HID_RI_OUTPUT(8,0x83),                          // Output
+
+    HID_RI_REPORT_ID(8,16),                         // Report ID (16)
+    HID_RI_USAGE(8,4),                              // Vendor defined: 4
+    HID_RI_REPORT_SIZE(8,8),
+    HID_RI_REPORT_COUNT(8,63),
+    HID_RI_OUTPUT(8,0x83),                          // Output
+
+    HID_RI_REPORT_ID(8,0x80),                       // Report ID (-128)
+    HID_RI_USAGE(8,5),                              // Vendor defined: 5
+    HID_RI_REPORT_SIZE(8,8),
+    HID_RI_REPORT_COUNT(8,63),
+    HID_RI_OUTPUT(8,0x83),                          // Output
+
+    HID_RI_REPORT_ID(8,0x82),                       // Report ID (-126)
+    HID_RI_USAGE(8,6),                              // Vendor defined: 6
+    HID_RI_REPORT_SIZE(8,8),
+    HID_RI_REPORT_COUNT(8,63),
+    HID_RI_OUTPUT(8,0x83),                          // Output
 
     HID_RI_END_COLLECTION(0),
 };
@@ -167,13 +176,13 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor = {
 
     .Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
 
-    .VendorID               = 0x0F0D,
-    .ProductID              = 0x00C1,
-    .ReleaseNumber          = VERSION_BCD(5,7,2),
+    .VendorID               = 0x057E,
+    .ProductID              = 0x2009,
+    .ReleaseNumber          = VERSION_BCD(2,1,0),
 
     .ManufacturerStrIndex   = STRING_ID_Manufacturer,
     .ProductStrIndex        = STRING_ID_Product,
-    .SerialNumStrIndex      = NO_DESCRIPTOR,
+    .SerialNumStrIndex      = STRING_ID_Serial,
 
     .NumberOfConfigurations = FIXED_NUM_CONFIGURATIONS
 };
@@ -190,9 +199,9 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor = {
             .ConfigurationNumber    = 1,
             .ConfigurationStrIndex  = NO_DESCRIPTOR,
 
-            .ConfigAttributes       = 0x80,
+            .ConfigAttributes       = (USB_CONFIG_ATTR_RESERVED | USB_CONFIG_ATTR_REMOTEWAKEUP),
 
-            .MaxPowerConsumption    = USB_CONFIG_POWER_MA(250)
+            .MaxPowerConsumption    = USB_CONFIG_POWER_MA(500)
         },
 
     .HID_Interface =
@@ -211,10 +220,6 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor = {
             .InterfaceStrIndex      = NO_DESCRIPTOR
         },
 
-    /*
-        Reference:
-        hid_descriptor = b'\x09\x21\x11\x01\x00\x01\x22\x50\x00'
-    */
     .HID_JoystickHID =
         {
             .Header                 = {.Size = sizeof(USB_HID_Descriptor_HID_t), .Type = HID_DTYPE_HID},
@@ -250,9 +255,10 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor = {
 // Language Descriptor Structure
 const USB_Descriptor_String_t PROGMEM LanguageString = USB_STRING_DESCRIPTOR_ARRAY(LANGUAGE_ID_ENG);
 
-// Manufacturer and Product Descriptor Strings
-const USB_Descriptor_String_t PROGMEM ManufacturerString = USB_STRING_DESCRIPTOR(L"HORI CO.,LTD.");
-const USB_Descriptor_String_t PROGMEM ProductString      = USB_STRING_DESCRIPTOR(L"HORIPAD S");
+// Manufacturer, Product and Serial number Descriptor Strings
+const USB_Descriptor_String_t PROGMEM ManufacturerString = USB_STRING_DESCRIPTOR(L"Nintendo Co., Ltd.");
+const USB_Descriptor_String_t PROGMEM ProductString      = USB_STRING_DESCRIPTOR(L"Pro Controller");
+const USB_Descriptor_String_t PROGMEM SerialNumberString = USB_STRING_DESCRIPTOR(L"000000000001");
 
 // USB Device Callback - Get Descriptor
 uint16_t CALLBACK_USB_GetDescriptor(
@@ -289,6 +295,9 @@ uint16_t CALLBACK_USB_GetDescriptor(
                     Address = &ProductString;
                     Size    = pgm_read_byte(&ProductString.Header.Size);
                     break;
+                case STRING_ID_Serial:
+                    Address = &SerialNumberString;
+                    Size    = pgm_read_byte(&SerialNumberString.Header.Size);
             }
 
             break;

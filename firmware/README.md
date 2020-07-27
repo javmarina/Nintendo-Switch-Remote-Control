@@ -1,12 +1,33 @@
 # How it works
 
-On June 20, 2017, Nintendo released System Update v3.0.0 for the Nintendo Switch. Along with a number of additional features that were advertised or noted in the changelog, additional hidden features were added. One of those features allows for the use of compatible USB controllers on the Nintendo Switch, such as the HORIPAD S.
+Based on valuable [reverse engineering information](https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering), this AVR firmware emulates a Nintendo Switch Pro Controller.
 
-Unlike the Wii U, which handles these controllers on a 'per-game' basis, the Switch treats the controllers as if they were a Switch Pro Controller. Along with having the icon for the Pro Controller, they function just like it in terms of using it in other games, apart from the lack of gyroscope, acceleremeter, HD Rumble and NFC.
+The first version of this firmware emulated a HORIPAD S controller, and was inspired by [wchill's work](https://github.com/wchill/SwitchInputEmulator), which itself is an extension of the [Switch-Fightstick](https://github.com/progmem/Switch-Fightstick) project. __wchill__ added UART support to the original firmware, giving the ability to send packets to the microcontroller in a straightforward way, and used the original HORIPAD S descriptors instead of the Pokken Controller ones. While the original project had controller input pre-programmed, __wchill__ work enabled real-time controller input with packet synchronization and error detection (CRC).
 
-This code is based on [wchill's work](https://github.com/wchill/SwitchInputEmulator). His work is based on the popular [Switch-Fightstick](https://github.com/progmem/Switch-Fightstick) repository, but he made some improvements such as using HORIPAD S descriptors instead of the Pokken Controller ones. Most importantly, he added the UART interface, so commands can be sent from a computer and don't need to be programmed inside the microcontroller memory. He also included packet syncronization and CRC check.
+However, emulating the HORIPAD S controller implies some limitations, as it's not a first-class Switch controller. For example, accelerometer and gyroscope aren't supported, nor are advanced features such as HD Rumble and [custom controller colors](https://github.com/CTCaer/jc_toolkit).
 
-My code has some minor improvements. The most important one is "connection lost detection". If the microcontroller doesn't receive new commands for a period of time, it sends custom commands to the console in order to pause the game and go to the HOME menu. Previously, the controller would stay blocked and the player could lost control of the game if the connection was unstable.
+For that reason, I modified the original firmware so that it works as a Pro Controller instead of a HORIPAD S. Key changes made to the code:
+
+* A sync protocol is used by the Switch. If Pro Controller doesn't success, it's not recognized as a valid controller. HORIPAD S worked fine from the moment it was plugged in. As a side note, the Pro Controller might not be added to the controller list instantly.
+
+* USB communication is two-way. HORIPAD S doesn't receive requests from Switch.
+
+* USB descriptors differ significantly (mostly HID report descriptors).
+
+* Switch might request to read the SPI flash memory of the Pro Controller. This firmware doesn't include a full Pro Controller flash memory, but supports most common read requests. Write is not allowed.
+
+* Controller input format is totally different.
+
+  * Some unsupported buttons are added (such as SR and SL, only found in Joy-Cons), because all official controllers (Pro, Joy-Cons, Charging Grip) mostly share the same firmware.
+  * Controller input includes information about connection status and battery level.
+  * Joystick axes are 12 bits each instead of 1 byte.
+  * IMU, NFC and IR data can be included (not supported in HORIPAD S).
+
+As well as emulating a Pro Controller, I also made some changes to __wchill__'s firmware. The most important one is "connection lost detection". If the microcontroller doesn't receive new commands for a period of time, it sends custom commands to the console in order to pause the game and go to the HOME menu. Previously, the controller would stay blocked and the player could lost control of the game if the connection was unstable.
+
+To the best of my knowledge, this is the first attempt to emulate a Pro Controller with an AVR microcontroller. Similar efforts have been made with Raspberry Pi, such as [mzyy94's work](https://mzyy94.com/blog/2020/03/20/nintendo-switch-pro-controller-usb-gadget/), which I found extremely helpful.
+
+I have kept the original firmware [here](https://github.com/javmarina/Nintendo-Switch-Remote-Control/tree/HORIPAD) for future reference.
 
 # Compilation instructions
 
