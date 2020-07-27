@@ -38,21 +38,19 @@ F_USB        = $(F_CPU)
 #     0 = turn off optimization. s = optimize for size.
 #     (Note: 3 is not always the best optimization level. See avr-libc FAQ.)
 OPTIMIZATION = s
-INCLUDE_DIR  = include
 
 
 # Target file name (without extension).
 TARGET       = Joystick
-SRC_DIR      = src
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC          = $(SRC_DIR)/Joystick.c $(LUFA_SRC_USB)
+SRC          = $(TARGET).c $(LUFA_SRC_USB)
 
 
 # Path to the LUFA library
 LUFA_PATH    = LUFA/LUFA
-CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -Iinclude/
+CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -IConfig/
 LD_FLAGS     =
 
 
@@ -85,7 +83,7 @@ CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)
 
 # Default target
-all: $(EMULATOR_TARGET)
+all:
 # Include LUFA build script makefiles
 include $(LUFA_PATH)/Build/lufa_core.mk
 include $(LUFA_PATH)/Build/lufa_sources.mk
