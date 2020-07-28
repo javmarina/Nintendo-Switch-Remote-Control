@@ -24,12 +24,12 @@ typedef enum {
 } JoystickButtons_t;
 
 // Battery levels
-#define BATTERY_FULL		0x08
-#define BATTERY_MEDIUM		0x06
-#define BATTERY_LOW			0x04
-#define BATTERY_CRITICAL	0x02
-#define BATTERY_EMPTY		0x00
-#define BATTERY_CHARGING	0x01 // Can be OR'ed
+#define BATTERY_FULL        0x08
+#define BATTERY_MEDIUM      0x06
+#define BATTERY_LOW         0x04
+#define BATTERY_CRITICAL    0x02
+#define BATTERY_EMPTY       0x00
+#define BATTERY_CHARGING    0x01 // Can be OR'ed
 
 // DPAD values
 #define HAT_TOP          0x00
@@ -125,32 +125,32 @@ typedef struct {
 // Taken from https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/bluetooth_hid_notes.md#standard-input-report-format
 // The order in every byte is inverted
 typedef struct {
-    uint8_t connection_info : 4;
-    uint8_t battery_level : 4;
-    bool button_y : 1;
-    bool button_x : 1;
-    bool button_b : 1;
-    bool button_a : 1;
-    bool button_right_sr : 1;
-    bool button_right_sl : 1;
-    bool button_r : 1;
-    bool button_zr : 1;
-    bool button_minus : 1;
-    bool button_plus : 1;
-    bool button_thumb_r : 1;
-    bool button_thumb_l : 1;
-    bool button_home : 1;
-    bool button_capture : 1;
-    uint8_t dummy : 1;
-    bool charging_grip : 1;
-    bool dpad_down : 1;
-    bool dpad_up : 1;
-    bool dpad_right : 1;
-    bool dpad_left : 1;
-    bool button_left_sr : 1;
-    bool button_left_sl : 1;
-    bool button_l : 1;
-    bool button_zl : 1;
+    uint8_t connection_info: 4;
+    uint8_t battery_level: 4;
+    bool button_y: 1;
+    bool button_x: 1;
+    bool button_b: 1;
+    bool button_a: 1;
+    bool button_right_sr: 1;
+    bool button_right_sl: 1;
+    bool button_r: 1;
+    bool button_zr: 1;
+    bool button_minus: 1;
+    bool button_plus: 1;
+    bool button_thumb_r: 1;
+    bool button_thumb_l: 1;
+    bool button_home: 1;
+    bool button_capture: 1;
+    uint8_t dummy: 1;
+    bool charging_grip: 1;
+    bool dpad_down: 1;
+    bool dpad_up: 1;
+    bool dpad_right: 1;
+    bool dpad_left: 1;
+    bool button_left_sr: 1;
+    bool button_left_sl: 1;
+    bool button_l: 1;
+    bool button_zl: 1;
     uint8_t analog[6];
     uint8_t vibrator_input_report;
 } USB_StandardReport_t;
@@ -158,7 +158,7 @@ typedef struct {
 // Full (extended) input report sent to Switch, with IMU data
 typedef struct {
     USB_StandardReport_t standardReport;
-    uint16_t imu[3*2*3]; // each axis is uint16_t, 3 axis per sensor, 2 sensors (accel and gyro), 3 reports
+    uint16_t imu[3 * 2 * 3]; // each axis is uint16_t, 3 axis per sensor, 2 sensors (accel and gyro), 3 reports
 } USB_ExtendedReport_t;
 
 #endif // FIRMWARE_DATATYPES_H

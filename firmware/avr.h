@@ -13,8 +13,8 @@
 // The baudrate must be defined as a macro instead of a function parameter. This utility will compute
 // the best values for the UBRR register and U2X bit (will choose the combination with less error).
 void USART_Init(void) {
-#define BAUD		1000000
-#define BAUD_TOL	0 // 0.0% error. A warning will appear if not achievable
+#define BAUD        1000000
+#define BAUD_TOL    0 // 0.0% error. A warning will appear if not achievable
 #include <util/setbaud.h>
     UBRR1 = UBRR_VALUE; // set baud rate
 #if USE_2X

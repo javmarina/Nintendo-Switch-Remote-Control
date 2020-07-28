@@ -47,9 +47,9 @@ static uint16_t millis = 0;
 // Connection lost detection: if 120 milliseconds elapse without a new packet from UART, stop Switch input (send empty
 // commands). If delay grows to 800 ms, a HOME command is sent during 200 ms in order to open the HOME menu and pause the
 // game. Note that the Switch might not accept the HOME command if the duration is less than 200 ms.
-#define MILLIS_UNTIL_PAUSE		120 // ms
-#define MILLIS_UNTIL_HOME		800 // 0.8 sec
-#define MILLIS_HOME_PRESSED		200 // ms (from 0.8 seconds to 1 second)
+#define MILLIS_UNTIL_PAUSE      120 // ms
+#define MILLIS_UNTIL_HOME       800 // 0.8 sec
+#define MILLIS_HOME_PRESSED     200 // ms (from 0.8 seconds to 1 second)
 
 /*
  * Receive byte from UART. Reads the byte and acts depending on the current state. Includes synchronization logic and
@@ -61,53 +61,51 @@ static uint16_t millis = 0;
  */
 // USART Interrupt Service Routine
 ISR(USART1_RX_vect) {
-	uint8_t b = recv_byte();
-	// Most probable case on top
-	if (state == SYNCED) {
-		if (serialInput.received_bytes < 8) {
-			// Still filling up the buffer
-			serialInput.input[serialInput.received_bytes++] = b;
-			serialInput.crc8_ccitt = _crc8_ccitt_update(serialInput.crc8_ccitt, b);
-		} else {
-			// We have 9 bytes ready in serialInput
-			if (serialInput.crc8_ccitt != b) {
-				// Last bytes is not valid CRC. It could be because host wants to re-sync
-				if (b == COMMAND_SYNC_START) {
-					// Start sync
-					state = SYNC_START;
-					send_byte(RESP_SYNC_START);
-				} else {
-					// Mismatched CRC
-					send_byte(RESP_UPDATE_NACK);
-				}
-			} else {
-				// Everything is ok
-				// Send ACK as soon as possible so that client is not waiting forever for a response if it uses blocking-mode
-				send_byte(RESP_UPDATE_ACK);
-				// Populate report values and select it
-				populate_report_from_serial(&serialInput, &controllerReport);
-				selectedReport = &controllerReport;
-				// Reset and resume timer
-				millis = 0;
-			}
-			serialInput.received_bytes = 0;
-			serialInput.crc8_ccitt = 0;
-		}
-	} else if (state == SYNC_START) {
+    uint8_t b = recv_byte();
+    // Most probable case on top
+    if (state == SYNCED) {
+        if (serialInput.received_bytes < 8) {
+            // Still filling up the buffer
+            serialInput.input[serialInput.received_bytes++] = b;
+            serialInput.crc8_ccitt = _crc8_ccitt_update(serialInput.crc8_ccitt, b);
+        } else {
+            // We have 9 bytes ready in serialInput
+            if (serialInput.crc8_ccitt != b) {
+                // Last bytes is not valid CRC. It could be because host wants to re-sync
+                if (b == COMMAND_SYNC_START) {
+                    // Start sync
+                    state = SYNC_START;
+                    send_byte(RESP_SYNC_START);
+                } else {
+                    // Mismatched CRC
+                    send_byte(RESP_UPDATE_NACK);
+                }
+            } else {
+                // Everything is ok
+                // Send ACK as soon as possible so that client is not waiting forever for a response if it uses blocking-mode
+                send_byte(RESP_UPDATE_ACK);
+                // Populate report values and select it
+                populate_report_from_serial(&serialInput, &controllerReport);
+                selectedReport = &controllerReport;
+                // Reset and resume timer
+                millis = 0;
+            }
+            serialInput.received_bytes = 0;
+            serialInput.crc8_ccitt = 0;
+        }
+    } else if (state == SYNC_START) {
         if (b == COMMAND_SYNC_1) {
             // Synchronization process continues to second step
             state = SYNC_1;
             send_byte(RESP_SYNC_1);
-        }
-        else state = OUT_OF_SYNC;
+        } else state = OUT_OF_SYNC;
         // Unsuccessful synchronization
     } else if (state == SYNC_1) {
         if (b == COMMAND_SYNC_2) {
             // Synchronization process has completed successfully
             state = SYNCED;
             send_byte(RESP_SYNC_OK);
-        }
-        else state = OUT_OF_SYNC;
+        } else state = OUT_OF_SYNC;
         // Unsuccessful synchronization
     }
 
@@ -296,7 +294,7 @@ void EVENT_USB_Device_ConfigurationChanged(void) {
     // We can read ConfigSuccess to indicate a success or failure at this point.
     if (!ConfigSuccess) {
         LEDs_SetAllLEDs(LEDMASK_NOT_SYNCED);
-        for(;;); // die
+        for (;;); // die
     }
 }
 
@@ -338,7 +336,7 @@ void CALLBACK_beforeSend() {
             }
 
             // Prevent overflow, there is no need to increment timer if we're in the last state
-            if (millis < MILLIS_UNTIL_HOME+MILLIS_HOME_PRESSED) {
+            if (millis < MILLIS_UNTIL_HOME + MILLIS_HOME_PRESSED) {
                 millis += 8;
             }
         } else {
@@ -374,7 +372,7 @@ void HID_Task(void) {
         // Clear input buffer before every read
         memset(switchResponseBuffer, 0, sizeof(switchResponseBuffer));
 
-        uint8_t* ReportData = switchResponseBuffer;
+        uint8_t *ReportData = switchResponseBuffer;
         uint16_t ReportSize = 0;
         // If we received something, and the packet has data, we'll store it.
         while (Endpoint_IsReadWriteAllowed()) {
@@ -418,21 +416,21 @@ void HID_Task(void) {
             Switch_Subcommand_t subcommand = switchResponseBuffer[10];
             switch (subcommand) {
                 case SUBCOMMAND_BLUETOOTH_MANUAL_PAIRING: {
-                    prepare_uart_reply(0x81, subcommand, (uint8_t*) 0x03, 1);
+                    prepare_uart_reply(0x81, subcommand, (uint8_t *) 0x03, 1);
                     break;
                 }
                 case SUBCOMMAND_REQUEST_DEVICE_INFO: {
                     size_t n = sizeof(mac_address); // = 6
-                    uint8_t buf[n+6];
+                    uint8_t buf[n + 6];
                     buf[0] = 0x03; buf[1] = 0x48; // Firmware version
                     buf[2] = 0x03; // Pro Controller
                     buf[3] = 0x02; // Unkown
                     // MAC address is flipped (big-endian)
-                    for (int i = 0; i < n; i++) {
-                        buf[(n+3)-i] = mac_address[i];
+                    for (unsigned int i = 0; i < n; i++) {
+                        buf[(n + 3) - i] = mac_address[i];
                     }
-                    buf[n+4] = 0x03; // Unknown
-                    buf[n+5] = 0x02; // Use colors in SPI memory, and use grip colors (added in Switch firmware 5.0)
+                    buf[n + 4] = 0x03; // Unknown
+                    buf[n + 5] = 0x02; // Use colors in SPI memory, and use grip colors (added in Switch firmware 5.0)
                     prepare_uart_reply(0x82, subcommand, buf, sizeof(buf));
                     break;
                 }

@@ -124,7 +124,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] = {
 const USB_Descriptor_Device_t PROGMEM DeviceDescriptor = {
         .Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
 
-        .USBSpecification       = VERSION_BCD(2,0,0),
+        .USBSpecification       = VERSION_BCD(2, 0, 0),
         .Class                  = USB_CSCP_NoDeviceClass,
         .SubClass               = USB_CSCP_NoDeviceSubclass,
         .Protocol               = USB_CSCP_NoDeviceProtocol,
@@ -133,7 +133,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor = {
 
         .VendorID               = 0x057E,
         .ProductID              = 0x2009,
-        .ReleaseNumber          = VERSION_BCD(2,1,0),
+        .ReleaseNumber          = VERSION_BCD(2, 1, 0),
 
         .ManufacturerStrIndex   = STRING_ID_Manufacturer,
         .ProductStrIndex        = STRING_ID_Product,
@@ -176,7 +176,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor = {
         .HID_JoystickHID = {
                 .Header                 = {.Size = sizeof(USB_HID_Descriptor_HID_t), .Type = HID_DTYPE_HID},
 
-                .HIDSpec                = VERSION_BCD(1,1,1),
+                .HIDSpec                = VERSION_BCD(1, 1, 1),
                 .CountryCode            = 0x00,
                 .TotalReportDescriptors = 1,
                 .HIDReportType          = HID_DTYPE_Report,
@@ -214,12 +214,12 @@ const USB_Descriptor_String_t PROGMEM SerialNumberString = USB_STRING_DESCRIPTOR
 uint16_t CALLBACK_USB_GetDescriptor(
         const uint16_t wValue,
         const uint16_t wIndex,
-        const void** const DescriptorAddress
+        const void **const DescriptorAddress
 ) {
     const uint8_t  DescriptorType   = (wValue >> 8);
     const uint8_t  DescriptorNumber = (wValue & 0xFF);
 
-    const void* Address = NULL;
+    const void *Address = NULL;
     uint16_t    Size    = NO_DESCRIPTOR;
 
     switch (DescriptorType) {

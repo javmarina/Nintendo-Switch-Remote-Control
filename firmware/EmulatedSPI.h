@@ -13,7 +13,7 @@ static size_t min_size(size_t s1, size_t s2) {
 }
 
 static void prepare_spi_reply(uint16_t address, uint8_t data[], uint8_t length) {
-    uint8_t spiReplyBuffer[5+length];
+    uint8_t spiReplyBuffer[5 + length];
     // Big-endian
     spiReplyBuffer[0] = address & 0xFF;
     spiReplyBuffer[1] = (address >> 8) & 0xFF;
@@ -69,7 +69,8 @@ void spi_read(SPI_Address_t address, size_t size) {
         }
         case ADDRESS_FACTORY_CALIBRATION_2: {
             uint8_t factory_calibration_2[] = {0xba, 0x15, 0x62, 0x11, 0xb8, 0x7f, 0x29, 0x06, 0x5b, 0xff, 0xe7, 0x7e,
-                                               0x0e, 0x36, 0x56, 0x9e, 0x85, 0x60, 0xff, 0x32, 0x32, 0x32, 0xff, 0xff, 0xff};
+                                               0x0e, 0x36, 0x56, 0x9e, 0x85, 0x60, 0xff, 0x32, 0x32, 0x32, 0xff, 0xff,
+                                               0xff};
             memcpy(&buf[0], &factory_calibration_2[0], min_size(size, sizeof(factory_calibration_2)));
             break;
         }

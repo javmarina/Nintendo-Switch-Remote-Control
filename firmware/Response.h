@@ -54,25 +54,25 @@ void prepare_uart_reply(uint8_t code, uint8_t subcommand, uint8_t data[], uint8_
     counter += COUNTER_INCREMENT;
     replyBuffer[1] = counter;
 
-    USB_StandardReport_t* selectedReport = *selectedReportPtr;
+    USB_StandardReport_t *selectedReport = *selectedReportPtr;
     size_t n = sizeof(USB_StandardReport_t);
     memcpy(&replyBuffer[2], selectedReport, n);
-    replyBuffer[n+2] = code;
-    replyBuffer[n+3] = subcommand;
-    memcpy(&replyBuffer[n+4], &data[0], length);
+    replyBuffer[n + 2] = code;
+    replyBuffer[n + 3] = subcommand;
+    memcpy(&replyBuffer[n + 4], &data[0], length);
     nextPacketReady = true;
 }
 
 void prepare_standard_report(USB_StandardReport_t *standardReport) {
     if (nextPacketReady) return;
     counter += COUNTER_INCREMENT;
-    prepare_reply(0x30, counter, (uint8_t*) standardReport, sizeof(USB_StandardReport_t));
+    prepare_reply(0x30, counter, (uint8_t *) standardReport, sizeof(USB_StandardReport_t));
 }
 
 void prepare_8101(void) {
     if (nextPacketReady) return;
     size_t n = sizeof(mac_address); // = 6
-    uint8_t buf[n+2];
+    uint8_t buf[n + 2];
     buf[0] = 0x00;
     buf[1] = 0x03; // Pro Controller
     memcpy(&buf[2], &mac_address[0], n);
