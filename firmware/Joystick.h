@@ -48,7 +48,7 @@
 #include <util/crc16.h> /* _crc8_ccitt_update() */
 
 // LUFA includes
-#include <LUFA/Drivers/Board/LEDS.h>
+#include <LUFA/Drivers/Board/LEDs.h>
 
 void populate_report_from_serial(Serial_Input_Packet_t *serialInputPacket, USB_StandardReport_t *standardReport);
 void initialize_idle_report(USB_StandardReport_t *standardReport);
