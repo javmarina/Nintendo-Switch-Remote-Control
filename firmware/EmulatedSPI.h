@@ -30,6 +30,7 @@ void spi_read(SPI_Address_t address, size_t size) {
     uint8_t buf[size];
     memset(buf, 0xFF, size);
     switch (address) {
+        default:
         case ADDRESS_SERIAL_NUMBER: {
             // All 0xFF, leave buf as it is
             break;
