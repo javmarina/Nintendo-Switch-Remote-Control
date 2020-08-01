@@ -127,8 +127,8 @@ void populate_report_from_serial(Serial_Input_Packet_t *serialInputPacket, USB_S
     standardReport->connection_info = 1; // Pro Controller + USB connected
     standardReport->battery_level = BATTERY_FULL | BATTERY_CHARGING;
 
-    uint16_t button = (serialInput.input[0] << 8) | serialInput.input[1];
-    uint8_t dpad = serialInput.input[2];
+    uint16_t button = (serialInputPacket->input[0] << 8) | serialInputPacket->input[1];
+    uint8_t dpad = serialInputPacket->input[2];
 
     standardReport->button_y = (button & SWITCH_Y) == SWITCH_Y;
     standardReport->button_x = (button & SWITCH_X) == SWITCH_X;
@@ -156,15 +156,15 @@ void populate_report_from_serial(Serial_Input_Packet_t *serialInputPacket, USB_S
     standardReport->button_zl = (button & SWITCH_ZL) == SWITCH_ZL;
 
     // Left stick
-    uint16_t lx = (serialInput.input[3] << 4) | 0x08;
-    uint16_t ly = (serialInput.input[4] << 4) | 0x08;
+    uint16_t lx = (serialInputPacket->input[3] << 4) | 0x08;
+    uint16_t ly = (serialInputPacket->input[4] << 4) | 0x08;
     standardReport->analog[0] = lx & 0xFF;
     standardReport->analog[1] = ((ly & 0x0F) << 4) | ((lx & 0xF00) >> 8);
     standardReport->analog[2] = (ly & 0xFF0) >> 4;
 
     // Right stick
-    uint16_t rx = (serialInput.input[5] << 4) | 0x08;
-    uint16_t ry = (serialInput.input[6] << 4) | 0x08;
+    uint16_t rx = (serialInputPacket->input[5] << 4) | 0x08;
+    uint16_t ry = (serialInputPacket->input[6] << 4) | 0x08;
     standardReport->analog[3] = rx & 0xFF;
     standardReport->analog[4] = ((ry & 0x0F) << 4) | ((rx & 0xF00) >> 8);
     standardReport->analog[5] = (ry & 0xFF0) >> 4;
