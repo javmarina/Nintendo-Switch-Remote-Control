@@ -41,11 +41,15 @@ OPTIMIZATION = s
 
 
 # Target file name (without extension).
-TARGET       = Joystick
+TARGET = Joystick
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC          = $(TARGET).c Descriptors.c $(LUFA_SRC_USB)
+SRC = $(TARGET).c \
+      Descriptors.c \
+      EmulatedSPI.c \
+      Response.c \
+      $(LUFA_SRC_USB)
 
 
 # Path to the LUFA library

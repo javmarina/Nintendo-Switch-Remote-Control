@@ -40,7 +40,6 @@
 #include "Descriptors.h"
 #include "datatypes.h"
 #include "Response.h"
-#include "EmulatedSPI.h"
 #include <stdio.h>
 
 // AVR includes
@@ -49,10 +48,6 @@
 
 // LUFA includes
 #include <LUFA/Drivers/Board/LEDs.h>
-
-void populate_report_from_serial(Serial_Input_Packet_t *serialInputPacket, USB_StandardReport_t *standardReport);
-void initialize_idle_report(USB_StandardReport_t *standardReport);
-void CALLBACK_beforeSend(void);
 
 // Setup all necessary hardware, including USB initialization.
 void SetupHardware(void);

@@ -28,14 +28,16 @@ typedef enum {
     OUT_OF_SYNC
 } State_t;
 
+// Private functions
+static void populate_report_from_serial(Serial_Input_Packet_t *serialInputPacket, USB_StandardReport_t *standardReport);
+static void initialize_idle_report(USB_StandardReport_t *standardReport);
+static void CALLBACK_beforeSend(void);
+
 static Serial_Input_Packet_t serialInput;
 
 static USB_StandardReport_t controllerReport;
 static USB_StandardReport_t idleReport;
 static USB_StandardReport_t *selectedReport; // Either &controllerReport or &idleReport
-
-// Messages from Switch
-static uint8_t switchResponseBuffer[JOYSTICK_EPSIZE];
 
 // Current sync state
 static State_t state = OUT_OF_SYNC;
@@ -121,7 +123,7 @@ ISR(USART1_RX_vect) {
 /*
  * Take UART input and put values in the controller report
  */
-void populate_report_from_serial(Serial_Input_Packet_t *serialInputPacket, USB_StandardReport_t *standardReport) {
+static void populate_report_from_serial(Serial_Input_Packet_t *serialInputPacket, USB_StandardReport_t *standardReport) {
     // Populate buffer values
 
     standardReport->connection_info = 1; // Pro Controller + USB connected
@@ -175,7 +177,7 @@ void populate_report_from_serial(Serial_Input_Packet_t *serialInputPacket, USB_S
 /*
  * Assign default values to the controller report (full battery, charging, centered sticks and no buttons pressed).
  */
-void initialize_idle_report(USB_StandardReport_t *standardReport) {
+static void initialize_idle_report(USB_StandardReport_t *standardReport) {
     memset(standardReport, 0, sizeof(USB_StandardReport_t));
 
     standardReport->connection_info = 1; // Pro Controller + USB connected
@@ -235,9 +237,6 @@ int main(void) {
 
     // Memory allocated for UART inputs, initially zeroed
     memset(&serialInput, 0, sizeof(Serial_Input_Packet_t));
-
-    // Initial value for IN endpoint buffer
-    prepare_8101();
 
     setup_response_manager(CALLBACK_beforeSend, &selectedReport);
 
@@ -316,7 +315,7 @@ void EVENT_USB_Device_ControlRequest(void) {
     }
 }
 
-void CALLBACK_beforeSend() {
+static void CALLBACK_beforeSend() {
     disable_rx_isr();
     if (state == SYNCED) {
         if (millis >= MILLIS_UNTIL_PAUSE) {
@@ -369,6 +368,8 @@ void HID_Task(void) {
     Endpoint_SelectEndpoint(JOYSTICK_OUT_EPADDR);
     // We'll check to see if we received something on the OUT endpoint.
     if (Endpoint_IsOUTReceived()) {
+        // Messages from Switch
+        static uint8_t switchResponseBuffer[JOYSTICK_EPSIZE];
         // Clear input buffer before every read
         memset(switchResponseBuffer, 0, sizeof(switchResponseBuffer));
 
@@ -389,84 +390,7 @@ void HID_Task(void) {
         Endpoint_ClearOUT();
 
         // At this point, we can react to this data.
-        // https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/bluetooth_hid_subcommands_notes.md
-        if (switchResponseBuffer[0] == 0x80) {
-            switch (switchResponseBuffer[1]) {
-                case 0x01: {
-                    prepare_8101();
-                    break;
-                }
-                case 0x02:
-                case 0x03: {
-                    prepare_reply(0x81, switchResponseBuffer[1], NULL, 0);
-                    break;
-                }
-                case 0x04: {
-                    //reportType = NONE;
-                    prepare_standard_report(selectedReport);
-                    break;
-                }
-                default: {
-                    // TODO
-                    prepare_reply(0x81, switchResponseBuffer[1], NULL, 0);
-                    break;
-                }
-            }
-        } else if (switchResponseBuffer[0] == 0x01 && ReportSize > 16) {
-            Switch_Subcommand_t subcommand = switchResponseBuffer[10];
-            switch (subcommand) {
-                case SUBCOMMAND_BLUETOOTH_MANUAL_PAIRING: {
-                    prepare_uart_reply(0x81, subcommand, (uint8_t *) 0x03, 1);
-                    break;
-                }
-                case SUBCOMMAND_REQUEST_DEVICE_INFO: {
-                    size_t n = sizeof(mac_address); // = 6
-                    uint8_t buf[n + 6];
-                    buf[0] = 0x03; buf[1] = 0x48; // Firmware version
-                    buf[2] = 0x03; // Pro Controller
-                    buf[3] = 0x02; // Unkown
-                    // MAC address is flipped (big-endian)
-                    for (unsigned int i = 0; i < n; i++) {
-                        buf[(n + 3) - i] = mac_address[i];
-                    }
-                    buf[n + 4] = 0x03; // Unknown
-                    buf[n + 5] = 0x02; // Use colors in SPI memory, and use grip colors (added in Switch firmware 5.0)
-                    prepare_uart_reply(0x82, subcommand, buf, sizeof(buf));
-                    break;
-                }
-                case SUBCOMMAND_SET_INPUT_REPORT_MODE:
-                case SUBCOMMAND_SET_SHIPMENT_LOW_POWER_STATE:
-                case SUBCOMMAND_SET_PLAYER_LIGHTS:
-                case SUBCOMMAND_SET_HOME_LIGHTS:
-                case SUBCOMMAND_ENABLE_IMU:
-                case SUBCOMMAND_ENABLE_VIBRATION: {
-                    prepare_uart_reply(0x80, subcommand, NULL, 0);
-                    break;
-                }
-                case SUBCOMMAND_TRIGGER_BUTTONS_ELAPSED_TIME: {
-                    prepare_uart_reply(0x83, subcommand, NULL, 0);
-                    break;
-                }
-                case SUBCOMMAND_SET_NFC_IR_MCU_CONFIG: {
-                    uint8_t buf[] = {0x01, 0x00, 0xFF, 0x00, 0x03, 0x00, 0x05, 0x01};
-                    prepare_uart_reply(0xA0, subcommand, buf, sizeof(buf));
-                    break;
-                }
-                case SUBCOMMAND_SPI_FLASH_READ: {
-                    // SPI
-                    // Addresses are little-endian, so 80 60 means address 0x6080
-                    SPI_Address_t address = (switchResponseBuffer[12] << 8) | switchResponseBuffer[11];
-                    size_t size = (size_t) switchResponseBuffer[15];
-                    spi_read(address, size);
-                    break;
-                }
-                default: {
-                    // TODO
-                    prepare_uart_reply(0x80, subcommand, NULL, 0);
-                    break;
-                }
-            }
-        }
+        process_OUT_report(switchResponseBuffer, ReportSize);
     }
 
     // We'll then move on to the IN endpoint.
@@ -474,6 +398,6 @@ void HID_Task(void) {
     // We first check to see if the host is ready to accept data.
     if (Endpoint_IsINReady()) {
         // Received IN interrupt. Switch wants a new packet.
-        send_buffer();
+        send_IN_report();
     }
 }

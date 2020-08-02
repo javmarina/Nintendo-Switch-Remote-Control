@@ -56,8 +56,6 @@ typedef enum {
 /** LED mask for the library LED driver, to indicate that we're in "connection lost" mode (home buffer). */
 #define LEDMASK_PAUSE_HOME_BUFFER      LEDS_LED2
 
-uint8_t mac_address[] = {0x79, 0x05, 0x44, 0xC6, 0xB5, 0x65};
-
 typedef enum {
     COMMAND_NOP         = 0,
     COMMAND_SYNC_1      = 0x33,
