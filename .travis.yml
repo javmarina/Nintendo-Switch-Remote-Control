@@ -1,0 +1,39 @@
+jobs:
+  include:
+    - language: c
+      os: linux
+      compiler: gcc
+      addons:
+        apt:
+          packages:
+            - avr-libc
+      before_script:
+        - cd firmware
+        - git clone https://github.com/abcminiuser/lufa.git LUFA
+      script:
+        - make
+
+    - language: java
+      os:
+        - linux
+        - osx
+      dist:
+        - xenial
+        - bionic
+      jdk:
+        - openjdk8
+        - openjdk10
+        - openjdk11
+      before_cache:
+        - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      cache:
+        directories:
+          - $HOME/.gradle/caches/
+          - $HOME/.gradle/wrapper/
+      before_script:
+        - cd gui
+
+notifications:
+  email:
+    - javmarina+T@gmail.com
