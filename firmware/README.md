@@ -31,7 +31,7 @@ I have kept the original firmware [here](https://github.com/javmarina/Nintendo-S
 
 # Compilation instructions
 
-The first thing you need to do is grabing the LUFA library. You can download it in a zipped folder at the bottom of [this page](http://www.fourwalledcubicle.com/LUFA.php) or you can clone [this](https://github.com/abcminiuser/lufa) repository in your computer. Rename the folder to `LUFA`. Then, download or clone the contents of this repository onto your computer. Next, you'll need to make sure the `LUFA_PATH` inside of the `Makefile` points to the `LUFA` subdirectory inside your `LUFA` directory. I recommend putting the `LUFA` inside `firmware`, so the current `Makefile` (`LUFA_PATH = ../LUFA/LUFA`). You can also put the `LUFA` folder elsewhere, in which case you will need to write the complete path.
+The LUFA library is provided in this repository as a [git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules). After `git clone`, you will need to run `git submodule update --init --recursive` in order to fetch the library folder. You can also clone this repository using `git clone --recurse-submodules`, which will clone and download all submodules in one step.
 
 Then, edit the MCU value in `Makefile` according to the microcontroller (e.g. at90usb1286 for a Teensy 2.0++, atmega16u2 for an Arduino UNO R3 and atmega32u4 for Arduino Micro).
 

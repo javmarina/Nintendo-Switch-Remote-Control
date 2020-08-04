@@ -9,7 +9,6 @@ jobs:
             - avr-libc
       before_script:
         - cd firmware
-        - git clone https://github.com/abcminiuser/lufa.git LUFA
       script:
         - make
 
