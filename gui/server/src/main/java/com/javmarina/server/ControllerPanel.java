@@ -104,12 +104,12 @@ public class ControllerPanel extends JPanel {
         assert packet.length == 8;
 
         final byte b0 = packet[0];
-        plus.setPressed((b0 & (Controller.Button.PLUS >> 8)) != 0);
-        minus.setPressed((b0 & (Controller.Button.MINUS >> 8)) != 0);
-        home.setPressed((b0 & (Controller.Button.HOME >> 8)) != 0);
-        capture.setPressed((b0 & (Controller.Button.CAPTURE >> 8)) != 0);
-        leftJoystick.setPressed((b0 & (Controller.Button.LCLICK >> 8)) != 0);
-        rightJoystick.setPressed((b0 & (Controller.Button.RCLICK >> 8)) != 0);
+        plus.setPressed((b0 & (Controller.Button.PLUS >>> 8)) != 0);
+        minus.setPressed((b0 & (Controller.Button.MINUS >>> 8)) != 0);
+        home.setPressed((b0 & (Controller.Button.HOME >>> 8)) != 0);
+        capture.setPressed((b0 & (Controller.Button.CAPTURE >>> 8)) != 0);
+        leftJoystick.setPressed((b0 & (Controller.Button.LCLICK >>> 8)) != 0);
+        rightJoystick.setPressed((b0 & (Controller.Button.RCLICK >>> 8)) != 0);
 
         final byte b1 = packet[1];
         a.setPressed((b1 & Controller.Button.A) != 0);

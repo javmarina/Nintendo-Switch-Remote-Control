@@ -37,8 +37,8 @@ public final class GeneralUtils {
      * @param b byte to append.
      */
     private static void appendByte(@NotNull final StringBuilder builder, final byte b) {
-        builder.append(HEX_CHARACTERS[(b & 0xF << 4) >> 4]);
-        builder.append(HEX_CHARACTERS[(b & 0xF)]);
+        builder.append(HEX_CHARACTERS[(b & 0xF0) >>> 4]);
+        builder.append(HEX_CHARACTERS[(b & 0x0F)]);
     }
 
     /**

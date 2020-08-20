@@ -31,14 +31,14 @@ public final class Packet {
     
     public void pressButton(final Button button) {
         final short value = (short) button.val;
-        final byte b0 = (byte) (value >> 8);
+        final byte b0 = (byte) (value >>> 8);
         final byte b1 = (byte) value;
         buffer[0] |= b0;
         buffer[1] |= b1;
     }
 
     public void pressButton(final short value) {
-        final byte b0 = (byte) (value >> 8);
+        final byte b0 = (byte) (value >>> 8);
         final byte b1 = (byte) value;
         buffer[0] |= b0;
         buffer[1] |= b1;
@@ -46,14 +46,14 @@ public final class Packet {
 
     public void releaseButton(final Button button) {
         final short value = (short) button.val;
-        final byte b0 = (byte) (~value >> 8);
+        final byte b0 = (byte) (~value >>> 8);
         final byte b1 = (byte) ~value;
         buffer[0] &= b0;
         buffer[1] &= b1;
     }
 
     public void releaseButton(final short value) {
-        final byte b0 = (byte) (~value >> 8);
+        final byte b0 = (byte) (~value >>> 8);
         final byte b1 = (byte) ~value;
         buffer[0] &= b0;
         buffer[1] &= b1;

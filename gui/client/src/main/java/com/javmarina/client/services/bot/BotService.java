@@ -342,7 +342,7 @@ public abstract class BotService extends ControllerService {
             final int buttonIndex = buttonsList.indexOf(text);
             if (buttonIndex >= 0) {
                 final short buttonCode = buttonCodes[buttonIndex];
-                emptyBuffer[0] |= (byte) ((buttonCode >> 8) & 0xFF);
+                emptyBuffer[0] |= (byte) ((buttonCode >>> 8) & 0xFF);
                 emptyBuffer[1] |= (byte) (buttonCode & 0xFF);
                 return Collections.singletonList(new Command(emptyBuffer, duration));
             } else {
