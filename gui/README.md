@@ -2,6 +2,8 @@
 
 This Java project contains a client and server module, which can be compiled, and a third 'util' module that acts as a dependency of the other two. I used IntelliJ Idea.
 
+In order to build, just run `gradle buildAll` and both `client.jar` and `server.jar` will appear in the root folder. Those are the executable files that you need.
+
 The [Jamepad](https://github.com/williamahartman/Jamepad) library is used for reading controller input. The Discord bot is implemented using [Discord4J](https://github.com/Discord4J/Discord4J).
 
 Note that the server and client can run on the same PC. In that case, use `localhost` as the server address.

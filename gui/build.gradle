@@ -1,5 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
+defaultTasks 'buildAll'
+
 buildscript {
     repositories {
         google()
@@ -17,4 +19,14 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+    // remove all *.jar files in rootDir
+    rootDir.eachFileMatch groovy.io.FileType.FILES, ~/.*\.jar/, { final File jarFile -> jarFile.delete() }
+}
+
+task buildAll {
+    dependsOn ":util:jar"
+    dependsOn ":client:jar"
+    dependsOn ":server:jar"
+    tasks.getByPath(":client:jar").mustRunAfter(":util:jar")
+    tasks.getByPath(":server:jar").mustRunAfter(":util:jar")
 }
