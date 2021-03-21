@@ -6,8 +6,6 @@ import com.javmarina.client.services.KeyboardService;
 import com.javmarina.client.services.bot.DiscordService;
 import com.javmarina.util.GeneralUtils;
 import com.javmarina.util.UdpUtils;
-import com.studiohartman.jamepad.ControllerIndex;
-import com.studiohartman.jamepad.ControllerManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JButton;
@@ -147,30 +145,16 @@ public final class Client {
      * @return list of available services.
      */
     private static ArrayList<ControllerService> getAvailableServices() {
-        final ControllerManager controllers = JamepadManager.manager;
-        controllers.initSDLGamepad();
-        controllers.update();
-        final int size = controllers.getNumControllers();
-        final ArrayList<ControllerService> services = new ArrayList<>(size+1);
-        services.add(new KeyboardService());
+        final ArrayList<DefaultJamepadService> jamepadServiceList = JamepadManager.getAvailableJamepadServices();
+        final ArrayList<ControllerService> allServices = new ArrayList<>(2 + jamepadServiceList.size());
+        allServices.add(new KeyboardService());
         final String token = getDiscordToken();
         if (token != null) {
-            services.add(new DiscordService(token));
+            allServices.add(new DiscordService(token));
         }
-        for (int i = 0; i < size; i++) {
-            try {
-                // TODO: even though getNumControllers() is > 0, this method could throw an exception
-                final ControllerIndex controllerIndex = controllers.getControllerIndex(i);
-                if (controllerIndex.isConnected()) {
-                    services.add(DefaultJamepadService.fromControllerIndex(controllerIndex));
-                }
-            } catch (final ArrayIndexOutOfBoundsException e) {
-            }
-        }
-        // Quit for now, might be used again later
-        controllers.quitSDLGamepad();
+        allServices.addAll(jamepadServiceList);
 
-        return services;
+        return allServices;
     }
 
     /**
