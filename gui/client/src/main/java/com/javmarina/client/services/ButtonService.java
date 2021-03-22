@@ -57,9 +57,9 @@ abstract class ButtonService extends ControllerService {
                 .put(1, booleanPackToByte(pack2))
                 .put(2, dpadByte(dpad))
                 .put(3, float2byte(axis[0]))
-                .put(4, float2byte(-axis[1])) // Y axis inverted
+                .put(4, float2byte(axis[1]))
                 .put(5, float2byte(axis[2]))
-                .put(6, float2byte(-axis[3])) // Y axis inverted
+                .put(6, float2byte(axis[3]))
                 .put(7, (byte) 0)
                 .array();
     }

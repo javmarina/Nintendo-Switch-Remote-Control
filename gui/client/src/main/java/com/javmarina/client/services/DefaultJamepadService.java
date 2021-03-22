@@ -32,10 +32,10 @@ public class DefaultJamepadService extends ButtonService {
             buttons[7] = controller.getAxisState(ControllerAxis.TRIGGERLEFT) > 0.5f; // ZL
             buttons[8] = controller.isButtonPressed(ControllerButton.RIGHTBUMPER); // R
             buttons[9] = controller.isButtonPressed(ControllerButton.LEFTBUMPER); // L
-            buttons[10] = controller.isButtonPressed(ControllerButton.X); // X
-            buttons[11] = controller.isButtonPressed(ControllerButton.A); // A
-            buttons[12] = controller.isButtonPressed(ControllerButton.B); // B
-            buttons[13] = controller.isButtonPressed(ControllerButton.Y); // Y
+            buttons[10] = controller.isButtonPressed(ControllerButton.Y); // X
+            buttons[11] = controller.isButtonPressed(ControllerButton.B); // A
+            buttons[12] = controller.isButtonPressed(ControllerButton.A); // B
+            buttons[13] = controller.isButtonPressed(ControllerButton.X); // Y
         } catch (final ControllerUnpluggedException e) {
             e.printStackTrace();
         }
@@ -95,17 +95,6 @@ public class DefaultJamepadService extends ButtonService {
     }
 
     public static DefaultJamepadService fromControllerIndex(final ControllerIndex controllerIndex) {
-        return isNintendoController(controllerIndex) ?
-                new NintendoControllerService(controllerIndex)
-                : new DefaultJamepadService(controllerIndex);
-    }
-
-    private static boolean isNintendoController(final ControllerIndex controller) {
-        try {
-            return controller.getName().contains("Nintendo"); // TODO: more robust method
-        } catch (final ControllerUnpluggedException e) {
-            e.printStackTrace();
-            return false;
-        }
+        return new DefaultJamepadService(controllerIndex);
     }
 }
