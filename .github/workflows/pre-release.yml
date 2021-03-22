@@ -20,9 +20,10 @@ jobs:
           java-version: 1.8
 
       - name: Build with Gradle
-        run: cd gui
-        run: ./gradlew buildAll
-        run: cd ..
+        run: |
+          cd gui
+          ./gradlew buildAll
+          cd ..
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
