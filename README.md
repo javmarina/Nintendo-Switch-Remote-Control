@@ -5,7 +5,7 @@
 
 Remote control for the Nintendo Switch via UDP or with a single computer. **Pro Controller** emulation in AVR firmware
 
-This project uses the LUFA library and reverse-engineering of the Pro Controller for Nintendo Switch for remote control of the console. It consists on two main parts:
+This project uses the LUFA library and reverse-engineering of the Pro Controller for Nintendo Switch for remote control of the console. It consists on three main parts:
 * GUI: Java project with two programs, client and server.
 
   The client takes input from a real controller, keyboard or a Discord bot and sends it to the server over UDP.
@@ -13,6 +13,8 @@ This project uses the LUFA library and reverse-engineering of the Pro Controller
   The server receives the input and sends it to an AVR microcontroller which acts as a controller. The MCU is plugged into the Switch dock and the console recognizes it as a Pro Controller. If you have a USB-C adapter, you should also be able to use this in handheld mode/Switch Lite.
   
 * Firmware: firmware that runs on the microcontroller. The server PC sends the received commands to the microcontroller via UART. When the Switch requests HID reports, the microcontroller sends them. It uses the LUFA library.
+
+* Small Python code for fast prototyping (`python` folder).
 
 The goal of this project is to provide a way to play Switch games remotely (two computers) or control the console locally (one computer). Keep in mind this project doesn't include any video streaming service.
 
