@@ -17,6 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
+import javax.swing.WindowConstants;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -98,7 +99,7 @@ public final class Client {
         jButton.setBounds (50, 160, 100, 30);
 
         final JFrame frame = new JFrame("Client configuration");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.getContentPane().add(jPanel);
         frame.pack();
         frame.setResizable(false);
@@ -232,7 +233,7 @@ public final class Client {
             jLabel.setBounds(10, 10, 200, 25);
             delayGraphPanel.setBounds(10,80,200,260);
 
-            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             getContentPane().add(jPanel);
             pack();
         }

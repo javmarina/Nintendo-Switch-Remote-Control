@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
+import javax.swing.WindowConstants;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -86,7 +87,7 @@ public final class Server {
         jButton.setBounds (50, 160, 100, 30);
 
         final JFrame frame = new JFrame("Server configuration");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.getContentPane().add(jPanel);
         frame.pack();
         frame.setResizable(false);
@@ -292,7 +293,7 @@ public final class Server {
             //jConnectionLabel.setBounds(50, 350, 300, 30);
             //jSerialLabel.setBounds(50, 390, 300, 40);
 
-            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             getContentPane().add(jPanel);
             pack();
         }
