@@ -4,6 +4,7 @@ import com.fazecast.jSerialComm.SerialPort;
 import com.javmarina.util.Controller;
 import com.javmarina.util.CrcUtils;
 import com.javmarina.util.GeneralUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -35,20 +36,23 @@ public class SerialAdapter {
     private static final byte RESP_SYNC_1 = (byte) 0xCC;
     private static final byte RESP_SYNC_OK = 0x33;
 
+    @Nullable
     private final SerialPort serialPort;
     private Status status = Status.OUT_OF_SYNC;
 
-    SerialAdapter(final SerialPort serialPort, final int baudrate) {
-        serialPort.setBaudRate(baudrate);
-        serialPort.setNumDataBits(8);
-        serialPort.setParity(SerialPort.NO_PARITY);
-        serialPort.setNumStopBits(SerialPort.ONE_STOP_BIT);
-        serialPort.setFlowControl(SerialPort.FLOW_CONTROL_DISABLED);
-        serialPort.setComPortTimeouts(
-                SerialPort.TIMEOUT_WRITE_BLOCKING | SerialPort.TIMEOUT_READ_BLOCKING,
-                READ_TIMEOUT,
-                WRITE_TIMEOUT);
-        serialPort.openPort();
+    SerialAdapter(@Nullable final SerialPort serialPort, final int baudrate) {
+        if (serialPort != null) {
+            serialPort.setBaudRate(baudrate);
+            serialPort.setNumDataBits(8);
+            serialPort.setParity(SerialPort.NO_PARITY);
+            serialPort.setNumStopBits(SerialPort.ONE_STOP_BIT);
+            serialPort.setFlowControl(SerialPort.FLOW_CONTROL_DISABLED);
+            serialPort.setComPortTimeouts(
+                    SerialPort.TIMEOUT_WRITE_BLOCKING | SerialPort.TIMEOUT_READ_BLOCKING,
+                    READ_TIMEOUT,
+                    WRITE_TIMEOUT);
+            serialPort.openPort();
+        }
         this.serialPort = serialPort;
     }
 
@@ -63,6 +67,10 @@ public class SerialAdapter {
     */
     @SuppressWarnings("ReuseOfLocalVariable")
     void sync(final boolean forceSync) throws IOException {
+        if (serialPort == null) {
+            status = Status.SYNCED;
+            return;
+        }
         final long t1 = System.currentTimeMillis();
         if (status == Status.SYNCING) {
             // Another thread started syncing process and it hasn't finished yet
@@ -129,7 +137,13 @@ public class SerialAdapter {
     }
 
     synchronized void closePort() {
-        serialPort.closePort();
+        if (serialPort != null) {
+            serialPort.closePort();
+        }
+    }
+
+    synchronized boolean isFake() {
+        return serialPort == null;
     }
 
     /*private void waitForData(final int sleep) {
@@ -189,13 +203,17 @@ public class SerialAdapter {
     private final byte[] rxByteBuffer = new byte[1];
 
     private synchronized void sendByte(final byte b) {
-        txByteBuffer[0] = b;
-        serialPort.writeBytes(txByteBuffer, 1);
+        if (serialPort != null) {
+            txByteBuffer[0] = b;
+            serialPort.writeBytes(txByteBuffer, 1);
+        }
     }
 
     private synchronized byte readByte() {
         rxByteBuffer[0] = 0; // Clear buffer
-        serialPort.readBytes(rxByteBuffer, 1);
+        if (serialPort != null) {
+            serialPort.readBytes(rxByteBuffer, 1);
+        }
         return rxByteBuffer[0];
     }
 
@@ -207,7 +225,6 @@ public class SerialAdapter {
     private float errorRate = 0.0f;
 
     synchronized boolean sendPacket(final byte[] packet) {
-        assert serialPort != null;
         assert packet.length == 8;
 
         if (status != Status.SYNCED) {
@@ -223,8 +240,13 @@ public class SerialAdapter {
         System.arraycopy(packet, 0, packetCrc, 0, 8);
         packetCrc[8] = CrcUtils.crc(packet);
 
-        serialPort.writeBytes(packetCrc, packetCrc.length);
-        final byte b = readByte();
+        final byte b;
+        if (serialPort == null) {
+            b = RESP_UPDATE_ACK;
+        } else {
+            serialPort.writeBytes(packetCrc, packetCrc.length);
+            b = readByte();
+        }
         switch (b) {
             case RESP_UPDATE_ACK:
                 errorRate = GeneralUtils.lowPassFilter(errorRate, 0, 0.005f);

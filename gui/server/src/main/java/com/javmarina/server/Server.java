@@ -115,15 +115,13 @@ public final class Server {
                 return;
             }
             if (jComboBox.getSelectedIndex() == -1) {
-                JOptionPane.showMessageDialog(frame, "You must select a serial port");
-                return;
+                JOptionPane.showMessageDialog(frame, "WARNING: No serial port selected");
             }
             // Save preferences
             prefs.put(KEY_SERVER_PORT, port);
             prefs.put(KEY_BAUDRATE, baudrate);
 
             final SerialPort serialPort = (SerialPort) jComboBox.getSelectedItem();
-            assert serialPort != null;
             frame.setVisible(false);
             showConnectionFrame(
                     new SerialAdapter(serialPort, Integer.parseInt(baudrate)),
@@ -151,49 +149,52 @@ public final class Server {
             return;
         }
 
-        final SerialAdapter.TestResults testResults = serialAdapter.testSpeed(100);
-        final String msg;
-        String url = null;
-        switch (testResults.errorType) {
-            case NONE:
-                final String temp = String.format("Minimum: %d ms\r\nMaximum: %d ms\r\nAverage: %.3f ms\r\nError count: %d",
-                        testResults.min, testResults.max, testResults.avg, testResults.errorCount);
-                if (testResults.avg > 10.0) {
-                    url = "https://projectgus.com/2011/10/notes-on-ftdi-latency-with-arduino/";
-                    msg = temp + "\r\nAverage is high. You might need to adjust the latency timer of the FTDI adapter." +
-                            "\r\nSee " + url + " for more info.";
-                } else {
-                    msg = temp;
-                }
-                break;
-            case NO_ACKS:
-                msg = "No packets were sent correctly";
-                break;
-            case SYNC_ERROR:
-                msg = "Sync error, test aborted";
-                break;
-            default:
-                msg = "Unknown error";
-                break;
-        }
-        if (url != null) {
-            final int selection = JOptionPane.showOptionDialog(
-                    frame,
-                    msg,
-                    "",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE,
-                    null,
-                    new Object[] {"OK", "Open"},
-                    "OK");
-
-            if (selection == 1) {
-                try {
-                    Desktop.getDesktop().browse(URI.create(url));
-                } catch (final IOException ignored) {}
+        if (!serialAdapter.isFake()) {
+            final SerialAdapter.TestResults testResults = serialAdapter.testSpeed(100);
+            final String msg;
+            String url = null;
+            switch (testResults.errorType) {
+                case NONE:
+                    final String temp = String.format("Minimum: %d ms\r\nMaximum: %d ms\r\nAverage: %.3f ms\r\nError count: %d",
+                            testResults.min, testResults.max, testResults.avg, testResults.errorCount);
+                    if (testResults.avg > 10.0) {
+                        url = "https://projectgus.com/2011/10/notes-on-ftdi-latency-with-arduino/";
+                        msg = temp + "\r\nAverage is high. You might need to adjust the latency timer of the FTDI adapter." +
+                                "\r\nSee " + url + " for more info.";
+                    } else {
+                        msg = temp;
+                    }
+                    break;
+                case NO_ACKS:
+                    msg = "No packets were sent correctly";
+                    break;
+                case SYNC_ERROR:
+                    msg = "Sync error, test aborted";
+                    break;
+                default:
+                    msg = "Unknown error";
+                    break;
             }
-        } else {
-            JOptionPane.showMessageDialog(frame, msg);
+            if (url != null) {
+                final int selection = JOptionPane.showOptionDialog(
+                        frame,
+                        msg,
+                        "",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        new Object[]{"OK", "Open"},
+                        "OK");
+
+                if (selection == 1) {
+                    try {
+                        Desktop.getDesktop().browse(URI.create(url));
+                    } catch (final IOException ignored) {
+                    }
+                }
+            } else {
+                JOptionPane.showMessageDialog(frame, msg);
+            }
         }
 
         new Thread(new Runnable() {
