@@ -18,6 +18,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -100,9 +101,14 @@ public final class Client {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().add(jPanel);
         frame.pack();
-        frame.setLocationRelativeTo(null); // Centered in screen
         frame.setResizable(false);
         frame.setVisible(true);
+
+        final Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        frame.setLocation(
+                dim.width/2-frame.getSize().width,
+                dim.height/2-frame.getSize().height/2
+        );
 
         jButton.addActionListener(actionEvent -> {
             final String ip = jIp.getText();
@@ -186,10 +192,15 @@ public final class Client {
                                             final ControllerService service) {
         final ConnectionFrame connectionFrame =
                 new ConnectionFrame("Client (server " + ip + ':' + port + ')');
-        connectionFrame.setLocationRelativeTo(null); // Centered in screen
         connectionFrame.setResizable(false);
         connectionFrame.setVisible(true);
         connectionFrame.jButton.addActionListener(new StartButtonListener(service, connectionFrame, ip, port));
+
+        final Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        connectionFrame.setLocation(
+                dim.width/2-connectionFrame.getSize().width,
+                dim.height/2-connectionFrame.getSize().height/2
+        );
     }
 
     private static class ConnectionFrame extends JFrame {

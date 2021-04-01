@@ -79,9 +79,14 @@ public final class Server {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().add(jPanel);
         frame.pack();
-        frame.setLocationRelativeTo(null); // Centered in screen
         frame.setResizable(false);
         frame.setVisible(true);
+
+        final Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        frame.setLocation(
+                dim.width/2,
+                dim.height/2-frame.getSize().height/2
+        );
 
         jButton.addActionListener(actionEvent -> {
             final String port = jPort.getText();
@@ -132,9 +137,14 @@ public final class Server {
 
     private static void showConnectionFrame(final SerialAdapter serialAdapter, final int serverPort) {
         final ConnectionFrame frame = new ConnectionFrame("Server");
-        frame.setLocationRelativeTo(null); // Centered in screen
         frame.setResizable(false);
         frame.setVisible(true);
+
+        final Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        frame.setLocation(
+                dim.width/2,
+                dim.height/2-frame.getSize().height/2
+        );
 
         try {
             frame.setSerialInfo("Trying to sync");
