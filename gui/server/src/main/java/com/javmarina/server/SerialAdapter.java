@@ -316,11 +316,11 @@ public class SerialAdapter {
             SYNC_ERROR
         }
 
-        public long min;
-        public long max;
-        public double avg;
-        public int errorCount;
-        public ErrorType errorType;
+        public final long min;
+        public final long max;
+        public final double avg;
+        public final int errorCount;
+        public final ErrorType errorType;
 
         private TestResults(final long min, final long max, final double avg,
                             final int errorCount, final ErrorType errorType) {
