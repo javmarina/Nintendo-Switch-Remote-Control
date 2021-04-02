@@ -30,13 +30,9 @@ public final class JamepadManager {
         final int size = manager.getNumControllers();
         final ArrayList<DefaultJamepadService> services = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
-            try {
-                // TODO: even though getNumControllers() is > 0, this method could throw an exception
-                final ControllerIndex controllerIndex = manager.getControllerIndex(i);
-                if (controllerIndex.isConnected()) {
-                    services.add(DefaultJamepadService.fromControllerIndex(controllerIndex));
-                }
-            } catch (final ArrayIndexOutOfBoundsException e) {
+            final ControllerIndex controllerIndex = manager.getControllerIndex(i);
+            if (controllerIndex.isConnected()) {
+                services.add(DefaultJamepadService.fromControllerIndex(controllerIndex));
             }
         }
         return services;
