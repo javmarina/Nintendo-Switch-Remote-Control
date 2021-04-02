@@ -5,8 +5,6 @@ import com.studiohartman.jamepad.ControllerIndex;
 import com.studiohartman.jamepad.ControllerManager;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 
 /**
@@ -16,20 +14,11 @@ public final class JamepadManager {
 
     private static final int MAX_CONTROLLERS = 10;
 
-    private static final Set<DefaultJamepadService> pool = new HashSet<>(MAX_CONTROLLERS);
     private static final ControllerManager manager = new ControllerManager(MAX_CONTROLLERS);
 
     static {
         manager.initSDLGamepad();
         Runtime.getRuntime().addShutdownHook(new Thread(manager::quitSDLGamepad));
-    }
-
-    public static void addService(final DefaultJamepadService service) {
-        pool.add(service);
-    }
-
-    public static void removeService(final DefaultJamepadService service) {
-        pool.remove(service);
     }
 
     public static void update() {

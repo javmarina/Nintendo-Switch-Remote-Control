@@ -75,16 +75,6 @@ public class DefaultJamepadService extends ButtonService {
     }
 
     @Override
-    public void onStart() {
-        JamepadManager.addService(this);
-    }
-
-    @Override
-    public void onFinish() {
-        JamepadManager.removeService(this);
-    }
-
-    @Override
     public String toString() {
         try {
             return controller.getName();
