@@ -270,16 +270,11 @@ public final class Server {
             super(title);
 
             final JPanel jPanel = new JPanel();
-            // Adjust size and set layout
+            // Adjust size
             jPanel.setPreferredSize(new Dimension(500, 350));
-            //jPanel.setLayout(null);
 
             controllerPanel = new ControllerPanel();
-            //controllerPanel.setBounds(10,10,500,300);
-
             connectionLostButton = new JButton("Simulate lost connection");
-            //connectionLostButton.setBounds(15, 310, 150, 30);
-
             jConnectionLabel = new JLabel("Waiting for the client request");
             jSerialLabel = new JLabel("Searching for serial adapter");
 
@@ -288,10 +283,6 @@ public final class Server {
             jPanel.add(jSerialLabel);
             jPanel.add(jConnectionLabel);
             jPanel.add(connectionLostButton);
-
-            // Set component bounds (only needed by Absolute Positioning)
-            //jConnectionLabel.setBounds(50, 350, 300, 30);
-            //jSerialLabel.setBounds(50, 390, 300, 40);
 
             setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             getContentPane().add(jPanel);
