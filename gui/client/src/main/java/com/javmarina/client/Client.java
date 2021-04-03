@@ -77,7 +77,7 @@ public final class Client {
         final int totalSize = services.size();
         System.out.println(totalSize + " service(s) available");
         for (int i = 0; i < totalSize; i++) {
-            System.out.println(" " + i + ". " + services.get(i).toString());
+            System.out.printf(" %d. %s%n", i, services.get(i).toString());
         }
         final JComboBox<ControllerService> jComboBox =
                 new JComboBox<>(services.toArray(new ControllerService[totalSize]));
@@ -359,7 +359,7 @@ public final class Client {
                                 // System.out.println("From server: " + ByteBuffer.wrap(inputFrame).getInt());
                                 if (inputFrame[7] == UdpUtils.PING_REPLY) {
                                     final int delay = (int) (System.currentTimeMillis()-millis);
-                                    frame.jLabel.setText("RTT: " + delay + " ms");
+                                    frame.jLabel.setText(String.format("RTT: %d ms", delay));
                                     frame.delayGraphPanel.addDelay(delay);
                                     millis = 0;
                                 } /*else {
