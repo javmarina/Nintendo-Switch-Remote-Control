@@ -1,10 +1,10 @@
 package com.javmarina.server;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.javmarina.util.Controller;
-import com.javmarina.util.CrcUtils;
+import com.javmarina.util.Crc;
 import com.javmarina.util.GeneralUtils;
 import org.jetbrains.annotations.Nullable;
+import com.javmarina.util.Packet;
 
 import java.io.IOException;
 
@@ -221,11 +221,19 @@ public class SerialAdapter {
      * Utilities for packet transmission
      */
 
-    private final byte[] packetCrc = new byte[9];
+    private final byte[] bufferWithCrc = new byte[Packet.Companion.getPACKET_BUFFER_LENGTH() + 1 /* CRC byte */];
     private float errorRate = 0.0f;
 
-    synchronized boolean sendPacket(final byte[] packet) {
-        assert packet.length == 8;
+    /**
+     * Send a controller packet to the emulated controller via UART.
+     * @param packet the controller input to send.
+     * @return {@code true} if successful (MCU replied with ACK), {@code false} otherwise.
+     * Also returns {@code false} if the serial port is closed.
+     */
+    synchronized boolean sendPacket(final Packet packet) {
+        if (serialPort != null && !serialPort.isOpen()) {
+            return false;
+        }
 
         if (status != Status.SYNCED) {
             System.out.println("sendPacket() error: serial communication is not currently synced");
@@ -237,14 +245,15 @@ public class SerialAdapter {
             return false;
         }
 
-        System.arraycopy(packet, 0, packetCrc, 0, 8);
-        packetCrc[8] = CrcUtils.crc(packet);
+        final byte[] packetBuffer = packet.getBuffer();
+        System.arraycopy(packetBuffer, 0, bufferWithCrc, 0, 8);
+        bufferWithCrc[8] = Crc.fromBytes(packetBuffer);
 
         final byte b;
         if (serialPort == null) {
             b = RESP_UPDATE_ACK;
         } else {
-            serialPort.writeBytes(packetCrc, packetCrc.length);
+            serialPort.writeBytes(bufferWithCrc, bufferWithCrc.length);
             b = readByte();
         }
         switch (b) {
@@ -282,7 +291,7 @@ public class SerialAdapter {
 
         for (int i = 0; i < samples; i++) {
             final long t0 = System.currentTimeMillis();
-            final boolean error = !sendPacket(Controller.EMPTY_PACKET);
+            final boolean error = !sendPacket(Packet.Companion.getEMPTY_PACKET());
             final long t1 = System.currentTimeMillis();
 
             if (error) {

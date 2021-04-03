@@ -1,14 +1,17 @@
 package com.javmarina.util;
 
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+
 /**
- * General utilities. Includes methods for generating hexadecimal strings from byte arrays and a simpler
- * {@link Thread#sleep(long)} alternative.
+ * General utilities.
  */
 public final class GeneralUtils {
+
+    /* Don't let anyone instantiate this class */
+    private GeneralUtils() {
+    }
 
     private static final char[] HEX_CHARACTERS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
             'E', 'F'};
@@ -39,17 +42,6 @@ public final class GeneralUtils {
     private static void appendByte(@NotNull final StringBuilder builder, final byte b) {
         builder.append(HEX_CHARACTERS[(b & 0xF0) >>> 4]);
         builder.append(HEX_CHARACTERS[(b & 0x0F)]);
-    }
-
-    /**
-     * Alternative to {@link Thread#sleep(long)} that ignores {@link InterruptedException}.
-     * @param millis  milliseconds to sleep.
-     */
-    public static void sleep(final int millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (final InterruptedException ignored) {
-        }
     }
 
     /**

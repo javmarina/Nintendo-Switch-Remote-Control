@@ -1,7 +1,8 @@
 package com.javmarina.client.services.bot;
 
 import com.javmarina.client.services.ControllerService;
-import com.javmarina.util.Controller;
+import com.javmarina.util.Packet;
+import static com.javmarina.util.Packet.Buttons.Code;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public abstract class BotService extends ControllerService {
      */
     private static final float MAX_COMMAND_TIME = 4.0f; // 4 seconds
 
-    private static final double MAX_MOD = StrictMath.pow(Controller.Joystick.CENTER_INTEGER, 2);
+    private static final double MAX_MOD = StrictMath.pow(Packet.Joystick.CENTER_INTEGER, 2);
 
     private final ArrayList<Command> currentCommands = new ArrayList<>(20) ; // 20 simultaneous commands
 
@@ -127,7 +128,7 @@ public abstract class BotService extends ControllerService {
     @Nullable
     private List<Command> createCommandList(final String message, final long millis) {
         final byte[] emptyBuffer = new byte[8];
-        System.arraycopy(Controller.EMPTY_PACKET, 0, emptyBuffer, 0, 8);
+        System.arraycopy(Packet.Companion.getEMPTY_PACKET_BUFFER(), 0, emptyBuffer, 0, 8);
         final String text = message.toLowerCase();
 
         // First check if custom command providers have the specified command
@@ -166,7 +167,7 @@ public abstract class BotService extends ControllerService {
         if (buffer.length != 8) {
             throw new IllegalArgumentException("Provided buffer must be 8 bytes long");
         }
-        System.arraycopy(Controller.EMPTY_PACKET, 0, buffer, 0, 8);
+        System.arraycopy(Packet.Companion.getEMPTY_PACKET_BUFFER(), 0, buffer, 0, 8);
 
         int leftx = 0;
         int lefty = 0;
@@ -188,7 +189,7 @@ public abstract class BotService extends ControllerService {
 
             // DPAD
             final byte dpadValue = packet[2];
-            if (dpadValue != Controller.Dpad.CENTER) {
+            if (dpadValue != Packet.Dpad.CENTER) {
                 if (dpadValue % 2 == 0) {
                     dpad[dpadValue]++;
                 } else {
@@ -207,10 +208,10 @@ public abstract class BotService extends ControllerService {
             final int ly = packet[4] < 0 ? packet[4] + 256 : packet[4];
             final int rx = packet[5] < 0 ? packet[5] + 256 : packet[5];
             final int ry = packet[6] < 0 ? packet[6] + 256 : packet[6];
-            leftx += (lx - Controller.Joystick.CENTER_INTEGER);
-            lefty += (ly - Controller.Joystick.CENTER_INTEGER);
-            rightx += (rx - Controller.Joystick.CENTER_INTEGER);
-            righty += (ry - Controller.Joystick.CENTER_INTEGER);
+            leftx += (lx - Packet.Joystick.CENTER_INTEGER);
+            lefty += (ly - Packet.Joystick.CENTER_INTEGER);
+            rightx += (rx - Packet.Joystick.CENTER_INTEGER);
+            righty += (ry - Packet.Joystick.CENTER_INTEGER);
         }
 
         assert dpad[1] == 0;
@@ -236,7 +237,7 @@ public abstract class BotService extends ControllerService {
         }
         switch (m) {
             case 0:
-                buffer[2] = Controller.Dpad.CENTER;
+                buffer[2] = Packet.Dpad.CENTER;
                 break;
             case 1:
                 buffer[2] = (byte) occurrences[0];
@@ -259,12 +260,12 @@ public abstract class BotService extends ControllerService {
     }
 
     private static void normalizeAxis(final int x, final int y, final int firstIndex, final byte[] buffer) {
-        final int x2 = normalizeByte(x+Controller.Joystick.CENTER_INTEGER) - Controller.Joystick.CENTER_INTEGER;
-        final int y2 = normalizeByte(y+Controller.Joystick.CENTER_INTEGER) - Controller.Joystick.CENTER_INTEGER;
+        final int x2 = normalizeByte(x+Packet.Joystick.CENTER_INTEGER) - Packet.Joystick.CENTER_INTEGER;
+        final int y2 = normalizeByte(y+Packet.Joystick.CENTER_INTEGER) - Packet.Joystick.CENTER_INTEGER;
         final double modSq = StrictMath.pow(x2, 2) + StrictMath.pow(y2, 2);
         final double k = modSq > MAX_MOD ? MAX_MOD/modSq : 1;
-        buffer[firstIndex] = (byte) normalizeByte((int) (StrictMath.sqrt(k)*x2) + Controller.Joystick.CENTER_INTEGER);
-        buffer[firstIndex+1] = (byte) normalizeByte((int) (StrictMath.sqrt(k)*y2) + Controller.Joystick.CENTER_INTEGER);
+        buffer[firstIndex] = (byte) normalizeByte((int) (StrictMath.sqrt(k)*x2) + Packet.Joystick.CENTER_INTEGER);
+        buffer[firstIndex+1] = (byte) normalizeByte((int) (StrictMath.sqrt(k)*y2) + Packet.Joystick.CENTER_INTEGER);
     }
 
     private static int maxDpad(final int val1, final int val2) {
@@ -289,12 +290,12 @@ public abstract class BotService extends ControllerService {
     private int oldSize = 0;
     private static final byte[] buffer = new byte[8];
     static {
-        System.arraycopy(Controller.EMPTY_PACKET, 0, buffer, 0, 8);
+        System.arraycopy(Packet.Companion.getEMPTY_PACKET_BUFFER(), 0, buffer, 0, 8);
     }
 
     @Override
-    public byte[] getMessage() {
-        buffer[7] = Controller.VENDORSPEC;
+    public Packet getPacket() {
+        buffer[7] = Packet.VENDORSPEC;
 
         // Remove expired commands
         boolean changed = currentCommands.removeIf(Command::hasExpired);
@@ -313,14 +314,14 @@ public abstract class BotService extends ControllerService {
 
         if (changed) {
             // Have to recompute buffer
-            System.arraycopy(Controller.EMPTY_PACKET, 0, buffer, 0, 8);
+            System.arraycopy(Packet.Companion.getEMPTY_PACKET_BUFFER(), 0, buffer, 0, 8);
             oldSize = runningCommands.size();
             packetOr(
                     runningCommands.stream().map(command -> command.packet).collect(Collectors.toList()),
                     buffer
             );
         }
-        return buffer;
+        return new Packet(buffer);
     }
 
     /**
@@ -331,17 +332,29 @@ public abstract class BotService extends ControllerService {
         private static final String[] buttons = {"a", "b", "x", "y", "l", "r", "zl",
                 "zr", "minus", "plus", "home", "capture", "lstick", "rstick"};
         private static final ArrayList<String> buttonsList = new ArrayList<>(Arrays.asList(buttons));
-        private static final short[] buttonCodes = {Controller.Button.A, Controller.Button.B, Controller.Button.X,
-                Controller.Button.Y, Controller.Button.L, Controller.Button.R, Controller.Button.ZL,
-                Controller.Button.ZR, Controller.Button.MINUS, Controller.Button.PLUS, Controller.Button.HOME,
-                Controller.Button.CAPTURE, Controller.Button.LCLICK, Controller.Button.RCLICK};
+        private static final int[] buttonCodes = {
+                Code.A.getValue(),
+                Code.B.getValue(),
+                Code.X.getValue(),
+                Code.Y.getValue(),
+                Code.L.getValue(),
+                Code.R.getValue(),
+                Code.ZL.getValue(),
+                Code.ZR.getValue(),
+                Code.MINUS.getValue(),
+                Code.PLUS.getValue(),
+                Code.HOME.getValue(),
+                Code.CAPTURE.getValue(),
+                Code.LCLICK.getValue(),
+                Code.RCLICK.getValue()
+        };
 
         @Nullable
         @Override
         public List<Command> createCommandList(final byte[] emptyBuffer, final String text, final long duration) {
             final int buttonIndex = buttonsList.indexOf(text);
             if (buttonIndex >= 0) {
-                final short buttonCode = buttonCodes[buttonIndex];
+                final int buttonCode = buttonCodes[buttonIndex];
                 emptyBuffer[0] |= (byte) ((buttonCode >>> 8) & 0xFF);
                 emptyBuffer[1] |= (byte) (buttonCode & 0xFF);
                 return Collections.singletonList(new Command(emptyBuffer, duration));
@@ -358,9 +371,9 @@ public abstract class BotService extends ControllerService {
 
         private static final String[] dpad = {"up", "upright", "right", "downright", "down", "downleft", "left", "upleft"};
         private static final ArrayList<String> dpadList = new ArrayList<>(Arrays.asList(dpad));
-        private static final byte[] dpadCodes = {Controller.Dpad.UP, Controller.Dpad.UP_RIGHT, Controller.Dpad.RIGHT,
-                Controller.Dpad.DOWN_RIGHT, Controller.Dpad.DOWN, Controller.Dpad.DOWN_LEFT, Controller.Dpad.LEFT,
-                Controller.Dpad.UP_LEFT};
+        private static final byte[] dpadCodes = {Packet.Dpad.UP, Packet.Dpad.UP_RIGHT, Packet.Dpad.RIGHT,
+                Packet.Dpad.DOWN_RIGHT, Packet.Dpad.DOWN, Packet.Dpad.DOWN_LEFT, Packet.Dpad.LEFT,
+                Packet.Dpad.UP_LEFT};
 
         @Nullable
         @Override

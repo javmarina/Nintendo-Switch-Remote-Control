@@ -1,6 +1,6 @@
 package com.javmarina.server;
 
-import com.javmarina.util.Controller;
+import com.javmarina.util.Packet;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -100,31 +100,28 @@ public class ControllerPanel extends JPanel {
         add(rightJoystick);
     }
 
-    public void updateUi(final byte[] packet) {
-        assert packet.length == 8;
+    public void updateUi(final Packet packet) {
 
-        final byte b0 = packet[0];
-        plus.setPressed((b0 & (Controller.Button.PLUS >>> 8)) != 0);
-        minus.setPressed((b0 & (Controller.Button.MINUS >>> 8)) != 0);
-        home.setPressed((b0 & (Controller.Button.HOME >>> 8)) != 0);
-        capture.setPressed((b0 & (Controller.Button.CAPTURE >>> 8)) != 0);
-        leftJoystick.setPressed((b0 & (Controller.Button.LCLICK >>> 8)) != 0);
-        rightJoystick.setPressed((b0 & (Controller.Button.RCLICK >>> 8)) != 0);
+        final Packet.Buttons buttons = packet.getButtons();
+        plus.setPressed(buttons.getPlus());
+        minus.setPressed(buttons.getMinus());
+        home.setPressed(buttons.getHome());
+        capture.setPressed(buttons.getCapture());
+        leftJoystick.setPressed(buttons.getLclick());
+        rightJoystick.setPressed(buttons.getRclick());
+        a.setPressed(buttons.getA());
+        b.setPressed(buttons.getB());
+        x.setPressed(buttons.getX());
+        y.setPressed(buttons.getY());
+        l.setPressed(buttons.getL());
+        zl.setPressed(buttons.getZl());
+        r.setPressed(buttons.getR());
+        zr.setPressed(buttons.getZr());
 
-        final byte b1 = packet[1];
-        a.setPressed((b1 & Controller.Button.A) != 0);
-        b.setPressed((b1 & Controller.Button.B) != 0);
-        x.setPressed((b1 & Controller.Button.X) != 0);
-        y.setPressed((b1 & Controller.Button.Y) != 0);
-        l.setPressed((b1 & Controller.Button.L) != 0);
-        zl.setPressed((b1 & Controller.Button.ZL) != 0);
-        r.setPressed((b1 & Controller.Button.R) != 0);
-        zr.setPressed((b1 & Controller.Button.ZR) != 0);
+        dpad.setState(packet.getDpad());
 
-        dpad.setState(packet[2]);
-
-        leftJoystick.setJoystickPosition(packet[3], packet[4]);
-        rightJoystick.setJoystickPosition(packet[5], packet[6]);
+        leftJoystick.setJoystickPosition(packet.getLeftJoystick());
+        rightJoystick.setJoystickPosition(packet.getRightJoystick());
     }
 
     private static class ButtonPanel extends JPanel {
@@ -206,7 +203,7 @@ public class ControllerPanel extends JPanel {
         private int internalState;
 
         private DpadPanel() {
-            setState(Controller.Dpad.CENTER);
+            setState(Packet.Dpad.center());
         }
 
         @Override
@@ -226,18 +223,18 @@ public class ControllerPanel extends JPanel {
             g.fillRect(w/3, h/3, w/3, h/3);
         }
 
-        private void setState(final byte state) {
+        private void setState(final Packet.Dpad dpad) {
             int internal = 0x00;
-            if (state == Controller.Dpad.UP || state == Controller.Dpad.UP_RIGHT || state == Controller.Dpad.UP_LEFT) {
+            if (dpad.getUp()) {
                 internal |= 0x01;
             }
-            if (state == Controller.Dpad.RIGHT || state == Controller.Dpad.UP_RIGHT || state == Controller.Dpad.DOWN_RIGHT) {
+            if (dpad.getRight()) {
                 internal |= 0x02;
             }
-            if (state == Controller.Dpad.DOWN || state == Controller.Dpad.DOWN_LEFT || state == Controller.Dpad.DOWN_RIGHT) {
+            if (dpad.getDown()) {
                 internal |= 0x04;
             }
-            if (state == Controller.Dpad.LEFT || state == Controller.Dpad.DOWN_LEFT || state == Controller.Dpad.UP_LEFT) {
+            if (dpad.getLeft()) {
                 internal |= 0x08;
             }
             internalState = internal;
@@ -304,18 +301,17 @@ public class ControllerPanel extends JPanel {
         }
 
         @SuppressWarnings("NumericCastThatLosesPrecision")
-        void setJoystickPosition(final int x, final int y) {
-            // x and y come in binary format. Use inverted two's complement
-            int x2 = x;
-            if (x2 < 0) {
-                x2 += 256;
-            }
-            int y2 = y;
-            if (y2 < 0) {
-                y2 += 256;
-            }
-            dx = (int) (diameter * (float) x2 / 255);
-            dy = (int) (diameter - diameter * (float) y2 / 255);
+        void setJoystickPosition(final Packet.Joystick joystick) {
+            float x = joystick.getX();
+            x += 1.0f;
+            x /= 2.0f;
+
+            float y = joystick.getY();
+            y += 1.0f;
+            y /= 2.0f;
+
+            dx = (int) (diameter * x);
+            dy = (int) (diameter * (1 - y));
             repaint();
         }
 

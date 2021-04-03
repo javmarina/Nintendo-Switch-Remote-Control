@@ -1,9 +1,11 @@
 package com.javmarina.server;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.javmarina.util.Controller;
 import com.javmarina.util.GeneralUtils;
-import com.javmarina.util.UdpUtils;
+import com.javmarina.util.Packet;
+import com.javmarina.util.network.BaseConnection;
+import com.javmarina.util.network.ServerConnection;
+import com.javmarina.util.network.protocol.ServerProtocol;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -19,11 +21,8 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.util.prefs.Preferences;
 
 
@@ -32,10 +31,6 @@ public final class Server {
     private static final int DEFAULT_BAUDRATE = 1000000; // 1 Mbps
     private static final String KEY_BAUDRATE = "key_baudrate";
     private static final String KEY_SERVER_PORT = "key_port";
-
-    private static final int FPS = 60;
-
-    private static SendThread sendThread;
 
     public static void main(final String... arg) {
         //noinspection OverlyBroadCatchBlock
@@ -64,7 +59,7 @@ public final class Server {
         jPanel.setPreferredSize(new Dimension(200, 200));
         jPanel.setLayout(null);
 
-        jPort.setText(prefs.get(KEY_SERVER_PORT, String.valueOf(UdpUtils.DEFAULT_PORT)));
+        jPort.setText(prefs.get(KEY_SERVER_PORT, String.valueOf(BaseConnection.DEFAULT_PORT)));
         jBaudrate.setText(prefs.get(KEY_BAUDRATE, String.valueOf(DEFAULT_BAUDRATE)));
 
         final SerialPort[] ports = SerialPort.getCommPorts();
@@ -171,92 +166,105 @@ public final class Server {
         }
 
         if (!serialAdapter.isFake()) {
-            final SerialAdapter.TestResults testResults = serialAdapter.testSpeed(100);
-            final String msg;
-            String url = null;
-            switch (testResults.errorType) {
-                case NONE:
-                    final String temp = String.format("Minimum: %d ms\r\nMaximum: %d ms\r\nAverage: %.3f ms\r\nError count: %d",
-                            testResults.min, testResults.max, testResults.avg, testResults.errorCount);
-                    if (testResults.avg > 10.0) {
-                        url = "https://projectgus.com/2011/10/notes-on-ftdi-latency-with-arduino/";
-                        msg = temp + "\r\nAverage is high. You might need to adjust the latency timer of the FTDI adapter." +
-                                "\r\nSee " + url + " for more info.";
-                    } else {
-                        msg = temp;
-                    }
-                    break;
-                case NO_ACKS:
-                    msg = "No packets were sent correctly";
-                    break;
-                case SYNC_ERROR:
-                    msg = "Sync error, test aborted";
-                    break;
-                default:
-                    msg = "Unknown error";
-                    break;
-            }
-            if (url != null) {
-                final int selection = JOptionPane.showOptionDialog(
-                        frame,
-                        msg,
-                        "",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE,
-                        null,
-                        new Object[]{"OK", "Open"},
-                        "OK");
-
-                if (selection == 1) {
-                    try {
-                        Desktop.getDesktop().browse(URI.create(url));
-                    } catch (final IOException ignored) {
-                    }
-                }
-            } else {
-                JOptionPane.showMessageDialog(frame, msg);
-            }
+            runSerialPortTests(serialAdapter, frame);
         }
 
-        new Thread(new Runnable() {
+        // Wait for client command
+        final ServerConnection server;
+        try {
+            server = BaseConnection.newServerConnection(serverPort);
+            final ServerProtocol serverProtocol = new ServerProtocol(
+                    server,
+                    new ServerProtocol.Callback() {
+                        @Override
+                        public void onPacketReceived(final Packet packet) {
+                            final String message = GeneralUtils.byteArrayToString(packet.getBuffer());
+                            System.out.println("From client: " + message);
+                            frame.setConnectionInfo("From client: " + message);
+                            // Update UI
+                            frame.updateControllerUi(packet);
+                            // Send to MCU
+                            if (!frame.connectionLostButton.getModel().isPressed()) {
+                                final boolean result = serialAdapter.sendPacket(packet);
+                                frame.setSerialInfo(result ? "Synced!" : "Packet error");
+                            }
+                        }
 
-            DatagramSocket socket;
-            InetAddress address;
-            int clientPort;
+                        @Override
+                        public void onSessionStarted() {
+                        }
 
-            @Override
-            public void run() {
-                // Wait for client command
+                        @Override
+                        public void onSessionStopped() {
+                            System.out.println("Session stopped");
+                            serialAdapter.closePort();
+                            frame.setVisible(false);
+                            showInitialFrame();
+                        }
+
+                        @Override
+                        public void onError(final Exception e) {
+                            JOptionPane.showMessageDialog(frame, e.getMessage());
+                            serialAdapter.closePort();
+                            frame.setVisible(false);
+                            showInitialFrame();
+                        }
+                    });
+            serverProtocol.waitForClientAsync();
+        } catch (final SocketException e) {
+            JOptionPane.showMessageDialog(frame, "Couldn't open socket. Select another port");
+            e.printStackTrace();
+            frame.setVisible(false);
+            showInitialFrame();
+        }
+    }
+
+    private static void runSerialPortTests(final SerialAdapter serialAdapter, final ConnectionFrame frame) {
+        final SerialAdapter.TestResults testResults = serialAdapter.testSpeed(100);
+        final String msg;
+        String url = null;
+        switch (testResults.errorType) {
+            case NONE:
+                final String temp = String.format("Minimum: %d ms\r\nMaximum: %d ms\r\nAverage: %.3f ms\r\nError count: %d",
+                        testResults.min, testResults.max, testResults.avg, testResults.errorCount);
+                if (testResults.avg > 10.0) {
+                    url = "https://projectgus.com/2011/10/notes-on-ftdi-latency-with-arduino/";
+                    msg = temp + "\r\nAverage is high. You might need to adjust the latency timer of the FTDI adapter." +
+                            "\r\nSee " + url + " for more info.";
+                } else {
+                    msg = temp;
+                }
+                break;
+            case NO_ACKS:
+                msg = "No packets were sent correctly";
+                break;
+            case SYNC_ERROR:
+                msg = "Sync error, test aborted";
+                break;
+            default:
+                msg = "Unknown error";
+                break;
+        }
+        if (url != null) {
+            final int selection = JOptionPane.showOptionDialog(
+                    frame,
+                    msg,
+                    "",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE,
+                    null,
+                    new Object[]{"OK", "Open"},
+                    "OK");
+
+            if (selection == 1) {
                 try {
-                    // While we could use UdpUtils methods, we need to discover the client's IP
-                    // address and port
-                    socket = new DatagramSocket(serverPort);
-                    final byte[] buf = new byte[1];
-                    final DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                    socket.receive(packet);
-
-                    assert buf[0] == UdpUtils.START;
-
-                    address = packet.getAddress();
-                    clientPort = packet.getPort();
-
-                    UdpUtils.sendSingleByte(socket, address, clientPort, UdpUtils.START_ACK);
-
-                    sendThread = new SendThread(socket, address, clientPort);
-                    sendThread.start();
-
-                    final Thread input = new ReceiveThread(socket, address, clientPort, frame, serialAdapter);
-                    input.start();
-
-                    Thread.currentThread().interrupt();
-                } catch (@SuppressWarnings("OverlyBroadCatchBlock") final IOException e) {
-                    JOptionPane.showMessageDialog(frame, e.getMessage());
-                    serialAdapter.closePort();
-                    frame.setVisible(false);
-                    showInitialFrame();
+                    Desktop.getDesktop().browse(URI.create(url));
+                } catch (final IOException ignored) {
                 }
             }
-        }).start();
+        } else {
+            JOptionPane.showMessageDialog(frame, msg);
+        }
     }
 
     private static class ConnectionFrame extends JFrame {
@@ -297,124 +305,8 @@ public final class Server {
             jConnectionLabel.setText(text);
         }
 
-        private void updateControllerUi(final byte[] packet) {
+        private void updateControllerUi(final Packet packet) {
             controllerPanel.updateUi(packet);
-        }
-    }
-
-    private static class ReceiveThread extends Thread {
-
-        private final DatagramSocket socket;
-        private final InetAddress address;
-        private final int clientPort;
-        private final ConnectionFrame connectionFrame;
-        private final SerialAdapter serialAdapter;
-
-        private boolean running;
-        private int crcFailCount = 0;
-
-        private ReceiveThread(final DatagramSocket socket, final InetAddress address,
-                              final int clientPort, final ConnectionFrame connectionFrame,
-                              final SerialAdapter serialAdapter) {
-            this.socket = socket;
-            this.address = address;
-            this.clientPort = clientPort;
-            this.connectionFrame = connectionFrame;
-            this.serialAdapter = serialAdapter;
-        }
-
-        @Override
-        public synchronized void start() {
-            super.start();
-            running = true;
-        }
-
-        @Override
-        public void run() {
-            final byte[] received = new byte[8];
-            while (running) {
-                try {
-                    // Fill received buffer with contents from client
-                    UdpUtils.receivePacket(socket, received);
-                    final String message = GeneralUtils.byteArrayToString(received);
-                    System.out.println("From client: " + message);
-                    connectionFrame.setConnectionInfo("<html>From client: " + message + "<br>UDP CRC fails: " + crcFailCount + "</html>");
-                    if (received[7] == UdpUtils.EXIT) {
-                        running = false;
-                        sendThread.interrupt();
-                        GeneralUtils.sleep(400); // Let the threads interrupt correctly
-                        UdpUtils.sendSingleByte(socket, address, clientPort, UdpUtils.EXIT_ACK);
-                        System.out.println("Sending exit_ack");
-                        break;
-                    }
-                    if (received[7] == UdpUtils.PING) {
-                        final byte save = received[7];
-                        received[7] = UdpUtils.PING_REPLY;
-                        UdpUtils.sendPacket(socket, address, clientPort, received);
-                        System.out.println("Sending ping_reply");
-                        received[7] = save; // Leave it as before
-                    }
-                    if (received[7] == UdpUtils.NO_ACTION || received[7] == UdpUtils.PING) {
-                        // Update UI
-                        connectionFrame.updateControllerUi(received);
-                        // Send to MCU
-                        if (!connectionFrame.connectionLostButton.getModel().isPressed()) {
-                            received[7] = Controller.VENDORSPEC;
-                            final boolean result = serialAdapter.sendPacket(received);
-                            connectionFrame.setSerialInfo(result ? "Synced!" : "Packet error");
-                        }
-                    }
-                } catch (final UdpUtils.InvalidCrcException e) {
-                    System.out.println("CRC is not valid");
-                    crcFailCount++;
-                } catch (final IOException e) {
-                    System.out.println("Error while reading input from client");
-                }
-            }
-            System.out.println("Closing socket server!!");
-            socket.close();
-            serialAdapter.closePort();
-            connectionFrame.setVisible(false);
-            showInitialFrame();
-        }
-    }
-
-    private static class SendThread extends Thread {
-
-        private final DatagramSocket socket;
-        private final InetAddress address;
-        private final int clientPort;
-
-        private boolean running;
-
-        private SendThread(final DatagramSocket socket, final InetAddress address,
-                              final int clientPort) {
-            this.socket = socket;
-            this.address = address;
-            this.clientPort = clientPort;
-        }
-
-        @Override
-        public void run() {
-            running = true;
-            int i = 0;
-            final ByteBuffer buffer = ByteBuffer.allocate(8);
-            while (running) {
-                try {
-                    UdpUtils.sendPacket(socket, address, clientPort, buffer.putInt(0, i).array());
-                    System.out.println("Sending frame " + i);
-                    i++;
-                    GeneralUtils.sleep(1000/FPS);
-                } catch (final IOException e) {
-                    System.out.println("Error while sending frames");
-                }
-            }
-        }
-
-        @Override
-        public void interrupt() {
-            super.interrupt();
-            running = false;
         }
     }
 }

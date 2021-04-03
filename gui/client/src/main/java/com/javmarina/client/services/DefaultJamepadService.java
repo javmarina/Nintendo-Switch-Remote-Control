@@ -1,6 +1,7 @@
 package com.javmarina.client.services;
 
 import com.javmarina.client.JamepadManager;
+import com.javmarina.util.Packet;
 import com.studiohartman.jamepad.ControllerAxis;
 import com.studiohartman.jamepad.ControllerButton;
 import com.studiohartman.jamepad.ControllerIndex;
@@ -11,7 +12,7 @@ import com.studiohartman.jamepad.ControllerUnpluggedException;
  * Represents a real controller, accessed via Jamepad library (based on DirectInput from DirectX). It has
  * some limitations. For example, the capture button (if using a Pro Controller) is not supported.
  */
-public class DefaultJamepadService extends ButtonService {
+public class DefaultJamepadService extends ControllerService {
 
     private final ControllerIndex controller;
 
@@ -19,58 +20,64 @@ public class DefaultJamepadService extends ButtonService {
         this.controller = controller;
     }
 
-    @Override
-    void getPressedButtons(final boolean[] buttons) {
-        try {
-            // buttons[0] = false; // CAPTURE
-            buttons[1] = controller.isButtonPressed(ControllerButton.GUIDE); // HOME
-            buttons[2] = controller.isButtonPressed(ControllerButton.RIGHTSTICK);
-            buttons[3] = controller.isButtonPressed(ControllerButton.LEFTSTICK);
-            buttons[4] = controller.isButtonPressed(ControllerButton.START); // PLUS
-            buttons[5] = controller.isButtonPressed(ControllerButton.BACK); // MINUS
-            buttons[6] = controller.getAxisState(ControllerAxis.TRIGGERRIGHT) > 0.5f; // ZR
-            buttons[7] = controller.getAxisState(ControllerAxis.TRIGGERLEFT) > 0.5f; // ZL
-            buttons[8] = controller.isButtonPressed(ControllerButton.RIGHTBUMPER); // R
-            buttons[9] = controller.isButtonPressed(ControllerButton.LEFTBUMPER); // L
-            buttons[10] = controller.isButtonPressed(ControllerButton.Y); // X
-            buttons[11] = controller.isButtonPressed(ControllerButton.B); // A
-            buttons[12] = controller.isButtonPressed(ControllerButton.A); // B
-            buttons[13] = controller.isButtonPressed(ControllerButton.X); // Y
-        } catch (final ControllerUnpluggedException e) {
-            e.printStackTrace();
+    protected static boolean isButtonPressed(final ControllerIndex controller, final Packet.Buttons.Code code)
+            throws ControllerUnpluggedException {
+        switch (code) {
+            case Y: return controller.isButtonPressed(ControllerButton.X);
+            case B: return controller.isButtonPressed(ControllerButton.A);
+            case A: return controller.isButtonPressed(ControllerButton.B);
+            case X: return controller.isButtonPressed(ControllerButton.Y);
+            case L: return controller.isButtonPressed(ControllerButton.LEFTBUMPER);
+            case R: return controller.isButtonPressed(ControllerButton.RIGHTBUMPER);
+            case ZL: return controller.getAxisState(ControllerAxis.TRIGGERLEFT) > 0.5f;
+            case ZR: return controller.getAxisState(ControllerAxis.TRIGGERRIGHT) > 0.5f;
+            case MINUS: return controller.isButtonPressed(ControllerButton.BACK);
+            case PLUS: return controller.isButtonPressed(ControllerButton.START);
+            case LCLICK: return controller.isButtonPressed(ControllerButton.LEFTSTICK);
+            case RCLICK: return controller.isButtonPressed(ControllerButton.RIGHTSTICK);
+            case HOME: return controller.isButtonPressed(ControllerButton.GUIDE);
+            case NONE:
+            case CAPTURE:
+            default:
+                return false;
         }
     }
 
     @Override
-    void getAxisState(final float[] axis) {
-        try {
-            axis[0] = controller.getAxisState(ControllerAxis.LEFTX);
-            axis[1] = controller.getAxisState(ControllerAxis.LEFTY);
-            axis[2] = controller.getAxisState(ControllerAxis.RIGHTX);
-            axis[3] = controller.getAxisState(ControllerAxis.RIGHTY);
-        } catch (final ControllerUnpluggedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    void getDpadState(final boolean[] dpad) {
-        try {
-            dpad[0] = controller.isButtonPressed(ControllerButton.DPAD_UP);
-            dpad[1] = controller.isButtonPressed(ControllerButton.DPAD_RIGHT);
-            dpad[2] = controller.isButtonPressed(ControllerButton.DPAD_DOWN);
-            dpad[3] = controller.isButtonPressed(ControllerButton.DPAD_LEFT);
-        } catch (final ControllerUnpluggedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onPrepareReport() {
+    public final Packet getPacket() {
         JamepadManager.update();
         if (!controller.isConnected()) {
             System.out.println("Controller unplugged");
             finish();
+        }
+        try {
+            final Packet.Buttons buttons = new Packet.Buttons(buttonCode -> {
+                try {
+                    return DefaultJamepadService.isButtonPressed(controller, buttonCode);
+                } catch (final ControllerUnpluggedException e) {
+                    return false;
+                }
+            });
+
+            final Packet.Dpad dpad = new Packet.Dpad(
+                    controller.isButtonPressed(ControllerButton.DPAD_UP),
+                    controller.isButtonPressed(ControllerButton.DPAD_RIGHT),
+                    controller.isButtonPressed(ControllerButton.DPAD_DOWN),
+                    controller.isButtonPressed(ControllerButton.DPAD_LEFT)
+            );
+
+            final Packet.Joystick leftJoystick = new Packet.Joystick(
+                    controller.getAxisState(ControllerAxis.LEFTX),
+                    controller.getAxisState(ControllerAxis.LEFTY));
+
+            final Packet.Joystick rightJoystick = new Packet.Joystick(
+                    controller.getAxisState(ControllerAxis.RIGHTX),
+                    controller.getAxisState(ControllerAxis.RIGHTY));
+
+            return new Packet(buttons, dpad, leftJoystick, rightJoystick);
+        } catch (final ControllerUnpluggedException e) {
+            e.printStackTrace();
+            return Packet.Companion.getEMPTY_PACKET();
         }
     }
 

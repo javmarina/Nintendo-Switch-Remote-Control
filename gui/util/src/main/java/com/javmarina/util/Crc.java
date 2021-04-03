@@ -3,16 +3,21 @@ package com.javmarina.util;
 
 /**
  * Utilities for computing the CRC of a byte array.
+ * Used for UART communication and network messages.
  */
-public class CrcUtils {
+public class Crc {
+
+    /* Don't let anyone instantiate this class */
+    private Crc() {
+    }
 
     /**
      * Simple method for computing the CRC of an entire array.
      * @param packet byte array whose CRC is going to be computed.
      * @return the CRC as a single byte.
      */
-    public static byte crc(final byte[] packet) {
-        return crc(packet, packet.length);
+    public static byte fromBytes(final byte[] packet) {
+        return fromBytes(packet, packet.length);
     }
 
     /**
@@ -21,7 +26,7 @@ public class CrcUtils {
      * @param length number of values used. The method computes the CRC of bytes 0 to length-1.
      * @return the CRC as a single byte.
      */
-    static byte crc(final byte[] packet, final int length) {
+    public static byte fromBytes(final byte[] packet, final int length) {
         byte crc = 0;
         for (int i = 0; i < length; i++) {
             crc = crc8_ccitt(crc, packet[i]);

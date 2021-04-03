@@ -1,6 +1,6 @@
 package com.javmarina.client.services.bot;
 
-import com.javmarina.util.Controller;
+import com.javmarina.util.Packet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class ExampleCommandProvider implements CommandProvider {
             case "shield":
                 // Example of a single command that ignores duration specified by user and
                 // instead uses a fixed duration of 1 second (1000 ms)
-                emptyBuffer[1] = (byte) (emptyBuffer[1] | Controller.Button.ZL);
+                emptyBuffer[1] = (byte) (emptyBuffer[1] | Packet.Buttons.Code.ZL.getValue());
                 return Collections.singletonList(new Command(emptyBuffer, 1000));
             case "next_weapon":
                 // Example of a compound command. The first one starts immediately and the second
@@ -30,10 +30,10 @@ public class ExampleCommandProvider implements CommandProvider {
                 final byte[] temp = new byte[8];
                 System.arraycopy(emptyBuffer, 0, temp, 0, 8);
                 // Command 1: DPAD right during 1 second, no start delay
-                emptyBuffer[2] = Controller.Dpad.RIGHT;
+                emptyBuffer[2] = Packet.Dpad.RIGHT;
                 list.add(new Command(emptyBuffer, 1000));
                 // Command 2: R button during 0.3 seconds, starting after 0.5 seconds
-                temp[1] = Controller.Button.R;
+                temp[1] = (byte) Packet.Buttons.Code.R.getValue();
                 list.add(new Command(temp, 300, 500));
                 return list;
             default:

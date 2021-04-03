@@ -1,6 +1,7 @@
 package com.javmarina.client.services;
 
 import com.javmarina.client.Client;
+import com.javmarina.util.Packet;
 
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
@@ -12,7 +13,7 @@ import java.util.Set;
  * Subclass of {@link ControllerService} that takes input from the computer keyboard. This implementation
  * includes some buttons and the DPAD, but not joysticks.
  */
-public class KeyboardService extends ButtonService {
+public class KeyboardService extends ControllerService {
 
     private static final Set<Integer> pressedKeys = new HashSet<>(10);
 
@@ -23,7 +24,6 @@ public class KeyboardService extends ButtonService {
                     case KeyEvent.KEY_PRESSED:
                         pressedKeys.add(keyEvent.getKeyCode());
                         break;
-
                     case KeyEvent.KEY_RELEASED:
                         pressedKeys.remove(keyEvent.getKeyCode());
                         break;
@@ -34,33 +34,33 @@ public class KeyboardService extends ButtonService {
     }
 
     @Override
-    void getPressedButtons(final boolean[] buttons) {
-        buttons[0] = pressedKeys.contains(KeyEvent.VK_C); // CAPTURE
-        buttons[1] = pressedKeys.contains(KeyEvent.VK_H); // HOME
-        //buttons[2] = false; // RIGHTSTICK
-        //buttons[3] = false; // LEFTSTICK
-        buttons[4] = pressedKeys.contains(KeyEvent.VK_PLUS); // PLUS
-        buttons[5] = pressedKeys.contains(KeyEvent.VK_MINUS); // MINUS
-        buttons[6] = pressedKeys.contains(KeyEvent.VK_R) && pressedKeys.contains(KeyEvent.VK_SHIFT); // ZR
-        buttons[7] = pressedKeys.contains(KeyEvent.VK_L) && pressedKeys.contains(KeyEvent.VK_SHIFT); // ZL
-        buttons[8] = pressedKeys.contains(KeyEvent.VK_R) && !pressedKeys.contains(KeyEvent.VK_SHIFT); // R
-        buttons[9] = pressedKeys.contains(KeyEvent.VK_L) && !pressedKeys.contains(KeyEvent.VK_SHIFT); // L
-        buttons[10] = pressedKeys.contains(KeyEvent.VK_X); // X
-        buttons[11] = pressedKeys.contains(KeyEvent.VK_A) || pressedKeys.contains(KeyEvent.VK_ENTER); // A
-        buttons[12] = pressedKeys.contains(KeyEvent.VK_B); // B
-        buttons[13] = pressedKeys.contains(KeyEvent.VK_Y); // Y
-    }
+    public Packet getPacket() {
+        final Packet.Buttons buttons = new Packet.Buttons(
+                pressedKeys.contains(KeyEvent.VK_Y), // Y
+                pressedKeys.contains(KeyEvent.VK_B), // B
+                pressedKeys.contains(KeyEvent.VK_A) || pressedKeys.contains(KeyEvent.VK_ENTER), // A
+                pressedKeys.contains(KeyEvent.VK_X), // X
+                pressedKeys.contains(KeyEvent.VK_L) && !pressedKeys.contains(KeyEvent.VK_SHIFT), // L
+                pressedKeys.contains(KeyEvent.VK_R) && !pressedKeys.contains(KeyEvent.VK_SHIFT), // R
+                pressedKeys.contains(KeyEvent.VK_L) && pressedKeys.contains(KeyEvent.VK_SHIFT), // ZL
+                pressedKeys.contains(KeyEvent.VK_R) && pressedKeys.contains(KeyEvent.VK_SHIFT), // ZR
+                pressedKeys.contains(KeyEvent.VK_MINUS), // MINUS
+                pressedKeys.contains(KeyEvent.VK_PLUS), // PLUS
+                false,
+                false,
+                pressedKeys.contains(KeyEvent.VK_H), // HOME
+                pressedKeys.contains(KeyEvent.VK_C) // CAPTURE
+        );
 
-    @Override
-    void getAxisState(final float[] axis) {
-    }
+        final Packet.Dpad dpad = new Packet.Dpad(
+                pressedKeys.contains(KeyEvent.VK_UP),
+                pressedKeys.contains(KeyEvent.VK_RIGHT),
+                pressedKeys.contains(KeyEvent.VK_DOWN),
+                pressedKeys.contains(KeyEvent.VK_LEFT)
+        );
 
-    @Override
-    void getDpadState(final boolean[] dpad) {
-        dpad[0] = pressedKeys.contains(KeyEvent.VK_UP);
-        dpad[1] = pressedKeys.contains(KeyEvent.VK_RIGHT);
-        dpad[2] = pressedKeys.contains(KeyEvent.VK_DOWN);
-        dpad[3] = pressedKeys.contains(KeyEvent.VK_LEFT);
+        // No joystick support
+        return new Packet(buttons, dpad, Packet.Joystick.centered(), Packet.Joystick.centered());
     }
 
     @Override

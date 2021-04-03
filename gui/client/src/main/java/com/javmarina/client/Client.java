@@ -5,7 +5,9 @@ import com.javmarina.client.services.DefaultJamepadService;
 import com.javmarina.client.services.KeyboardService;
 import com.javmarina.client.services.bot.DiscordService;
 import com.javmarina.util.GeneralUtils;
-import com.javmarina.util.UdpUtils;
+import com.javmarina.util.network.ClientConnection;
+import com.javmarina.util.network.protocol.ClientProtocol;
+import com.javmarina.util.network.BaseConnection;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JButton;
@@ -24,19 +26,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.prefs.Preferences;
 
 
 public final class Client {
-
-    // Timeout for establishing or ending a connection with server
-    private static final int CONNECTION_TIMEOUT = 2000; // 2 seconds
-    // Packet send rate
-    private static final int PERIOD_MS = 5; // ms
 
     private static final String DEFAULT_ADDRESS = "localhost";
     private static final String KEY_ADDRESS = "key_address";
@@ -70,7 +67,7 @@ public final class Client {
         jPanel.setLayout(null);
 
         jIp.setText(prefs.get(KEY_ADDRESS, DEFAULT_ADDRESS));
-        jPort.setText(prefs.get(KEY_PORT, String.valueOf(UdpUtils.DEFAULT_PORT)));
+        jPort.setText(prefs.get(KEY_PORT, String.valueOf(BaseConnection.DEFAULT_PORT)));
 
         final ArrayList<ControllerService> services = getAvailableServices();
 
@@ -136,12 +133,24 @@ public final class Client {
                 JOptionPane.showMessageDialog(frame, "You must select a controller");
                 return;
             }
+
+            final ClientConnection client;
+            try {
+                client = BaseConnection.newClientConnection(ip, Integer.parseInt(port));
+            } catch (final SocketException e) {
+                JOptionPane.showMessageDialog(frame, "Couldn't open socket. Select another port");
+                return;
+            } catch (final UnknownHostException e) {
+                JOptionPane.showMessageDialog(frame, "Invalid IP address");
+                return;
+            }
+
             // Save preferences
             prefs.put(KEY_ADDRESS, ip);
             prefs.put(KEY_PORT, port);
 
             final ControllerService service = (ControllerService) jComboBox.getSelectedItem();
-            showConnectionFrame(ip, Integer.parseInt(port), service);
+            showConnectionFrame(service, client);
             frame.setVisible(false);
         });
     }
@@ -189,13 +198,11 @@ public final class Client {
         }
     }
 
-    private static void showConnectionFrame(final String ip, final int port,
-                                            final ControllerService service) {
+    private static void showConnectionFrame(final ControllerService service, final ClientConnection client) {
         final ConnectionFrame connectionFrame =
-                new ConnectionFrame("Client (server " + ip + ':' + port + ')');
+                new ConnectionFrame("Client (server " + client.getServerDescription() + ')', service, client);
         connectionFrame.setResizable(false);
         connectionFrame.setVisible(true);
-        connectionFrame.jButton.addActionListener(new StartButtonListener(service, connectionFrame, ip, port));
 
         final Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
         connectionFrame.setLocation(
@@ -210,7 +217,7 @@ public final class Client {
         private final JLabel jLabel;
         private final DelayGraphPanel delayGraphPanel;
 
-        private ConnectionFrame(final String title) {
+        private ConnectionFrame(final String title, final ControllerService service, final ClientConnection client) {
             super(title);
 
             // construct components
@@ -218,6 +225,9 @@ public final class Client {
             jButton = new JButton("Start");
             jLabel = new JLabel("Press start when server is ready", SwingConstants.CENTER);
             delayGraphPanel = new DelayGraphPanel();
+
+            // add action listener to button
+            jButton.addActionListener(new ConnectionFrame.ButtonListener(service, this, client));
 
             // adjust size and set layout
             jPanel.setPreferredSize(new Dimension(220, 360));
@@ -237,155 +247,64 @@ public final class Client {
             getContentPane().add(jPanel);
             pack();
         }
-    }
 
-    private static class StartButtonListener implements ActionListener {
+        private static class ButtonListener implements ActionListener {
 
-        private boolean started;
-        long millis = 0;
+            private boolean started;
 
-        private InetAddress address;
-        private DatagramSocket socket;
+            private final ConnectionFrame frame;
+            private final ClientProtocol protocol;
 
-        private final ControllerService service;
-        private final ConnectionFrame frame;
-        private final String ip;
-        private final int port;
-
-        private StartButtonListener(final ControllerService service, final ConnectionFrame frame,
-                                    final String ip, final int port) {
-            this.service = service;
-            this.frame = frame;
-            this.ip = ip;
-            this.port = port;
-        }
-
-        @Override
-        public void actionPerformed(final ActionEvent actionEvent) {
-            if (started) {
-                started = false;
-                service.finish();
-                GeneralUtils.sleep(400); // Let the threads interrupt correctly
-
-                try {
-                    // Send "exit" packet
-                    System.out.println("Sending exit command");
-                    final byte[] exit = new byte[8];
-                    exit[7] = UdpUtils.EXIT;
-                    UdpUtils.sendPacket(socket, address, port, exit);
-
-                    // Wait for server response
-                    socket.setSoTimeout(CONNECTION_TIMEOUT);
-                    final byte response = UdpUtils.receiveSingleByte(socket);
-                    socket.setSoTimeout(0);
-
-                    // Check that server response is valid
-                    assert response == UdpUtils.EXIT_ACK;
-                } catch (@SuppressWarnings("OverlyBroadCatchBlock") final IOException e) {
-                    System.out.println("Couldn't onFinish connection. Closing anyways");
-                    e.printStackTrace();
-                }
-
-                socket.close();
-                frame.setVisible(false);
-                showInitialFrame();
-            } else {
-                try {
-                    // Datagram sockets don't have IP and port, they belong to individual packets
-                    socket = new DatagramSocket();
-                    // Get InetAddress from provided name
-                    address = InetAddress.getByName(ip);
-
-                    // Send "start" command
-                    UdpUtils.sendSingleByte(socket, address, port, UdpUtils.START);
-
-                    // Wait for server response
-                    socket.setSoTimeout(CONNECTION_TIMEOUT);
-                    final byte response = UdpUtils.receiveSingleByte(socket);
-                    socket.setSoTimeout(0);
-
-                    // Check that server response is valid
-                    assert response == UdpUtils.START_ACK;
-                    frame.jButton.setText("Exit");
-                    started = true;
-
-                    final Thread controller = new Thread(() -> {
-
-                        int counter = 0;
-
-                        service.start();
-                        byte[] packet;
-                        while (started) {
-                            try {
-                                packet = service.getControllerStatus();
-                                if (packet.length == 0) {
-                                    frame.jButton.doClick(); // will send exit command
-                                    break;
-                                } else {
-                                    // Send ping every 50 packets
-                                    if (counter >= 50) {
-                                        counter = 0;
-                                        packet[7] = UdpUtils.PING;
-                                        millis = System.currentTimeMillis();
-                                    } else {
-                                        packet[7] = UdpUtils.NO_ACTION;
-                                    }
-
-                                    //System.out.println("Sending " + GeneralUtils.byteArrayToString(packet));
-                                    UdpUtils.sendPacket(socket, address, port, packet);
-                                    if (millis == 0) {
-                                        counter++;
-                                    }
-                                    GeneralUtils.sleep(PERIOD_MS);
-                                }
-                            } catch (final IOException e) {
-                                System.out.println("Error while sending controller state");
-                                e.printStackTrace();
-                                // TODO: socket.close();
-                                // frame.setVisible(false);
-                                // showInitialFrame();
+            private ButtonListener(final ControllerService service, final ConnectionFrame frame,
+                                   final ClientConnection client) {
+                this.frame = frame;
+                this.protocol = new ClientProtocol(
+                        client,
+                        service::getControllerStatus,
+                        new ClientProtocol.Callback() {
+                            @Override
+                            public void onRttReplyReceived(final int milliseconds) {
+                                frame.jLabel.setText(String.format("RTT: %d ms", milliseconds));
+                                frame.delayGraphPanel.addDelay(milliseconds);
                             }
-                        }
-                    });
-                    controller.start();
 
-                    final Thread frames = new Thread(() -> {
-                        GeneralUtils.sleep(100);
+                            @Override
+                            public void onFrameReceived() {}
 
-                        final byte[] inputFrame = new byte[8];
-                        while (started) {
-                            try {
-                                UdpUtils.receivePacket(socket, inputFrame);
-                                // System.out.println("From server: " + ByteBuffer.wrap(inputFrame).getInt());
-                                if (inputFrame[7] == UdpUtils.PING_REPLY) {
-                                    final int delay = (int) (System.currentTimeMillis()-millis);
-                                    frame.jLabel.setText(String.format("RTT: %d ms", delay));
-                                    frame.delayGraphPanel.addDelay(delay);
-                                    millis = 0;
-                                } /*else {
-                                        ByteArrayInputStream bais = new ByteArrayInputStream(inputFrame);
-                                        BufferedImage image = ImageIO.read(bais);
-                                        if (image != null) {
-                                            jImage.setIcon(new ImageIcon(image));
-                                            frame.repaint();
-                                        }
-                                    }*/
-                            } catch (final IOException e) {
-                                System.out.println("Error while receiving frames");
-                                e.printStackTrace();
-                                // TODO: socket.close();
-                                // frame.setVisible(false);
-                                // showInitialFrame();
+                            @Override
+                            public void onSessionStarted() {
+                                started = true;
+                                service.start();
+                                frame.jButton.setText("Exit");
                             }
-                        }
-                    });
-                    frames.start();
-                } catch (final IOException e) {
-                    System.out.println("Couldn't start connection with server");
-                    JOptionPane.showMessageDialog(frame, e);
-                    e.printStackTrace();
-                    frame.setVisible(false);
-                    showInitialFrame();
+
+                            @Override
+                            public void onSessionStopped() {
+                                service.finish();
+                                frame.setVisible(false);
+                                showInitialFrame();
+                            }
+                        });
+            }
+
+            @Override
+            public void actionPerformed(final ActionEvent actionEvent) {
+                if (started) {
+                    // "Exit" button clicked
+                    started = false;
+                    System.out.println("Stopping session");
+                    protocol.stopSession(); // async method, onSessionStopped() will be called if successful
+                } else {
+                    // "Start" button clicked
+                    try {
+                        protocol.startSession(); // onSessionStarted() will be called if successful
+                    } catch (final IOException e) {
+                        System.out.println("Couldn't start connection with server");
+                        JOptionPane.showMessageDialog(frame, e);
+                        e.printStackTrace();
+                        frame.setVisible(false);
+                        showInitialFrame();
+                    }
                 }
             }
         }
