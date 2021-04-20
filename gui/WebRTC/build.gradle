@@ -1,5 +1,4 @@
-apply plugin: 'java'
-apply plugin: 'application'
+apply plugin: 'java-library'
 
 repositories {
     mavenCentral()
@@ -8,8 +7,8 @@ repositories {
 dependencies {
     implementation project(':util')
     implementation 'com.google.code.gson:gson:2.8.6'
-    implementation fileTree(dir: 'lib', include: '*.jar')
-    implementation group: 'dev.onvoid.webrtc', name: 'webrtc-java', version: '0.2.0'
+    api fileTree(dir: 'lib', include: '*.jar')
+    api group: 'dev.onvoid.webrtc', name: 'webrtc-java', version: '0.2.0'
 }
 
 test {
