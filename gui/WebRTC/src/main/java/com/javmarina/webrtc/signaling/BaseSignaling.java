@@ -64,6 +64,9 @@ public class BaseSignaling {
      * @throws IOException if an error occurred.
      */
     public final Command receiveCommand() throws IOException {
+        if (in.available() == 0) {
+            return null;
+        }
         synchronized (readLock) {
             final byte lengthSize = in.readByte();
             final byte[] lengthBuffer = in.readNBytes(lengthSize);
