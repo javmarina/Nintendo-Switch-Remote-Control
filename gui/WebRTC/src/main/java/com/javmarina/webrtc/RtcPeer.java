@@ -136,6 +136,9 @@ public abstract class RtcPeer<T extends BaseSignaling> {
         public void loop() {
             try {
                 final Command command = baseSignaling.receiveCommand();
+                if (command == null) {
+                    return;
+                }
                 switch (command.getId()) {
                     case BaseSignaling.OFFER_COMMAND:
                         final RTCSessionDescription description =
