@@ -1,1 +1,1 @@
-include ':server', ':client', ':util'
+include ':server', ':client', ':util', ':WebRTC'
