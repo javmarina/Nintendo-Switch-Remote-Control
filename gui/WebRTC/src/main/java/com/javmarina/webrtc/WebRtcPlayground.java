@@ -31,15 +31,14 @@ public class WebRtcPlayground {
             return;
         }
         final AudioDeviceModule deviceModule = new AudioDeviceModule();
-        final AudioDevice audioDevice = MediaDevices.getAudioCaptureDevices().get(0); // TODO
+        final AudioDevice audioDevice = MediaDevices.getAudioCaptureDevices().get(0);
         deviceModule.setRecordingDevice(audioDevice);
         final List<VideoDevice> videoDevices = MediaDevices.getVideoCaptureDevices();
-        final VideoDevice videoDevice = videoDevices.get(0); // TODO
+        final VideoDevice videoDevice = videoDevices.get(0);
         final RtcServer server = new RtcServer(serverSideSignaling, deviceModule, videoDevice,
                 new RtcServer.Callback() {
                     @Override
                     public void onPacketReceived(final Packet packet) {
-                        // TODO: send to Switch
                     }
 
                     @Override
@@ -82,7 +81,6 @@ public class WebRtcPlayground {
                     @Override
                     public void onData(final byte[] data, final int bitsPerSample, final int sampleRate,
                                        final int channels, final int frames) {
-                        // TODO: play sound
                     }
 
                     @Override
