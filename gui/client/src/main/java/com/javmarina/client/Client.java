@@ -72,10 +72,6 @@ public final class Client {
         final ArrayList<ControllerService> services = getAvailableServices();
 
         final int totalSize = services.size();
-        System.out.println(totalSize + " service(s) available");
-        for (int i = 0; i < totalSize; i++) {
-            System.out.printf(" %d. %s%n", i, services.get(i).toString());
-        }
         final JComboBox<ControllerService> jComboBox =
                 new JComboBox<>(services.toArray(new ControllerService[totalSize]));
 

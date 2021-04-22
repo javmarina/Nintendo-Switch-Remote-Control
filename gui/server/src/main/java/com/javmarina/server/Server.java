@@ -179,7 +179,6 @@ public final class Server {
                         @Override
                         public void onPacketReceived(final Packet packet) {
                             final String message = GeneralUtils.byteArrayToString(packet.getBuffer());
-                            System.out.println("From client: " + message);
                             frame.setConnectionInfo("From client: " + message);
                             // Update UI
                             frame.updateControllerUi(packet);

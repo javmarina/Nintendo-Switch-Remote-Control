@@ -94,7 +94,6 @@ public final class ClientProtocol extends BaseProtocol<ClientConnection> {
     }
 
     private void sendPacket(final Packet packet) throws IOException {
-        System.out.println("Sending " + GeneralUtils.byteArrayToString(packet.getBuffer()));
         sendCommand(new Command(BaseProtocol.PACKET, packet.getBuffer()));
     }
 
@@ -139,7 +138,6 @@ public final class ClientProtocol extends BaseProtocol<ClientConnection> {
                         break;
                     case BaseProtocol.FRAME:
                         final String message = GeneralUtils.byteArrayToString(command.getPayload());
-                        System.out.println("Received frame: " + message);
                         break;
                 }
             } catch (final IOException e) {

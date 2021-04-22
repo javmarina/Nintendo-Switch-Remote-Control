@@ -123,7 +123,6 @@ public final class ServerProtocol extends BaseProtocol<ServerConnection> {
         public void loop() {
             try {
                 if (System.currentTimeMillis() - millis > PERIOD_MS) {
-                    System.out.println("Sending frame " + i);
                     sendFrame(buffer.putInt(0, i).array());
                     millis = System.currentTimeMillis();
                     i++;
