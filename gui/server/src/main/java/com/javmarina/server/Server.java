@@ -63,7 +63,9 @@ public final class Server {
         jBaudrate.setText(prefs.get(KEY_BAUDRATE, String.valueOf(DEFAULT_BAUDRATE)));
 
         final SerialPort[] ports = SerialPort.getCommPorts();
-        final JComboBox<SerialPort> jComboBox = new JComboBox<>(ports);
+        final SerialPort[] selectablePorts = new SerialPort[ports.length + 1];
+        System.arraycopy(ports, 0, selectablePorts, 0, ports.length);
+        final JComboBox<SerialPort> jComboBox = new JComboBox<>(selectablePorts);
 
         // add components
         jPanel.add(jButton);
