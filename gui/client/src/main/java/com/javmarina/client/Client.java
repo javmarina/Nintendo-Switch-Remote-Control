@@ -5,11 +5,22 @@ import com.javmarina.client.services.DefaultJamepadService;
 import com.javmarina.client.services.KeyboardService;
 import com.javmarina.client.services.bot.DiscordService;
 import com.javmarina.util.GeneralUtils;
-import com.javmarina.util.network.ClientConnection;
-import com.javmarina.util.network.protocol.ClientProtocol;
+import com.javmarina.util.StoppableLoop;
 import com.javmarina.util.network.BaseConnection;
+import com.javmarina.webrtc.FramerateEstimator;
+import com.javmarina.webrtc.RtcClient;
+import com.javmarina.webrtc.WebRtcLoader;
+import com.javmarina.webrtc.signaling.ClientSideSignaling;
+import dev.onvoid.webrtc.RTCStats;
+import dev.onvoid.webrtc.RTCStatsReport;
+import dev.onvoid.webrtc.media.FourCC;
+import dev.onvoid.webrtc.media.MediaStreamTrack;
+import dev.onvoid.webrtc.media.video.VideoBufferConverter;
+import dev.onvoid.webrtc.media.video.VideoFrame;
+import dev.onvoid.webrtc.media.video.VideoFrameBuffer;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -18,19 +29,34 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.Raster;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 
 public final class Client {
@@ -38,6 +64,10 @@ public final class Client {
     private static final String DEFAULT_ADDRESS = "localhost";
     private static final String KEY_ADDRESS = "key_address";
     private static final String KEY_PORT = "key_port";
+
+    static {
+        WebRtcLoader.loadLibrary();
+    }
 
     public static void main(final String... arg) {
         //noinspection OverlyBroadCatchBlock
@@ -70,7 +100,6 @@ public final class Client {
         jPort.setText(prefs.get(KEY_PORT, String.valueOf(BaseConnection.DEFAULT_PORT)));
 
         final ArrayList<ControllerService> services = getAvailableServices();
-
         final int totalSize = services.size();
         final JComboBox<ControllerService> jComboBox =
                 new JComboBox<>(services.toArray(new ControllerService[totalSize]));
@@ -88,7 +117,7 @@ public final class Client {
         jIp.setBounds (110, 10, 80, 30);
         jPortLabel.setBounds(10, 60, 80, 30);
         jPort.setBounds(110, 60, 80, 30);
-        jComboBox.setBounds(50, 110, 100, 30);
+        jComboBox.setBounds(10, 110, 180, 30);
         jButton.setBounds (50, 160, 100, 30);
 
         final JFrame frame = new JFrame("Client configuration");
@@ -130,12 +159,9 @@ public final class Client {
                 return;
             }
 
-            final ClientConnection client;
+            final ClientSideSignaling clientSideSignaling;
             try {
-                client = BaseConnection.newClientConnection(ip, Integer.parseInt(port));
-            } catch (final SocketException e) {
-                JOptionPane.showMessageDialog(frame, "Couldn't open socket. Select another port");
-                return;
+                clientSideSignaling = new ClientSideSignaling(ip, Integer.parseInt(port));
             } catch (final UnknownHostException e) {
                 JOptionPane.showMessageDialog(frame, "Invalid IP address");
                 return;
@@ -146,7 +172,7 @@ public final class Client {
             prefs.put(KEY_PORT, port);
 
             final ControllerService service = (ControllerService) jComboBox.getSelectedItem();
-            showConnectionFrame(service, client);
+            showConnectionFrame(service, clientSideSignaling);
             frame.setVisible(false);
         });
     }
@@ -194,26 +220,24 @@ public final class Client {
         }
     }
 
-    private static void showConnectionFrame(final ControllerService service, final ClientConnection client) {
+    private static void showConnectionFrame(final ControllerService service,
+                                            final ClientSideSignaling clientSideSignaling) {
         final ConnectionFrame connectionFrame =
-                new ConnectionFrame("Client (server " + client.getServerDescription() + ')', service, client);
-        connectionFrame.setResizable(false);
+                new ConnectionFrame("Client", service, clientSideSignaling);
+        connectionFrame.setExtendedState(connectionFrame.getExtendedState() | Frame.MAXIMIZED_BOTH);
         connectionFrame.setVisible(true);
-
-        final Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        connectionFrame.setLocation(
-                dim.width/2-connectionFrame.getSize().width,
-                dim.height/2-connectionFrame.getSize().height/2
-        );
     }
 
     private static class ConnectionFrame extends JFrame {
 
         private final JButton jButton;
         private final JLabel jLabel;
+        private final JLabel jImage;
+        private final JLabel jStats;
         private final DelayGraphPanel delayGraphPanel;
 
-        private ConnectionFrame(final String title, final ControllerService service, final ClientConnection client) {
+        private ConnectionFrame(final String title, final ControllerService service,
+                                final ClientSideSignaling clientSideSignaling) {
             super(title);
 
             // construct components
@@ -221,43 +245,164 @@ public final class Client {
             jButton = new JButton("Start");
             jLabel = new JLabel("Press start when server is ready", SwingConstants.CENTER);
             delayGraphPanel = new DelayGraphPanel();
+            jImage = new JLabel();
+            jStats = new JLabel();
 
             // add action listener to button
-            jButton.addActionListener(new ConnectionFrame.ButtonListener(service, this, client));
+            jButton.addActionListener(new ConnectionFrame.ButtonListener(
+                    service,
+                    this,
+                    clientSideSignaling
+            ));
 
             // adjust size and set layout
-            jPanel.setPreferredSize(new Dimension(220, 360));
+            jPanel.setPreferredSize(new Dimension(540, 360));
             jPanel.setLayout(null);
 
             // add components
             jPanel.add(jButton);
             jPanel.add(jLabel);
+            jPanel.add(jImage);
+            jPanel.add(jStats);
             jPanel.add(delayGraphPanel);
 
             // set component bounds (only needed by Absolute Positioning)
             jButton.setBounds(55, 45, 100, 20);
             jLabel.setBounds(10, 10, 200, 25);
             delayGraphPanel.setBounds(10,80,200,260);
+            jImage.setBounds(220, 10, 240, 320);
+            jStats.setBounds(10, 320, 200, 200);
 
             setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             getContentPane().add(jPanel);
             pack();
         }
 
+        private void newStats(final RTCStatsReport report) {
+            final Map<String, String> displayInfo = new HashMap<>(10);
+
+            final Map<String, RTCStats> map = report.getStats();
+            final String videoStreamKey = map.keySet().stream()
+                    .filter(s -> s.startsWith("RTCInboundRTPVideoStream_"))
+                    .findFirst().orElse(null);
+            if (videoStreamKey != null) {
+                final RTCStats videoStats = map.get(videoStreamKey);
+                // https://www.w3.org/TR/webrtc-stats/#dom-rtcinboundrtpstreamstats
+                // timestamp, type: INBOUND_RTP, qpSum, decoderImplementation,
+                // lastPacketReceivedTimestamp, transportId, kind: "video",
+                // trackId: "RTCMediaStreamTrack_receiver_2", ssrc, isRemote,
+                // ackCount, mediaType: "video", headerBytesReceived, codecId,
+                // bytesReceived, firCount, packetsReceived, pliCount, packetsLost,
+                // keyFramesDecoded, totalDecodeTime, framesDecoded, totalSquaredInterFrameDelay,
+                // totalInterFrameDelay
+                if (videoStats.getMembers().containsKey("codecId")) {
+                    final RTCStats codecStats = map.get(videoStats.getMembers().get("codecId"));
+                    final String codec = (String) codecStats.getMembers().get("mimeType");
+                    final long clockRate = (long) codecStats.getMembers().get("clockRate");
+                    displayInfo.put("Video codec", String.format("%s (%d kHz)", codec, clockRate/1000));
+                }
+                displayInfo.put("Frames decoded", videoStats.getMembers().get("framesDecoded").toString());
+                if (videoStats.getMembers().containsKey("framesPerSecond")) {
+                    displayInfo.put("FPS", videoStats.getMembers().get("framesPerSecond").toString());
+                }
+            }
+
+            final String audioStreamKey = map.keySet().stream()
+                    .filter(s -> s.startsWith("RTCInboundRTPAudioStream_"))
+                    .findFirst().orElse(null);
+            if (audioStreamKey != null) {
+                final RTCStats audioStats = map.get(audioStreamKey);
+                // https://www.w3.org/TR/webrtc-stats/#dom-rtcinboundrtpstreamstats
+                // timestamp, type: INBOUND_RTP, qpSum, decoderImplementation,
+                // lastPacketReceivedTimestamp, transportId, kind: "video",
+                // trackId: "RTCMediaStreamTrack_receiver_2", ssrc, isRemote,
+                // ackCount, mediaType: "video", headerBytesReceived, codecId,
+                // bytesReceived, firCount, packetsReceived, pliCount, packetsLost,
+                // eyFramesDecoded, totalDecodeTime, framesDecoded, totalSquaredInterFrameDelay,
+                // totalInterFrameDelay
+            }
+
+            final String dataChannelKey = map.keySet().stream()
+                    .filter(s -> s.startsWith("RTCDataChannel_"))
+                    .findFirst().orElse(null);
+            if (dataChannelKey != null) {
+                final RTCStats dataChannelStats = map.get(dataChannelKey);
+                // timestamp, type: DATA_CHANNEL, protocol = null,
+                // bytesReceived, messagesSent, messagesReceived, datachannelid,
+                // label, state, bytesSent
+            }
+
+            final String transportKey = map.keySet().stream()
+                    .filter(s -> s.startsWith("RTCTransport_"))
+                    .findFirst().orElse(null);
+            if (transportKey != null) {
+                final RTCStats transportStats = map.get(transportKey);
+                // timestamp, type: TRANSPORT, bytesReceived,
+                // dtlsState, localCertificateId, tlsVersion,
+                // selectedCandidatePairChanges, bytesSent, selectedCandidatePairId,
+                // dtlsCipher, srtpCipher, remoteCertificateId
+                displayInfo.put("Bytes sent", transportStats.getMembers().get("bytesSent").toString());
+            }
+
+            final String streamKey = map.keySet().stream()
+                    .filter(s -> s.startsWith("RTCMediaStream_"))
+                    .findFirst().orElse(null);
+            if (streamKey != null) {
+                final RTCStats streamStats = map.get(streamKey);
+                final String[] trackIds = (String[]) streamStats.getMembers().get("trackIds");
+                for (final String trackId : trackIds) {
+                    final RTCStats trackStats = map.get(trackId);
+                    // timestamp, type: TRACK, detached,
+                    // kind ("audio" o "video"), ended, remoteSource, trackIdentifier,
+                    // mediaSourceId
+                    final String kind = (String) trackStats.getMembers().get("kind");
+                    final boolean remote = (boolean) trackStats.getMembers().get("remoteSource");
+                    if (kind.equals(MediaStreamTrack.VIDEO_TRACK_KIND) && remote) {
+                        final long width = (long) trackStats.getMembers().get("frameWidth");
+                        final long height = (long) trackStats.getMembers().get("frameHeight");
+                        displayInfo.put("Frame size", String.format("%d x %d", width, height));
+                    }
+                }
+            }
+
+            jStats.setText("<html>" + displayInfo.entrySet()
+                    .stream()
+                    .map(entry -> entry.getKey() + ": " + entry.getValue())
+                    .collect(Collectors.joining("<br>"))
+            );
+        }
+
         private static class ButtonListener implements ActionListener {
 
             private boolean started;
 
-            private final ConnectionFrame frame;
-            private final ClientProtocol protocol;
+            private final RtcClient rtcClient;
 
             private ButtonListener(final ControllerService service, final ConnectionFrame frame,
-                                   final ClientConnection client) {
-                this.frame = frame;
-                this.protocol = new ClientProtocol(
-                        client,
+                                   final ClientSideSignaling clientSideSignaling) {
+                final FrameProcessing frameProcessing = new FrameProcessing(
+                        () -> frame.getWidth() - 240,
+                        imageIcon -> SwingUtilities.invokeLater(() -> {
+                            frame.jImage.setBounds(220, 10, imageIcon.getIconWidth(), imageIcon.getIconHeight());
+                            frame.jImage.setIcon(imageIcon);
+                        })
+                );
+                final Thread thread = new Thread(frameProcessing);
+
+                final ActionListener taskPerformer = new ActionListener() {
+                    @Override
+                    public void actionPerformed(final ActionEvent evt) {
+                        rtcClient.getStats(report ->
+                                SwingUtilities.invokeLater(()
+                                        -> frame.newStats(report)));
+                    }
+                };
+                final Timer timer = new Timer(1000, taskPerformer);
+
+                this.rtcClient = new RtcClient(
+                        clientSideSignaling,
                         service::getControllerStatus,
-                        new ClientProtocol.Callback() {
+                        new RtcClient.Callback() {
                             @Override
                             public void onRttReplyReceived(final int milliseconds) {
                                 frame.jLabel.setText(String.format("RTT: %d ms", milliseconds));
@@ -265,22 +410,30 @@ public final class Client {
                             }
 
                             @Override
-                            public void onFrameReceived() {}
-
-                            @Override
                             public void onSessionStarted() {
                                 started = true;
                                 service.start();
+                                thread.start();
+                                timer.start();
                                 frame.jButton.setText("Exit");
                             }
 
                             @Override
                             public void onSessionStopped() {
                                 service.finish();
-                                frame.setVisible(false);
-                                showInitialFrame();
+                                frameProcessing.stop(() -> {
+                                    timer.stop();
+                                    frame.setVisible(false);
+                                    showInitialFrame();
+                                });
                             }
-                        });
+
+                            @Override
+                            public void onVideoFrame(final VideoFrame videoFrame) {
+                                frameProcessing.newFrame(videoFrame);
+                            }
+                        }
+                );
             }
 
             @Override
@@ -289,20 +442,112 @@ public final class Client {
                     // "Exit" button clicked
                     started = false;
                     System.out.println("Stopping session");
-                    protocol.stopSession(); // async method, onSessionStopped() will be called if successful
+                    rtcClient.stop();
                 } else {
                     // "Start" button clicked
-                    try {
-                        protocol.startSession(); // onSessionStarted() will be called if successful
-                    } catch (final IOException e) {
-                        System.out.println("Couldn't start connection with server");
-                        JOptionPane.showMessageDialog(frame, e);
-                        e.printStackTrace();
-                        frame.setVisible(false);
-                        showInitialFrame();
-                    }
+                    rtcClient.start(); // onSessionStarted() will be called if successful
                 }
             }
+        }
+    }
+
+    private static final class FrameProcessing extends StoppableLoop {
+
+        private final Object lock = new Object();
+        private final WidthProvider widthProvider;
+        private final Callback callback;
+        private final FramerateEstimator framerateEstimator = new FramerateEstimator();
+
+        @Nullable
+        private VideoFrame nextFrame = null;
+        private ByteBuffer byteBuffer;
+        private int lastWidth = -1;
+        private int lastHeight = -1;
+
+        private FrameProcessing(final WidthProvider widthProvider, final Callback callback) {
+            this.widthProvider = widthProvider;
+            this.callback = callback;
+        }
+
+        @Override
+        public void loop() {
+            final VideoFrame currentFrame;
+            synchronized (lock) {
+                currentFrame = nextFrame;
+                nextFrame = null;
+            }
+            if (currentFrame != null) {
+                final VideoFrameBuffer buffer = currentFrame.buffer;
+                final int width = buffer.getWidth();
+                final int height = buffer.getHeight();
+
+                if (byteBuffer == null || lastHeight != height || lastWidth != width) {
+                    byteBuffer = ByteBuffer.allocate(width * height * 4);
+                }
+
+                try {
+                    VideoBufferConverter.convertFromI420(buffer, byteBuffer, FourCC.ARGB);
+                } catch (final Exception e) {
+                    e.printStackTrace();
+                }
+
+                final byte[] bytes = byteBuffer.array();
+                final DataBufferByte dataBuffer = new DataBufferByte(bytes, bytes.length);
+                final ColorModel cm = new ComponentColorModel(
+                        ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB),
+                        new int[]{8, 8, 8, 8},
+                        true,
+                        false,
+                        Transparency.TRANSLUCENT,
+                        DataBuffer.TYPE_BYTE
+                );
+                final BufferedImage image = new BufferedImage(
+                        cm,
+                        Raster.createInterleavedRaster(
+                                dataBuffer,
+                                width,
+                                height,
+                                width * 4,
+                                4,
+                                new int[]{2, 1, 0, 3},
+                                null),
+                        false,
+                        null
+                );
+
+                final int targetWidth = widthProvider.getFrameWidth();
+                final int targetHeight = (int) (targetWidth * ((double) height / width));
+
+                final ImageIcon imageIcon = new ImageIcon(
+                        image.getScaledInstance(targetWidth, targetHeight, Image.SCALE_FAST)
+                );
+                callback.onImageIcon(imageIcon);
+
+                framerateEstimator.onVideoFrame(currentFrame);
+
+                currentFrame.release();
+
+                lastWidth = width;
+                lastHeight = height;
+            }
+        }
+
+        private void newFrame(final VideoFrame frame) {
+            synchronized (lock) {
+                if (nextFrame != null) {
+                    nextFrame.release();
+                }
+                frame.retain();
+                nextFrame = frame;
+            }
+        }
+
+        private interface Callback {
+            void onImageIcon(final ImageIcon imageIcon);
+        }
+
+        private interface WidthProvider {
+            int getFrameWidth();
         }
     }
 }
