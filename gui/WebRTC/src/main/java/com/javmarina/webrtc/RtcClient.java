@@ -14,6 +14,7 @@ import dev.onvoid.webrtc.RTCRtpTransceiver;
 import dev.onvoid.webrtc.RTCRtpTransceiverDirection;
 import dev.onvoid.webrtc.RTCRtpTransceiverInit;
 import dev.onvoid.webrtc.RTCSessionDescription;
+import dev.onvoid.webrtc.RTCStatsCollectorCallback;
 import dev.onvoid.webrtc.SetSessionDescriptionObserver;
 import dev.onvoid.webrtc.media.MediaStreamTrack;
 import dev.onvoid.webrtc.media.audio.AudioOptions;
@@ -161,6 +162,12 @@ public class RtcClient extends RtcPeer<ClientSideSignaling> {
     @Override
     protected void onDisconnected() {
         clientOutRunnable.stop(callback::onSessionStopped);
+    }
+
+    public void getStats(final RTCStatsCollectorCallback callback) {
+        if (peerConnection != null) {
+            peerConnection.getStats(callback);
+        }
     }
 
     private final class ClientOut extends StoppableLoop {
