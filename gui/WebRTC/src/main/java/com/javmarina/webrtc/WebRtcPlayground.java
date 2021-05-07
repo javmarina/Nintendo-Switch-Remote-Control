@@ -24,6 +24,7 @@ import java.util.List;
 public class WebRtcPlayground {
 
     public static void main(final String... args) {
+        WebRtcLoader.loadLibrary();
 
         testDevices();
 
