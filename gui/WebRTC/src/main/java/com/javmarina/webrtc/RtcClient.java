@@ -153,6 +153,7 @@ public class RtcClient extends RtcPeer<ClientSideSignaling> {
 
     @Override
     protected void onConnected() {
+        super.onConnected();
         threadOut.start();
         callback.onSessionStarted();
     }

@@ -154,6 +154,7 @@ public class RtcServer extends RtcPeer<ServerSideSignaling> {
 
     @Override
     protected void onConnected() {
+        super.onConnected();
         videoSource.start();
         audioDeviceModule.initRecording();
         callback.onSessionStarted();
