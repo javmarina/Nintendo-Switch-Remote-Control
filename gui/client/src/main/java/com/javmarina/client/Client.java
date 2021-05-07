@@ -6,10 +6,10 @@ import com.javmarina.client.services.KeyboardService;
 import com.javmarina.client.services.bot.DiscordService;
 import com.javmarina.util.GeneralUtils;
 import com.javmarina.util.StoppableLoop;
-import com.javmarina.util.network.BaseConnection;
 import com.javmarina.webrtc.FramerateEstimator;
 import com.javmarina.webrtc.RtcClient;
 import com.javmarina.webrtc.WebRtcLoader;
+import com.javmarina.webrtc.signaling.BaseSignaling;
 import com.javmarina.webrtc.signaling.ClientSideSignaling;
 import dev.onvoid.webrtc.RTCStats;
 import dev.onvoid.webrtc.RTCStatsReport;
@@ -97,7 +97,7 @@ public final class Client {
         jPanel.setLayout(null);
 
         jIp.setText(prefs.get(KEY_ADDRESS, DEFAULT_ADDRESS));
-        jPort.setText(prefs.get(KEY_PORT, String.valueOf(BaseConnection.DEFAULT_PORT)));
+        jPort.setText(prefs.get(KEY_PORT, String.valueOf(BaseSignaling.DEFAULT_PORT)));
 
         final ArrayList<ControllerService> services = getAvailableServices();
         final int totalSize = services.size();
