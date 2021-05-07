@@ -1,7 +1,7 @@
 package com.javmarina.webrtc.signaling;
 
 import com.javmarina.util.Crc;
-import com.javmarina.util.network.protocol.Command;
+import com.javmarina.util.Command;
 import com.javmarina.webrtc.JsonCodec;
 import dev.onvoid.webrtc.RTCIceCandidate;
 import dev.onvoid.webrtc.RTCSessionDescription;
