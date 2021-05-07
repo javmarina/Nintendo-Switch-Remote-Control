@@ -1,7 +1,7 @@
 package com.javmarina.webrtc;
 
 import com.javmarina.util.StoppableLoop;
-import com.javmarina.util.network.protocol.Command;
+import com.javmarina.util.Command;
 import com.javmarina.webrtc.signaling.BaseSignaling;
 import dev.onvoid.webrtc.PeerConnectionFactory;
 import dev.onvoid.webrtc.PeerConnectionObserver;

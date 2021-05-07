@@ -1,4 +1,4 @@
-package com.javmarina.util.network.protocol
+package com.javmarina.util
 
 
 data class Command(val id: Byte, val payload: ByteArray) {
