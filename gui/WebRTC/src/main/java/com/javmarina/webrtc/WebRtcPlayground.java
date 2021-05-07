@@ -84,11 +84,6 @@ public class WebRtcPlayground {
                     }
 
                     @Override
-                    public void onData(final byte[] data, final int bitsPerSample, final int sampleRate,
-                                       final int channels, final int frames) {
-                    }
-
-                    @Override
                     public void onVideoFrame(final VideoFrame frame) {
                         // TODO: show frame
                     }

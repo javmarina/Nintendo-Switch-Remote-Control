@@ -23,6 +23,7 @@ import dev.onvoid.webrtc.media.audio.AudioTrack;
 import dev.onvoid.webrtc.media.video.VideoDeviceSource;
 import dev.onvoid.webrtc.media.video.VideoSource;
 import dev.onvoid.webrtc.media.video.VideoTrack;
+import dev.onvoid.webrtc.media.video.VideoTrackSink;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -147,9 +148,6 @@ public class RtcClient extends RtcPeer<ClientSideSignaling> {
         if (track.getKind().equals(MediaStreamTrack.VIDEO_TRACK_KIND)) {
             final VideoTrack videoTrack = (VideoTrack) track;
             videoTrack.addSink(callback);
-        } else if (track.getKind().equals(MediaStreamTrack.AUDIO_TRACK_KIND)) {
-            final AudioTrack audioTrack = (AudioTrack) track;
-            audioTrack.addSink(callback);
         }
     }
 
@@ -229,7 +227,7 @@ public class RtcClient extends RtcPeer<ClientSideSignaling> {
         Packet getPacket();
     }
 
-    public interface Callback extends AudioVideoSink {
+    public interface Callback extends VideoTrackSink {
         /**
          * New RTT value computed.
          * @param milliseconds new RTT in milliseconds.
