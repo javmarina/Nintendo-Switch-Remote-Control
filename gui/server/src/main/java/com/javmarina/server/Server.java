@@ -3,9 +3,15 @@ package com.javmarina.server;
 import com.fazecast.jSerialComm.SerialPort;
 import com.javmarina.util.GeneralUtils;
 import com.javmarina.util.Packet;
-import com.javmarina.util.network.BaseConnection;
-import com.javmarina.util.network.ServerConnection;
-import com.javmarina.util.network.protocol.ServerProtocol;
+import com.javmarina.webrtc.RtcServer;
+import com.javmarina.webrtc.WebRtcLoader;
+import com.javmarina.webrtc.signaling.BaseSignaling;
+import com.javmarina.webrtc.signaling.ServerSideSignaling;
+import dev.onvoid.webrtc.media.Device;
+import dev.onvoid.webrtc.media.MediaDevices;
+import dev.onvoid.webrtc.media.audio.AudioDevice;
+import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
+import dev.onvoid.webrtc.media.video.VideoDevice;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -21,8 +27,8 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.IOException;
-import java.net.SocketException;
 import java.net.URI;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 
@@ -31,6 +37,10 @@ public final class Server {
     private static final int DEFAULT_BAUDRATE = 1000000; // 1 Mbps
     private static final String KEY_BAUDRATE = "key_baudrate";
     private static final String KEY_SERVER_PORT = "key_port";
+
+    static {
+        WebRtcLoader.loadLibrary();
+    }
 
     public static void main(final String... arg) {
         //noinspection OverlyBroadCatchBlock
@@ -56,16 +66,24 @@ public final class Server {
         final JLabel jBaudrateLabel = new JLabel("Baud rate", SwingConstants.RIGHT);
 
         // adjust size and set layout
-        jPanel.setPreferredSize(new Dimension(200, 200));
+        jPanel.setPreferredSize(new Dimension(200, 300));
         jPanel.setLayout(null);
 
-        jPort.setText(prefs.get(KEY_SERVER_PORT, String.valueOf(BaseConnection.DEFAULT_PORT)));
+        jPort.setText(prefs.get(KEY_SERVER_PORT, String.valueOf(BaseSignaling.DEFAULT_PORT)));
         jBaudrate.setText(prefs.get(KEY_BAUDRATE, String.valueOf(DEFAULT_BAUDRATE)));
 
         final SerialPort[] ports = SerialPort.getCommPorts();
         final SerialPort[] selectablePorts = new SerialPort[ports.length + 1];
         System.arraycopy(ports, 0, selectablePorts, 0, ports.length);
         final JComboBox<SerialPort> jComboBox = new JComboBox<>(selectablePorts);
+
+        final List<VideoDevice> videoDevices = MediaDevices.getVideoCaptureDevices();
+        final String[] videoDeviceNames = videoDevices.stream().map(Device::getName).toArray(String[]::new);
+        final JComboBox<String> jVideoComboBox = new JComboBox<>(videoDeviceNames);
+
+        final List<AudioDevice> audioDevices = MediaDevices.getAudioCaptureDevices();
+        final String[] audioDeviceNames = audioDevices.stream().map(Device::getName).toArray(String[]::new);
+        final JComboBox<String> jAudioComboBox = new JComboBox<>(audioDeviceNames);
 
         // add components
         jPanel.add(jButton);
@@ -74,14 +92,20 @@ public final class Server {
         jPanel.add(jBaudrate);
         jPanel.add(jBaudrateLabel);
         jPanel.add(jComboBox);
+        jPanel.add(jVideoComboBox);
+        jPanel.add(jAudioComboBox);
+
+        // TODO: option to select video capability
 
         // set component bounds (only needed by Absolute Positioning)
-        jPortLabel.setBounds (10, 10, 80, 30);
-        jPort.setBounds (110, 10, 80, 30);
+        jPortLabel.setBounds(10, 10, 80, 30);
+        jPort.setBounds(110, 10, 80, 30);
         jBaudrateLabel.setBounds(10, 60, 80, 30);
         jBaudrate.setBounds(110, 60, 80, 30);
-        jComboBox.setBounds(50, 110, 100, 30);
-        jButton.setBounds (50, 160, 100, 30);
+        jComboBox.setBounds(10, 110, 180, 30);
+        jVideoComboBox.setBounds(10, 160, 180, 30);
+        jAudioComboBox.setBounds(10, 210, 180, 30);
+        jButton.setBounds(50, 260, 100, 30);
 
         final JFrame frame = new JFrame("Server configuration");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -138,12 +162,15 @@ public final class Server {
             frame.setVisible(false);
             showConnectionFrame(
                     new SerialAdapter(serialPort, Integer.parseInt(baudrate)),
-                    Integer.parseInt(port)
+                    Integer.parseInt(port),
+                    videoDevices.get(jVideoComboBox.getSelectedIndex()),
+                    audioDevices.get(jAudioComboBox.getSelectedIndex())
             );
         });
     }
 
-    private static void showConnectionFrame(final SerialAdapter serialAdapter, final int serverPort) {
+    private static void showConnectionFrame(final SerialAdapter serialAdapter, final int serverPort,
+                                            final VideoDevice videoDevice, final AudioDevice audioDevice) {
         final ConnectionFrame frame = new ConnectionFrame("Server");
         frame.setResizable(false);
         frame.setVisible(true);
@@ -172,12 +199,18 @@ public final class Server {
         }
 
         // Wait for client command
-        final ServerConnection server;
+        final ServerSideSignaling serverSideSignaling;
         try {
-            server = BaseConnection.newServerConnection(serverPort);
-            final ServerProtocol serverProtocol = new ServerProtocol(
-                    server,
-                    new ServerProtocol.Callback() {
+            serverSideSignaling = new ServerSideSignaling(serverPort);
+
+            final AudioDeviceModule deviceModule = new AudioDeviceModule();
+            deviceModule.setRecordingDevice(audioDevice);
+
+            final RtcServer server = new RtcServer(
+                    serverSideSignaling,
+                    deviceModule,
+                    videoDevice,
+                    new RtcServer.Callback() {
                         @Override
                         public void onPacketReceived(final Packet packet) {
                             final String message = GeneralUtils.byteArrayToString(packet.getBuffer());
@@ -210,9 +243,10 @@ public final class Server {
                             frame.setVisible(false);
                             showInitialFrame();
                         }
-                    });
-            serverProtocol.waitForClientAsync();
-        } catch (final SocketException e) {
+                    }
+            );
+            new Thread(server::start).start();
+        } catch (final IOException e) {
             JOptionPane.showMessageDialog(frame, "Couldn't open socket. Select another port");
             e.printStackTrace();
             frame.setVisible(false);
