@@ -5,8 +5,12 @@ import com.javmarina.webrtc.signaling.BaseSignaling;
 import com.javmarina.webrtc.signaling.ClientSideSignaling;
 import com.javmarina.webrtc.signaling.ServerSideSignaling;
 import dev.onvoid.webrtc.media.MediaDevices;
-import dev.onvoid.webrtc.media.audio.*;
-import dev.onvoid.webrtc.media.video.*;
+import dev.onvoid.webrtc.media.audio.AudioDevice;
+import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
+import dev.onvoid.webrtc.media.video.VideoCaptureCapability;
+import dev.onvoid.webrtc.media.video.VideoDevice;
+import dev.onvoid.webrtc.media.video.VideoDeviceSource;
+import dev.onvoid.webrtc.media.video.VideoFrame;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
