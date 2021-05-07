@@ -128,6 +128,7 @@ public abstract class RtcPeer<T extends BaseSignaling> {
 
     protected void onConnected() {
         try {
+            commandProcessing.stop();
             baseSignaling.close();
         } catch (final IOException e) {
             e.printStackTrace();
