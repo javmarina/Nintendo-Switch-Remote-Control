@@ -29,6 +29,8 @@ public class RtcServer extends RtcPeer<ServerSideSignaling> {
     private final VideoDevice videoDevice;
     private VideoDeviceSource videoSource;
 
+    private final AudioDeviceModule audioDeviceModule;
+
     private final Callback callback;
 
     public RtcServer(final ServerSideSignaling serverSideSignaling,
@@ -36,6 +38,7 @@ public class RtcServer extends RtcPeer<ServerSideSignaling> {
                      final VideoDevice videoDevice,
                      final Callback callback) {
         super(serverSideSignaling, audioDeviceModule);
+        this.audioDeviceModule = audioDeviceModule;
         this.videoDevice = videoDevice;
         this.callback = callback;
         createTransceivers();
@@ -152,6 +155,7 @@ public class RtcServer extends RtcPeer<ServerSideSignaling> {
     @Override
     protected void onConnected() {
         videoSource.start();
+        audioDeviceModule.initRecording();
         callback.onSessionStarted();
     }
 
@@ -159,6 +163,7 @@ public class RtcServer extends RtcPeer<ServerSideSignaling> {
     protected void onDisconnected() {
         videoSource.stop();
         videoSource.dispose();
+        audioDeviceModule.dispose();
         callback.onSessionStopped();
     }
 
