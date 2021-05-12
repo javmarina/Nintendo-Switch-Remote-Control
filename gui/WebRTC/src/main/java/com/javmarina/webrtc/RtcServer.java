@@ -131,6 +131,7 @@ public class RtcServer extends RtcPeer {
                         } catch (final Exception e) {
                             e.printStackTrace();
                         }
+                        break;
                 }
             }
         });
