@@ -1,7 +1,8 @@
 package com.javmarina.webrtc;
 
 import com.javmarina.util.Packet;
-import com.javmarina.webrtc.signaling.ServerSideSignaling;
+import com.javmarina.webrtc.signaling.SignalingPeer;
+import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.CreateSessionDescriptionObserver;
 import dev.onvoid.webrtc.RTCAnswerOptions;
 import dev.onvoid.webrtc.RTCDataChannel;
@@ -21,17 +22,17 @@ import java.io.IOException;
 import java.util.List;
 
 
-public class RtcServer extends RtcPeer<ServerSideSignaling> {
+public class RtcServer extends RtcPeer {
 
     private final VideoDeviceSource videoSource;
     private final AudioDeviceModule audioDeviceModule;
     private final Callback callback;
 
-    public RtcServer(final ServerSideSignaling serverSideSignaling,
+    public RtcServer(final SessionId sessionId,
                      final AudioDeviceModule audioDeviceModule,
                      final VideoDeviceSource videoSource,
                      final Callback callback) {
-        super(serverSideSignaling, audioDeviceModule);
+        super(new SignalingPeer(sessionId, "register-server"), audioDeviceModule);
         this.audioDeviceModule = audioDeviceModule;
         this.videoSource = videoSource;
         this.callback = callback;
@@ -58,13 +59,9 @@ public class RtcServer extends RtcPeer<ServerSideSignaling> {
     }
 
     @Override
-    public void start() {
-        try {
-            baseSignaling.acceptConnection();
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
+    public void start() throws Exception {
         super.start();
+        signalingPeer.sendRegisterCommand();
     }
 
     @Override
@@ -80,7 +77,7 @@ public class RtcServer extends RtcPeer<ServerSideSignaling> {
                             @Override
                             public void onSuccess() {
                                 try {
-                                    baseSignaling.sendAnswer(description);
+                                    signalingPeer.sendAnswer(description);
                                 } catch (final IOException e) {
                                     e.printStackTrace();
                                 }
@@ -155,6 +152,11 @@ public class RtcServer extends RtcPeer<ServerSideSignaling> {
         callback.onSessionStopped();
     }
 
+    @Override
+    protected void onInvalidSessionId() {
+        callback.onInvalidSessionId();
+    }
+
     public interface Callback {
         /**
          * New packet received from client.
@@ -177,5 +179,10 @@ public class RtcServer extends RtcPeer<ServerSideSignaling> {
          * @param e the error.
          */
         void onError(final Exception e);
+
+        /**
+         * Called if the selected session ID is not valid (already in use).
+         */
+        void onInvalidSessionId();
     }
 }

@@ -1,9 +1,7 @@
 package com.javmarina.webrtc;
 
 import com.javmarina.util.Packet;
-import com.javmarina.webrtc.signaling.BaseSignaling;
-import com.javmarina.webrtc.signaling.ClientSideSignaling;
-import com.javmarina.webrtc.signaling.ServerSideSignaling;
+import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
 import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
@@ -12,8 +10,6 @@ import dev.onvoid.webrtc.media.video.VideoDevice;
 import dev.onvoid.webrtc.media.video.VideoDeviceSource;
 import dev.onvoid.webrtc.media.video.VideoFrame;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.List;
 
 
@@ -28,13 +24,6 @@ public class WebRtcPlayground {
 
         testDevices();
 
-        ServerSideSignaling serverSideSignaling = null;
-        try {
-            serverSideSignaling = new ServerSideSignaling(BaseSignaling.DEFAULT_PORT);
-        } catch (final IOException e) {
-            e.printStackTrace();
-            return;
-        }
         final AudioDeviceModule deviceModule = new AudioDeviceModule();
         final AudioDevice audioDevice = MediaDevices.getAudioCaptureDevices().get(0);
         deviceModule.setRecordingDevice(audioDevice);
@@ -47,7 +36,7 @@ public class WebRtcPlayground {
                 VideoCapabilitySelection.Policy.BEST_RESOLUTION
         );
         videoSource.setVideoCaptureCapability(capability);
-        final RtcServer server = new RtcServer(serverSideSignaling, deviceModule, videoSource,
+        final RtcServer server = new RtcServer(SessionId.fromString("0000"), deviceModule, videoSource,
                 new RtcServer.Callback() {
                     @Override
                     public void onPacketReceived(final Packet packet) {
@@ -64,16 +53,14 @@ public class WebRtcPlayground {
                     @Override
                     public void onError(final Exception e) {
                     }
+
+                    @Override
+                    public void onInvalidSessionId() {
+                    }
                 });
 
-        ClientSideSignaling clientSideSignaling = null;
-        try {
-            clientSideSignaling = new ClientSideSignaling("127.0.0.1", BaseSignaling.DEFAULT_PORT);
-        } catch (final UnknownHostException e) {
-            e.printStackTrace();
-        }
         final RtcClient client = new RtcClient(
-                clientSideSignaling,
+                SessionId.fromString("0000"),
                 Packet.Companion::getEMPTY_PACKET,
                 new RtcClient.Callback() {
                     @Override
@@ -91,14 +78,31 @@ public class WebRtcPlayground {
                     }
 
                     @Override
+                    public void onInvalidSessionId() {
+
+                    }
+
+                    @Override
                     public void onVideoFrame(final VideoFrame frame) {
-                        // TODO: show frame
                     }
                 }
         );
 
-        new Thread(server::start).start();
-        new Thread(client::start).start();
+        new Thread(() -> {
+            try {
+                server.start();
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        new Thread(() -> {
+            try {
+                client.start();
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     private static void testDevices() {
