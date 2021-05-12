@@ -120,7 +120,7 @@ public abstract class RtcPeer {
     }
 
     public static void log(final String error) {
-        System.out.println(error);
+        log(new Exception(error));
     }
 
     public static void log(final Exception e) {
