@@ -4,13 +4,11 @@ import com.javmarina.client.services.ControllerService;
 import com.javmarina.client.services.DefaultJamepadService;
 import com.javmarina.client.services.KeyboardService;
 import com.javmarina.client.services.bot.DiscordService;
-import com.javmarina.util.GeneralUtils;
 import com.javmarina.util.StoppableLoop;
 import com.javmarina.webrtc.FramerateEstimator;
 import com.javmarina.webrtc.RtcClient;
 import com.javmarina.webrtc.WebRtcLoader;
-import com.javmarina.webrtc.signaling.BaseSignaling;
-import com.javmarina.webrtc.signaling.ClientSideSignaling;
+import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.RTCStats;
 import dev.onvoid.webrtc.RTCStatsReport;
 import dev.onvoid.webrtc.media.FourCC;
@@ -49,21 +47,15 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
 
 public final class Client {
-
-    private static final String DEFAULT_ADDRESS = "localhost";
-    private static final String KEY_ADDRESS = "key_address";
-    private static final String KEY_PORT = "key_port";
 
     static {
         WebRtcLoader.loadLibrary();
@@ -82,22 +74,16 @@ public final class Client {
     }
 
     private static void showInitialFrame() {
-        final Preferences prefs = Preferences.userNodeForPackage(Client.class);
 
         // construct components
         final JPanel jPanel = new JPanel();
         final JButton jButton = new JButton("Save settings");
-        final JTextField jIp = new JTextField(15);
-        final JTextField jPort = new JTextField(5);
-        final JLabel jIpLabel = new JLabel("IP or domain", SwingConstants.RIGHT);
-        final JLabel jPortLabel = new JLabel("Port", SwingConstants.RIGHT);
+        final JTextField jSessionId = new JTextField(4);
+        final JLabel jSessionIdLabel = new JLabel("Session ID", SwingConstants.RIGHT);
 
         // adjust size and set layout
         jPanel.setPreferredSize(new Dimension(200, 200));
         jPanel.setLayout(null);
-
-        jIp.setText(prefs.get(KEY_ADDRESS, DEFAULT_ADDRESS));
-        jPort.setText(prefs.get(KEY_PORT, String.valueOf(BaseSignaling.DEFAULT_PORT)));
 
         final ArrayList<ControllerService> services = getAvailableServices();
         final int totalSize = services.size();
@@ -106,19 +92,15 @@ public final class Client {
 
         // add components
         jPanel.add(jButton);
-        jPanel.add(jIp);
-        jPanel.add(jIpLabel);
-        jPanel.add(jPort);
-        jPanel.add(jPortLabel);
+        jPanel.add(jSessionId);
+        jPanel.add(jSessionIdLabel);
         jPanel.add(jComboBox);
 
         // set component bounds (only needed by Absolute Positioning)
-        jIpLabel.setBounds (10, 10, 80, 30);
-        jIp.setBounds (110, 10, 80, 30);
-        jPortLabel.setBounds(10, 60, 80, 30);
-        jPort.setBounds(110, 60, 80, 30);
-        jComboBox.setBounds(10, 110, 180, 30);
-        jButton.setBounds (50, 160, 100, 30);
+        jSessionIdLabel.setBounds(10, 10, 80, 30);
+        jSessionId.setBounds(110, 10, 80, 30);
+        jComboBox.setBounds(10, 60, 180, 30);
+        jButton.setBounds(50, 110, 100, 30);
 
         final JFrame frame = new JFrame("Client configuration");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -134,24 +116,9 @@ public final class Client {
         );
 
         jButton.addActionListener(actionEvent -> {
-            final String ip = jIp.getText();
-            if (ip.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "IP cannot be empty");
-                return;
-            }
-            final String port = jPort.getText();
-            if (port.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "Port cannot be empty");
-                return;
-            }
-            if (GeneralUtils.isStringInteger(port)) {
-                final int portNumber = Integer.parseInt(port);
-                if (portNumber <= 1023 || portNumber > 65535) {
-                    JOptionPane.showMessageDialog(frame, "Port must be in the range 1024-65535");
-                    return;
-                }
-            } else {
-                JOptionPane.showMessageDialog(frame, "Port must be numeric");
+            final String sessionId = jSessionId.getText();
+            if (!SessionId.validateString(sessionId)) {
+                JOptionPane.showMessageDialog(frame, "Invalid session ID");
                 return;
             }
             if (jComboBox.getSelectedIndex() == -1) {
@@ -159,20 +126,8 @@ public final class Client {
                 return;
             }
 
-            final ClientSideSignaling clientSideSignaling;
-            try {
-                clientSideSignaling = new ClientSideSignaling(ip, Integer.parseInt(port));
-            } catch (final UnknownHostException e) {
-                JOptionPane.showMessageDialog(frame, "Invalid IP address");
-                return;
-            }
-
-            // Save preferences
-            prefs.put(KEY_ADDRESS, ip);
-            prefs.put(KEY_PORT, port);
-
             final ControllerService service = (ControllerService) jComboBox.getSelectedItem();
-            showConnectionFrame(service, clientSideSignaling);
+            showConnectionFrame(service, SessionId.fromString(sessionId));
             frame.setVisible(false);
         });
     }
@@ -221,9 +176,9 @@ public final class Client {
     }
 
     private static void showConnectionFrame(final ControllerService service,
-                                            final ClientSideSignaling clientSideSignaling) {
+                                            final SessionId sessionId) {
         final ConnectionFrame connectionFrame =
-                new ConnectionFrame("Client", service, clientSideSignaling);
+                new ConnectionFrame("Client", service, sessionId);
         connectionFrame.setExtendedState(connectionFrame.getExtendedState() | Frame.MAXIMIZED_BOTH);
         connectionFrame.setVisible(true);
     }
@@ -237,7 +192,7 @@ public final class Client {
         private final DelayGraphPanel delayGraphPanel;
 
         private ConnectionFrame(final String title, final ControllerService service,
-                                final ClientSideSignaling clientSideSignaling) {
+                                final SessionId sessionId) {
             super(title);
 
             // construct components
@@ -252,7 +207,7 @@ public final class Client {
             jButton.addActionListener(new ConnectionFrame.ButtonListener(
                     service,
                     this,
-                    clientSideSignaling
+                    sessionId
             ));
 
             // adjust size and set layout
@@ -379,7 +334,7 @@ public final class Client {
             private final RtcClient rtcClient;
 
             private ButtonListener(final ControllerService service, final ConnectionFrame frame,
-                                   final ClientSideSignaling clientSideSignaling) {
+                                   final SessionId sessionId) {
                 final FrameProcessing frameProcessing = new FrameProcessing(
                         () -> frame.getWidth() - 240,
                         imageIcon -> SwingUtilities.invokeLater(() -> {
@@ -400,7 +355,7 @@ public final class Client {
                 final Timer timer = new Timer(1000, taskPerformer);
 
                 this.rtcClient = new RtcClient(
-                        clientSideSignaling,
+                        sessionId,
                         service::getControllerStatus,
                         new RtcClient.Callback() {
                             @Override
@@ -429,6 +384,13 @@ public final class Client {
                             }
 
                             @Override
+                            public void onInvalidSessionId() {
+                                JOptionPane.showMessageDialog(frame, "Invalid session ID");
+                                frame.setVisible(false);
+                                showInitialFrame();
+                            }
+
+                            @Override
                             public void onVideoFrame(final VideoFrame videoFrame) {
                                 frameProcessing.newFrame(videoFrame);
                             }
@@ -445,7 +407,11 @@ public final class Client {
                     rtcClient.stop();
                 } else {
                     // "Start" button clicked
-                    rtcClient.start(); // onSessionStarted() will be called if successful
+                    try {
+                        rtcClient.start(); // onSessionStarted() will be called if successful
+                    } catch (final Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }

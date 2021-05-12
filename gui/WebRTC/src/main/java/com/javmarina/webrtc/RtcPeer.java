@@ -1,14 +1,11 @@
 package com.javmarina.webrtc;
 
-import com.javmarina.util.StoppableLoop;
-import com.javmarina.util.Command;
-import com.javmarina.webrtc.signaling.BaseSignaling;
+import com.javmarina.webrtc.signaling.SignalingPeer;
 import dev.onvoid.webrtc.PeerConnectionFactory;
 import dev.onvoid.webrtc.PeerConnectionObserver;
 import dev.onvoid.webrtc.RTCConfiguration;
 import dev.onvoid.webrtc.RTCDataChannel;
 import dev.onvoid.webrtc.RTCIceCandidate;
-import dev.onvoid.webrtc.RTCIceConnectionState;
 import dev.onvoid.webrtc.RTCIceServer;
 import dev.onvoid.webrtc.RTCPeerConnection;
 import dev.onvoid.webrtc.RTCPeerConnectionState;
@@ -17,14 +14,13 @@ import dev.onvoid.webrtc.RTCSessionDescription;
 import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 
-public abstract class RtcPeer<T extends BaseSignaling> {
+public abstract class RtcPeer {
 
     // Data channel
     protected static final byte COMMAND_PACKET = 0x33;
@@ -49,19 +45,16 @@ public abstract class RtcPeer<T extends BaseSignaling> {
         defaultConfiguration.iceServers = iceServers;
     }
 
-    protected final T baseSignaling;
-    private final CommandProcessing commandProcessing = new CommandProcessing();
-    private final Thread commandThread;
+    protected final SignalingPeer signalingPeer;
     protected final PeerConnectionFactory factory;
     protected RTCPeerConnection peerConnection;
 
-    public RtcPeer(final T baseSignaling) {
-        this(baseSignaling, null);
+    public RtcPeer(final SignalingPeer signalingPeer) {
+        this(signalingPeer, null);
     }
 
-    public RtcPeer(final T baseSignaling, final AudioDeviceModule audioDeviceModule) {
-        this.baseSignaling = baseSignaling;
-        commandThread = new Thread(commandProcessing);
+    public RtcPeer(final SignalingPeer signalingPeer, final AudioDeviceModule audioDeviceModule) {
+        this.signalingPeer = signalingPeer;
 
         factory = audioDeviceModule != null ?
                 new PeerConnectionFactory(audioDeviceModule) : new PeerConnectionFactory();
@@ -69,7 +62,7 @@ public abstract class RtcPeer<T extends BaseSignaling> {
             @Override
             public void onIceCandidate(final RTCIceCandidate candidate) {
                 try {
-                    baseSignaling.sendIceCandidate(candidate);
+                    signalingPeer.sendIceCandidate(candidate);
                 } catch (final IOException e) {
                     e.printStackTrace();
                 }
@@ -82,20 +75,12 @@ public abstract class RtcPeer<T extends BaseSignaling> {
 
             @Override
             public void onConnectionChange(final RTCPeerConnectionState state) {
-                System.out.println("[onConnectionChange] " + state);
-                switch (state) {
-                    case CONNECTED:
-                        onConnected();
-                        break;
-                    case DISCONNECTED:
-                        onDisconnected();
-                        break;
+                if (state == RTCPeerConnectionState.CONNECTED) {
+                    onConnected();
                 }
-            }
-
-            @Override
-            public void onIceConnectionChange(final RTCIceConnectionState state) {
-                System.out.println("[onIceConnectionChange] " + state);
+                if (state == RTCPeerConnectionState.CLOSED || state == RTCPeerConnectionState.DISCONNECTED) {
+                    onDisconnected();
+                }
             }
 
             @Override
@@ -105,12 +90,33 @@ public abstract class RtcPeer<T extends BaseSignaling> {
         });
     }
 
-    public void start() {
-        commandThread.start();
+    public void start() throws Exception {
+        signalingPeer.start();
+        signalingPeer.connect(new SignalingPeer.Callback() {
+            @Override
+            public void onOfferReceived(final RTCSessionDescription description) {
+                RtcPeer.this.onOfferReceived(description);
+            }
+
+            @Override
+            public void onAnswerReceived(final RTCSessionDescription description) {
+                RtcPeer.this.onAnswerReceived(description);
+            }
+
+            @Override
+            public void onCandidateReceived(final RTCIceCandidate candidate) {
+                peerConnection.addIceCandidate(candidate);
+            }
+
+            @Override
+            public void onInvalidRegister() {
+                RtcPeer.this.onInvalidSessionId();
+            }
+        });
     }
 
     public void stop() {
-        commandProcessing.stop();
+        peerConnection.close();
     }
 
     public static void log(final String error) {
@@ -127,52 +133,9 @@ public abstract class RtcPeer<T extends BaseSignaling> {
     protected void onTrack(final RTCRtpTransceiver transceiver) {}
 
     protected void onConnected() {
-        try {
-            commandProcessing.stop();
-            baseSignaling.close();
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
+        signalingPeer.close();
     }
 
     protected abstract void onDisconnected();
-
-    protected void onCandidateReceived(final RTCIceCandidate candidate) {
-        peerConnection.addIceCandidate(candidate);
-    }
-
-    private final class CommandProcessing extends StoppableLoop {
-
-        @Override
-        public void loop() {
-            try {
-                final Command command = baseSignaling.receiveCommand();
-                if (command == null) {
-                    return;
-                }
-                switch (command.getId()) {
-                    case BaseSignaling.OFFER_COMMAND:
-                        final RTCSessionDescription description =
-                                (RTCSessionDescription) JsonCodec.decode(new String(command.getPayload(), StandardCharsets.UTF_8));
-                        onOfferReceived(description);
-                        break;
-                    case BaseSignaling.ANSWER_COMMAND:
-                        final RTCSessionDescription answerDescription =
-                                (RTCSessionDescription) JsonCodec.decode(new String(command.getPayload(), StandardCharsets.UTF_8));
-                        onAnswerReceived(answerDescription);
-                        break;
-                    case BaseSignaling.NEW_ICE_CANDIDATE_COMMAND:
-                        final RTCIceCandidate candidate =
-                                (RTCIceCandidate) JsonCodec.decode(new String(command.getPayload(), StandardCharsets.UTF_8));
-                        onCandidateReceived(candidate);
-                        break;
-                    default:
-                        throw new RuntimeException("Unknown ID: " + command.getId());
-                }
-            } catch (final IOException e) {
-                // Not a fatal error
-                e.printStackTrace();
-            }
-        }
-    }
+    protected abstract void onInvalidSessionId();
 }

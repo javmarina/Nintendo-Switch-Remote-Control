@@ -2,7 +2,8 @@ package com.javmarina.webrtc;
 
 import com.javmarina.util.Packet;
 import com.javmarina.util.StoppableLoop;
-import com.javmarina.webrtc.signaling.ClientSideSignaling;
+import com.javmarina.webrtc.signaling.SignalingPeer;
+import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.CreateSessionDescriptionObserver;
 import dev.onvoid.webrtc.RTCDataChannel;
 import dev.onvoid.webrtc.RTCDataChannelBuffer;
@@ -29,7 +30,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 
-public class RtcClient extends RtcPeer<ClientSideSignaling> {
+public class RtcClient extends RtcPeer {
 
     private final PacketProvider packetProvider;
     private final RTCDataChannel dataChannel;
@@ -37,10 +38,10 @@ public class RtcClient extends RtcPeer<ClientSideSignaling> {
     private final Thread threadOut;
     private final Callback callback;
 
-    public RtcClient(final ClientSideSignaling clientSideSignaling,
+    public RtcClient(final SessionId sessionId,
                      final PacketProvider packetProvider,
                      final Callback callback) {
-        super(clientSideSignaling);
+        super(new SignalingPeer(sessionId, "register-client"));
         this.packetProvider = packetProvider;
         this.callback = callback;
 
@@ -90,10 +91,10 @@ public class RtcClient extends RtcPeer<ClientSideSignaling> {
     }
 
     @Override
-    public void start() {
+    public void start() throws Exception {
         try {
-            baseSignaling.requestConnection();
             super.start();
+            signalingPeer.sendRegisterCommand();
 
             // Create offer
             final RTCOfferOptions offerOptions = new RTCOfferOptions();
@@ -104,7 +105,7 @@ public class RtcClient extends RtcPeer<ClientSideSignaling> {
                         @Override
                         public void onSuccess() {
                             try {
-                                baseSignaling.sendOffer(description);
+                                signalingPeer.sendOffer(description);
                             } catch (final IOException e) {
                                 e.printStackTrace();
                             }
@@ -161,6 +162,11 @@ public class RtcClient extends RtcPeer<ClientSideSignaling> {
     @Override
     protected void onDisconnected() {
         clientOutRunnable.stop(callback::onSessionStopped);
+    }
+
+    @Override
+    protected void onInvalidSessionId() {
+        callback.onInvalidSessionId();
     }
 
     public void getStats(final RTCStatsCollectorCallback callback) {
@@ -244,5 +250,10 @@ public class RtcClient extends RtcPeer<ClientSideSignaling> {
          * Connection with server successfully closed.
          */
         void onSessionStopped();
+
+        /**
+         * Called if the selected session ID is not valid (already in use).
+         */
+        void onInvalidSessionId();
     }
 }

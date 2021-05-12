@@ -5,8 +5,7 @@ import com.javmarina.util.GeneralUtils;
 import com.javmarina.util.Packet;
 import com.javmarina.webrtc.RtcServer;
 import com.javmarina.webrtc.WebRtcLoader;
-import com.javmarina.webrtc.signaling.BaseSignaling;
-import com.javmarina.webrtc.signaling.ServerSideSignaling;
+import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.PeerConnectionFactory;
 import dev.onvoid.webrtc.media.Device;
 import dev.onvoid.webrtc.media.FourCC;
@@ -58,7 +57,6 @@ public final class Server {
 
     private static final int DEFAULT_BAUDRATE = 1000000; // 1 Mbps
     private static final String KEY_BAUDRATE = "key_baudrate";
-    private static final String KEY_SERVER_PORT = "key_port";
 
     static {
         WebRtcLoader.loadLibrary();
@@ -82,9 +80,9 @@ public final class Server {
         // construct components
         final JPanel jPanel = new JPanel();
         final JButton jButton = new JButton("Open server");
-        final JTextField jPort = new JTextField(15);
+        final JTextField jSessionId = new JTextField(4);
         final JTextField jBaudrate = new JTextField(5);
-        final JLabel jPortLabel = new JLabel("Port", SwingConstants.RIGHT);
+        final JLabel jSessionIdLabel = new JLabel("Session ID", SwingConstants.RIGHT);
         final JLabel jBaudrateLabel = new JLabel("Baud rate", SwingConstants.RIGHT);
         final JLabel jImage = new JLabel();
 
@@ -92,7 +90,9 @@ public final class Server {
         jPanel.setPreferredSize(new Dimension(200+20+320, 360));
         jPanel.setLayout(null);
 
-        jPort.setText(prefs.get(KEY_SERVER_PORT, String.valueOf(BaseSignaling.DEFAULT_PORT)));
+        final SessionId sessionId = new SessionId();
+        jSessionId.setText(sessionId.toString());
+        jSessionId.setEditable(false);
         jBaudrate.setText(prefs.get(KEY_BAUDRATE, String.valueOf(DEFAULT_BAUDRATE)));
 
         final SerialPort[] ports = SerialPort.getCommPorts();
@@ -195,8 +195,8 @@ public final class Server {
 
         // add components
         jPanel.add(jButton);
-        jPanel.add(jPort);
-        jPanel.add(jPortLabel);
+        jPanel.add(jSessionId);
+        jPanel.add(jSessionIdLabel);
         jPanel.add(jBaudrate);
         jPanel.add(jBaudrateLabel);
         jPanel.add(jComboBox);
@@ -206,8 +206,8 @@ public final class Server {
         jPanel.add(jImage);
 
         // set component bounds (only needed by Absolute Positioning)
-        jPortLabel.setBounds(10, 10, 80, 30);
-        jPort.setBounds(110, 10, 80, 30);
+        jSessionIdLabel.setBounds(10, 10, 80, 30);
+        jSessionId.setBounds(110, 10, 80, 30);
         jBaudrateLabel.setBounds(10, 60, 80, 30);
         jBaudrate.setBounds(110, 60, 80, 30);
         jComboBox.setBounds(10, 110, 180, 30);
@@ -231,21 +231,6 @@ public final class Server {
         );
 
         jButton.addActionListener(actionEvent -> {
-            final String port = jPort.getText();
-            if (port.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "Port cannot be empty");
-                return;
-            }
-            if (GeneralUtils.isStringInteger(port)) {
-                final int portNumber = Integer.parseInt(port);
-                if (portNumber <= 1023 || portNumber > 65535) {
-                    JOptionPane.showMessageDialog(frame, "Port must be in the range 1024-65535");
-                    return;
-                }
-            } else {
-                JOptionPane.showMessageDialog(frame, "Port must be numeric");
-                return;
-            }
             final String baudrate = jBaudrate.getText();
             if (baudrate.isEmpty()) {
                 JOptionPane.showMessageDialog(frame, "Baud rate cannot be empty");
@@ -265,7 +250,6 @@ public final class Server {
                 JOptionPane.showMessageDialog(frame, "WARNING: No serial port selected");
             }
             // Save preferences
-            prefs.put(KEY_SERVER_PORT, port);
             prefs.put(KEY_BAUDRATE, baudrate);
 
             final SerialPort serialPort = (SerialPort) jComboBox.getSelectedItem();
@@ -273,7 +257,7 @@ public final class Server {
             videoDeviceSource.stop();
             showConnectionFrame(
                     new SerialAdapter(serialPort, Integer.parseInt(baudrate)),
-                    Integer.parseInt(port),
+                    sessionId,
                     videoDeviceSource,
                     audioDevices.get(jAudioComboBox.getSelectedIndex())
             );
@@ -293,7 +277,7 @@ public final class Server {
         jVideoCapabilityComboBox.setSelectedIndex(0);
     }
 
-    private static void showConnectionFrame(final SerialAdapter serialAdapter, final int serverPort,
+    private static void showConnectionFrame(final SerialAdapter serialAdapter, final SessionId sessionId,
                                             final VideoDeviceSource videoDeviceSource,
                                             final AudioDevice audioDevice) {
         final ConnectionFrame frame = new ConnectionFrame("Server");
@@ -323,60 +307,65 @@ public final class Server {
             runSerialPortTests(serialAdapter, frame);
         }
 
-        // Wait for client command
-        final ServerSideSignaling serverSideSignaling;
-        try {
-            serverSideSignaling = new ServerSideSignaling(serverPort);
+        final AudioDeviceModule deviceModule = new AudioDeviceModule();
+        deviceModule.setRecordingDevice(audioDevice);
 
-            final AudioDeviceModule deviceModule = new AudioDeviceModule();
-            deviceModule.setRecordingDevice(audioDevice);
-
-            final RtcServer server = new RtcServer(
-                    serverSideSignaling,
-                    deviceModule,
-                    videoDeviceSource,
-                    new RtcServer.Callback() {
-                        @Override
-                        public void onPacketReceived(final Packet packet) {
-                            final String message = GeneralUtils.byteArrayToString(packet.getBuffer());
-                            frame.setConnectionInfo("From client: " + message);
-                            // Update UI
-                            frame.updateControllerUi(packet);
-                            // Send to MCU
-                            if (!frame.connectionLostButton.getModel().isPressed()) {
-                                final boolean result = serialAdapter.sendPacket(packet);
-                                frame.setSerialInfo(result ? "Synced!" : "Packet error");
-                            }
-                        }
-
-                        @Override
-                        public void onSessionStarted() {
-                        }
-
-                        @Override
-                        public void onSessionStopped() {
-                            System.out.println("Session stopped");
-                            serialAdapter.closePort();
-                            frame.setVisible(false);
-                            showInitialFrame();
-                        }
-
-                        @Override
-                        public void onError(final Exception e) {
-                            JOptionPane.showMessageDialog(frame, e.getMessage());
-                            serialAdapter.closePort();
-                            frame.setVisible(false);
-                            showInitialFrame();
+        final RtcServer server = new RtcServer(
+                sessionId,
+                deviceModule,
+                videoDeviceSource,
+                new RtcServer.Callback() {
+                    @Override
+                    public void onPacketReceived(final Packet packet) {
+                        final String message = GeneralUtils.byteArrayToString(packet.getBuffer());
+                        frame.setConnectionInfo("From client: " + message);
+                        // Update UI
+                        frame.updateControllerUi(packet);
+                        // Send to MCU
+                        if (!frame.connectionLostButton.getModel().isPressed()) {
+                            final boolean result = serialAdapter.sendPacket(packet);
+                            frame.setSerialInfo(result ? "Synced!" : "Packet error");
                         }
                     }
-            );
-            new Thread(server::start).start();
-        } catch (final IOException e) {
-            JOptionPane.showMessageDialog(frame, "Couldn't open socket. Select another port");
-            e.printStackTrace();
-            frame.setVisible(false);
-            showInitialFrame();
-        }
+
+                    @Override
+                    public void onSessionStarted() {
+                    }
+
+                    @Override
+                    public void onSessionStopped() {
+                        System.out.println("Session stopped");
+                        serialAdapter.closePort();
+                        frame.setVisible(false);
+                        showInitialFrame();
+                    }
+
+                    @Override
+                    public void onError(final Exception e) {
+                        JOptionPane.showMessageDialog(frame, e.getMessage());
+                        serialAdapter.closePort();
+                        frame.setVisible(false);
+                        showInitialFrame();
+                    }
+
+                    @Override
+                    public void onInvalidSessionId() {
+                        JOptionPane.showMessageDialog(frame, "Invalid session ID");
+                        frame.setVisible(false);
+                        showInitialFrame();
+                    }
+                }
+        );
+        new Thread(() -> {
+            try {
+                server.start();
+            } catch (final Exception e) {
+                JOptionPane.showMessageDialog(frame, "An error occurred, please try again.");
+                e.printStackTrace();
+                frame.setVisible(false);
+                showInitialFrame();
+            }
+        }).start();
     }
 
     private static void runSerialPortTests(final SerialAdapter serialAdapter, final ConnectionFrame frame) {
