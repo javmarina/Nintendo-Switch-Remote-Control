@@ -10,13 +10,10 @@ import dev.onvoid.webrtc.RTCDataChannelObserver;
 import dev.onvoid.webrtc.RTCRtpSender;
 import dev.onvoid.webrtc.RTCSessionDescription;
 import dev.onvoid.webrtc.SetSessionDescriptionObserver;
-import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 import dev.onvoid.webrtc.media.audio.AudioOptions;
 import dev.onvoid.webrtc.media.audio.AudioSource;
 import dev.onvoid.webrtc.media.audio.AudioTrack;
-import dev.onvoid.webrtc.media.video.VideoCaptureCapability;
-import dev.onvoid.webrtc.media.video.VideoDevice;
 import dev.onvoid.webrtc.media.video.VideoDeviceSource;
 import dev.onvoid.webrtc.media.video.VideoTrack;
 
@@ -26,20 +23,17 @@ import java.util.List;
 
 public class RtcServer extends RtcPeer<ServerSideSignaling> {
 
-    private final VideoDevice videoDevice;
-    private VideoDeviceSource videoSource;
-
+    private final VideoDeviceSource videoSource;
     private final AudioDeviceModule audioDeviceModule;
-
     private final Callback callback;
 
     public RtcServer(final ServerSideSignaling serverSideSignaling,
                      final AudioDeviceModule audioDeviceModule,
-                     final VideoDevice videoDevice,
+                     final VideoDeviceSource videoSource,
                      final Callback callback) {
         super(serverSideSignaling, audioDeviceModule);
         this.audioDeviceModule = audioDeviceModule;
-        this.videoDevice = videoDevice;
+        this.videoSource = videoSource;
         this.callback = callback;
         createTransceivers();
     }
@@ -54,13 +48,6 @@ public class RtcServer extends RtcPeer<ServerSideSignaling> {
         final RTCRtpSender audioSender = peerConnection.addTrack(audioTrack, List.of("stream"));
 
         // Add video
-        videoSource = new VideoDeviceSource();
-        videoSource.setVideoCaptureDevice(videoDevice);
-        final VideoCaptureCapability capability = VideoCapabilitySelection.selectCapability(
-                MediaDevices.getVideoCaptureCapabilities(videoDevice),
-                VideoCapabilitySelection.Policy.BEST_RESOLUTION
-        );
-        videoSource.setVideoCaptureCapability(capability);
         final VideoTrack videoTrack = factory.createVideoTrack("videoTrack", videoSource);
         final RTCRtpSender videoSender = peerConnection.addTrack(videoTrack, List.of("stream"));
 

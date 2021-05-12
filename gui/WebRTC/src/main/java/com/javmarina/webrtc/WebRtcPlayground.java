@@ -40,7 +40,14 @@ public class WebRtcPlayground {
         deviceModule.setRecordingDevice(audioDevice);
         final List<VideoDevice> videoDevices = MediaDevices.getVideoCaptureDevices();
         final VideoDevice videoDevice = videoDevices.get(0);
-        final RtcServer server = new RtcServer(serverSideSignaling, deviceModule, videoDevice,
+        final VideoDeviceSource videoSource = new VideoDeviceSource();
+        videoSource.setVideoCaptureDevice(videoDevice);
+        final VideoCaptureCapability capability = VideoCapabilitySelection.selectCapability(
+                MediaDevices.getVideoCaptureCapabilities(videoDevice),
+                VideoCapabilitySelection.Policy.BEST_RESOLUTION
+        );
+        videoSource.setVideoCaptureCapability(capability);
+        final RtcServer server = new RtcServer(serverSideSignaling, deviceModule, videoSource,
                 new RtcServer.Callback() {
                     @Override
                     public void onPacketReceived(final Packet packet) {
