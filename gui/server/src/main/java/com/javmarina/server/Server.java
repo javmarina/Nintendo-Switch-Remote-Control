@@ -7,12 +7,21 @@ import com.javmarina.webrtc.RtcServer;
 import com.javmarina.webrtc.WebRtcLoader;
 import com.javmarina.webrtc.signaling.BaseSignaling;
 import com.javmarina.webrtc.signaling.ServerSideSignaling;
+import dev.onvoid.webrtc.PeerConnectionFactory;
 import dev.onvoid.webrtc.media.Device;
+import dev.onvoid.webrtc.media.FourCC;
 import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
 import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
+import dev.onvoid.webrtc.media.video.VideoBufferConverter;
+import dev.onvoid.webrtc.media.video.VideoCaptureCapability;
 import dev.onvoid.webrtc.media.video.VideoDevice;
+import dev.onvoid.webrtc.media.video.VideoDeviceSource;
+import dev.onvoid.webrtc.media.video.VideoFrameBuffer;
+import dev.onvoid.webrtc.media.video.VideoTrack;
 
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -21,13 +30,26 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
+import java.awt.event.ItemEvent;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.Raster;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.Comparator;
 import java.util.List;
 import java.util.prefs.Preferences;
 
@@ -64,9 +86,10 @@ public final class Server {
         final JTextField jBaudrate = new JTextField(5);
         final JLabel jPortLabel = new JLabel("Port", SwingConstants.RIGHT);
         final JLabel jBaudrateLabel = new JLabel("Baud rate", SwingConstants.RIGHT);
+        final JLabel jImage = new JLabel();
 
         // adjust size and set layout
-        jPanel.setPreferredSize(new Dimension(200, 300));
+        jPanel.setPreferredSize(new Dimension(200+20+320, 360));
         jPanel.setLayout(null);
 
         jPort.setText(prefs.get(KEY_SERVER_PORT, String.valueOf(BaseSignaling.DEFAULT_PORT)));
@@ -77,9 +100,94 @@ public final class Server {
         System.arraycopy(ports, 0, selectablePorts, 0, ports.length);
         final JComboBox<SerialPort> jComboBox = new JComboBox<>(selectablePorts);
 
+        final JComboBox<String> jVideoCapabilityComboBox = new JComboBox<>(new String[0]);
+
+        final PeerConnectionFactory factory = new PeerConnectionFactory();
+        final VideoDevice[] currentVideoDevice = {null};
+        final VideoDeviceSource videoDeviceSource = new VideoDeviceSource();
+        final VideoCaptureCapability[] currentVideoCapability = {null};
+        final VideoTrack[] videoTrack = {null};
+
         final List<VideoDevice> videoDevices = MediaDevices.getVideoCaptureDevices();
         final String[] videoDeviceNames = videoDevices.stream().map(Device::getName).toArray(String[]::new);
         final JComboBox<String> jVideoComboBox = new JComboBox<>(videoDeviceNames);
+        jVideoComboBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                currentVideoDevice[0] = videoDevices.get(jVideoComboBox.getSelectedIndex());
+                videoDeviceSource.setVideoCaptureDevice(currentVideoDevice[0]);
+                updateVideoCapabilityComboBox(currentVideoDevice[0], jVideoCapabilityComboBox);
+            }
+        });
+
+        jVideoCapabilityComboBox.addItemListener(e -> {
+            final String capabilityName = (String) jVideoCapabilityComboBox.getSelectedItem();
+            if (capabilityName == null) {
+                return;
+            }
+            currentVideoCapability[0] = VideoCapabilityUtils.fromString(capabilityName);
+
+            if (videoTrack[0] != null) {
+                videoTrack[0].dispose();
+            }
+            videoDeviceSource.stop();
+            videoDeviceSource.setVideoCaptureDevice(currentVideoDevice[0]);
+            videoDeviceSource.setVideoCaptureCapability(currentVideoCapability[0]);
+
+            videoTrack[0] = factory.createVideoTrack("videoTrack", videoDeviceSource);
+            videoTrack[0].addSink(frame -> {
+                frame.retain();
+                final VideoFrameBuffer buffer = frame.buffer;
+                final int width = buffer.getWidth();
+                final int height = buffer.getHeight();
+
+                final ByteBuffer byteBuffer = ByteBuffer.allocate(width * height * 4);
+
+                try {
+                    VideoBufferConverter.convertFromI420(buffer, byteBuffer, FourCC.ARGB);
+                } catch (final Exception e1) {
+                    e1.printStackTrace();
+                }
+
+                final byte[] bytes = byteBuffer.array();
+                final DataBufferByte dataBuffer = new DataBufferByte(bytes, bytes.length);
+                final ColorModel cm = new ComponentColorModel(
+                        ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB),
+                        new int[]{8, 8, 8, 8},
+                        true,
+                        false,
+                        Transparency.TRANSLUCENT,
+                        DataBuffer.TYPE_BYTE
+                );
+                final BufferedImage image = new BufferedImage(
+                        cm,
+                        Raster.createInterleavedRaster(
+                                dataBuffer,
+                                width,
+                                height,
+                                width * 4,
+                                4,
+                                new int[]{2, 1, 0, 3},
+                                null),
+                        false,
+                        null
+                );
+
+                final int targetWidth = 320;
+                final int targetHeight = 240;
+
+                final ImageIcon imageIcon = new ImageIcon(
+                        image.getScaledInstance(targetWidth, targetHeight, Image.SCALE_DEFAULT)
+                );
+                SwingUtilities.invokeLater(() -> jImage.setIcon(imageIcon));
+
+                frame.release();
+            });
+            videoDeviceSource.start();
+        });
+
+        currentVideoDevice[0] = videoDevices.get(jVideoComboBox.getSelectedIndex());
+        videoDeviceSource.setVideoCaptureDevice(currentVideoDevice[0]);
+        updateVideoCapabilityComboBox(currentVideoDevice[0], jVideoCapabilityComboBox);
 
         final List<AudioDevice> audioDevices = MediaDevices.getAudioCaptureDevices();
         final String[] audioDeviceNames = audioDevices.stream().map(Device::getName).toArray(String[]::new);
@@ -93,9 +201,9 @@ public final class Server {
         jPanel.add(jBaudrateLabel);
         jPanel.add(jComboBox);
         jPanel.add(jVideoComboBox);
+        jPanel.add(jVideoCapabilityComboBox);
         jPanel.add(jAudioComboBox);
-
-        // TODO: option to select video capability
+        jPanel.add(jImage);
 
         // set component bounds (only needed by Absolute Positioning)
         jPortLabel.setBounds(10, 10, 80, 30);
@@ -104,8 +212,10 @@ public final class Server {
         jBaudrate.setBounds(110, 60, 80, 30);
         jComboBox.setBounds(10, 110, 180, 30);
         jVideoComboBox.setBounds(10, 160, 180, 30);
-        jAudioComboBox.setBounds(10, 210, 180, 30);
-        jButton.setBounds(50, 260, 100, 30);
+        jVideoCapabilityComboBox.setBounds(10, 210, 180, 30);
+        jAudioComboBox.setBounds(10, 260, 180, 30);
+        jButton.setBounds(50, 310, 100, 30);
+        jImage.setBounds(210, 10, 320, 240);
 
         final JFrame frame = new JFrame("Server configuration");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -160,17 +270,32 @@ public final class Server {
 
             final SerialPort serialPort = (SerialPort) jComboBox.getSelectedItem();
             frame.setVisible(false);
+            videoDeviceSource.stop();
             showConnectionFrame(
                     new SerialAdapter(serialPort, Integer.parseInt(baudrate)),
                     Integer.parseInt(port),
-                    videoDevices.get(jVideoComboBox.getSelectedIndex()),
+                    videoDeviceSource,
                     audioDevices.get(jAudioComboBox.getSelectedIndex())
             );
         });
     }
 
+    private static void updateVideoCapabilityComboBox(final VideoDevice videoDevice,
+                                                      final JComboBox<String> jVideoCapabilityComboBox) {
+        final String[] capabilityNames = MediaDevices.getVideoCaptureCapabilities(videoDevice).stream()
+                .distinct()
+                .sorted(VideoCapabilityUtils.getComparator())
+                .map(VideoCapabilityUtils::toString)
+                .toArray(String[]::new);
+        final DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(capabilityNames);
+        jVideoCapabilityComboBox.setModel(model);
+        jVideoCapabilityComboBox.setSelectedItem(null);
+        jVideoCapabilityComboBox.setSelectedIndex(0);
+    }
+
     private static void showConnectionFrame(final SerialAdapter serialAdapter, final int serverPort,
-                                            final VideoDevice videoDevice, final AudioDevice audioDevice) {
+                                            final VideoDeviceSource videoDeviceSource,
+                                            final AudioDevice audioDevice) {
         final ConnectionFrame frame = new ConnectionFrame("Server");
         frame.setResizable(false);
         frame.setVisible(true);
@@ -209,7 +334,7 @@ public final class Server {
             final RtcServer server = new RtcServer(
                     serverSideSignaling,
                     deviceModule,
-                    videoDevice,
+                    videoDeviceSource,
                     new RtcServer.Callback() {
                         @Override
                         public void onPacketReceived(final Packet packet) {
@@ -342,6 +467,40 @@ public final class Server {
 
         private void updateControllerUi(final Packet packet) {
             controllerPanel.updateUi(packet);
+        }
+    }
+
+    private static final class VideoCapabilityUtils {
+
+        private static final String FORMAT = "%dx%d@%d";
+
+        private static final Comparator<VideoCaptureCapability> comparator = (o1, o2) -> {
+            final int compare1 = Integer.compare(
+                    o1.width*o1.height,
+                    o2.width*o2.height
+            );
+            if (compare1 == 0) {
+                return Integer.compare(o1.frameRate, o2.frameRate);
+            } else {
+                return compare1;
+            }
+        };
+
+        private static String toString(final VideoCaptureCapability capability) {
+            return String.format(FORMAT, capability.width, capability.height, capability.frameRate);
+        }
+
+        private static VideoCaptureCapability fromString(final String name) {
+            final String[] parts = name.split("@");
+            final String[] parts2 = parts[0].split("x");
+            final int width = Integer.parseInt(parts2[0]);
+            final int height = Integer.parseInt(parts2[1]);
+            final int framerate = Integer.parseInt(parts[1]);
+            return new VideoCaptureCapability(width, height, framerate);
+        }
+
+        private static Comparator<VideoCaptureCapability> getComparator() {
+            return comparator;
         }
     }
 }
