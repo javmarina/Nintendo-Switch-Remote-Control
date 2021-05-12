@@ -79,27 +79,27 @@ public class RtcServer extends RtcPeer {
                                 try {
                                     signalingPeer.sendAnswer(description);
                                 } catch (final IOException e) {
-                                    e.printStackTrace();
+                                    callback.onError(e);
                                 }
                             }
 
                             @Override
                             public void onFailure(final String error) {
-                                log(error);
+                                callback.onError(new Exception(error));
                             }
                         });
                     }
 
                     @Override
                     public void onFailure(final String error) {
-                        log(error);
+                        callback.onError(new Exception(error));
                     }
                 });
             }
 
             @Override
             public void onFailure(final String error) {
-                log(error);
+                callback.onError(new Exception(error));
             }
         });
     }
