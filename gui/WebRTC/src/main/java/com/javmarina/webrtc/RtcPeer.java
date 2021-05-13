@@ -52,17 +52,14 @@ public abstract class RtcPeer {
 
     protected final SignalingPeer signalingPeer;
     protected final PeerConnectionFactory factory;
+    protected final AudioDeviceModule audioDeviceModule;
     protected RTCPeerConnection peerConnection;
-
-    public RtcPeer(final SignalingPeer signalingPeer) {
-        this(signalingPeer, null);
-    }
 
     public RtcPeer(final SignalingPeer signalingPeer, final AudioDeviceModule audioDeviceModule) {
         this.signalingPeer = signalingPeer;
+        this.audioDeviceModule = audioDeviceModule;
 
-        factory = audioDeviceModule != null ?
-                new PeerConnectionFactory(audioDeviceModule) : new PeerConnectionFactory();
+        factory = new PeerConnectionFactory(this.audioDeviceModule);
         peerConnection = factory.createPeerConnection(defaultConfiguration, new PeerConnectionObserver() {
             @Override
             public void onIceCandidate(final RTCIceCandidate candidate) {
