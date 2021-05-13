@@ -280,7 +280,9 @@ public final class Server {
     private static void showConnectionFrame(final SerialAdapter serialAdapter, final SessionId sessionId,
                                             final VideoDeviceSource videoDeviceSource,
                                             final AudioDevice audioDevice) {
-        final ConnectionFrame frame = new ConnectionFrame("Server");
+        final ConnectionFrame frame = new ConnectionFrame(
+                String.format("Server (session ID: %s)", sessionId.toString())
+        );
         frame.setResizable(false);
         frame.setVisible(true);
 
