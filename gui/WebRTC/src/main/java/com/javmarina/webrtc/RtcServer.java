@@ -9,6 +9,8 @@ import dev.onvoid.webrtc.RTCDataChannel;
 import dev.onvoid.webrtc.RTCDataChannelBuffer;
 import dev.onvoid.webrtc.RTCDataChannelObserver;
 import dev.onvoid.webrtc.RTCRtpSender;
+import dev.onvoid.webrtc.RTCRtpTransceiver;
+import dev.onvoid.webrtc.RTCRtpTransceiverDirection;
 import dev.onvoid.webrtc.RTCSessionDescription;
 import dev.onvoid.webrtc.SetSessionDescriptionObserver;
 import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
@@ -52,10 +54,10 @@ public class RtcServer extends RtcPeer {
         final VideoTrack videoTrack = factory.createVideoTrack(VIDEO_TRACK_NAME, videoSource);
         final RTCRtpSender videoSender = peerConnection.addTrack(videoTrack, List.of(STREAM_ID));
 
-        // TODO: we can block receiving media, even though client won't offer it
-        /* for (final RTCRtpTransceiver transceiver : peerConnection.getTransceivers()) {
+        // Block incoming media streams
+        for (final RTCRtpTransceiver transceiver : peerConnection.getTransceivers()) {
             transceiver.setDirection(RTCRtpTransceiverDirection.SEND_ONLY);
-        }*/
+        }
     }
 
     @Override
