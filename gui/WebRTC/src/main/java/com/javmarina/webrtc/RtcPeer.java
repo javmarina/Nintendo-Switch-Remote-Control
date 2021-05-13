@@ -26,6 +26,11 @@ public abstract class RtcPeer {
     protected static final byte COMMAND_PACKET = 0x33;
     protected static final byte COMMAND_PING = 0x44;
 
+    protected static final String AUDIO_TRACK_NAME = "audioTrack";
+    protected static final String VIDEO_TRACK_NAME = "videoTrack";
+    protected static final String DATA_CHANNEL_NAME = "dataChannel";
+    protected static final String STREAM_ID = "stream";
+
     private static final RTCConfiguration defaultConfiguration;
     static {
         final String[] urls = {

@@ -47,7 +47,7 @@ public class RtcClient extends RtcPeer {
 
         final RTCDataChannelInit init = new RTCDataChannelInit();
         init.priority = RTCPriorityType.HIGH;
-        dataChannel = peerConnection.createDataChannel("dataChannel", init);
+        dataChannel = peerConnection.createDataChannel(DATA_CHANNEL_NAME, init);
         dataChannel.registerObserver(new RTCDataChannelObserver() {
             @Override
             public void onBufferedAmountChange(final long previousAmount) {
@@ -76,17 +76,17 @@ public class RtcClient extends RtcPeer {
 
     private void createTransceivers() {
         final AudioSource audioSource = factory.createAudioSource(new AudioOptions());
-        final AudioTrack audioTrack = factory.createAudioTrack("audioTrack", audioSource);
+        final AudioTrack audioTrack = factory.createAudioTrack(AUDIO_TRACK_NAME, audioSource);
         final RTCRtpTransceiverInit audioTransceiverInit = new RTCRtpTransceiverInit();
         audioTransceiverInit.direction = RTCRtpTransceiverDirection.RECV_ONLY;
-        audioTransceiverInit.streamIds.add("stream");
+        audioTransceiverInit.streamIds.add(STREAM_ID);
         final RTCRtpTransceiver audioTransceiver = peerConnection.addTransceiver(audioTrack, audioTransceiverInit);
 
         final VideoSource videoSource = new VideoDeviceSource();
-        final VideoTrack videoTrack = factory.createVideoTrack("videoTrack", videoSource);
+        final VideoTrack videoTrack = factory.createVideoTrack(VIDEO_TRACK_NAME, videoSource);
         final RTCRtpTransceiverInit videoTransceiverInit = new RTCRtpTransceiverInit();
         videoTransceiverInit.direction = RTCRtpTransceiverDirection.RECV_ONLY;
-        videoTransceiverInit.streamIds.add("stream");
+        videoTransceiverInit.streamIds.add(STREAM_ID);
         final RTCRtpTransceiver videoTransceiver = peerConnection.addTransceiver(videoTrack, videoTransceiverInit);
     }
 
