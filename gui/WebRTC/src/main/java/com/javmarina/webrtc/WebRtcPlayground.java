@@ -22,15 +22,21 @@ public class WebRtcPlayground {
 
     private static void testDevices() {
         final List<VideoDevice> videoDevices = MediaDevices.getVideoCaptureDevices();
-        final List<AudioDevice> audioDevices = MediaDevices.getAudioCaptureDevices();
+        final List<AudioDevice> audioCaptureDevices = MediaDevices.getAudioCaptureDevices();
+        final List<AudioDevice> audioRenderDevices = MediaDevices.getAudioRenderDevices();
 
         System.out.println("Video devices:");
         for (final VideoDevice device : videoDevices) {
             System.out.println(device);
         }
 
-        System.out.println("Audio devices:");
-        for (final AudioDevice device : audioDevices) {
+        System.out.println("Audio capture devices:");
+        for (final AudioDevice device : audioCaptureDevices) {
+            System.out.println(device);
+        }
+
+        System.out.println("Audio render devices:");
+        for (final AudioDevice device : audioRenderDevices) {
             System.out.println(device);
         }
 
