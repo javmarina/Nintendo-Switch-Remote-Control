@@ -27,7 +27,6 @@ import java.util.List;
 public class RtcServer extends RtcPeer {
 
     private final VideoDeviceSource videoSource;
-    private final AudioDeviceModule audioDeviceModule;
     private final Callback callback;
 
     public RtcServer(final SessionId sessionId,
@@ -35,7 +34,6 @@ public class RtcServer extends RtcPeer {
                      final VideoDeviceSource videoSource,
                      final Callback callback) {
         super(new SignalingPeer(sessionId, "register-server"), audioDeviceModule);
-        this.audioDeviceModule = audioDeviceModule;
         this.videoSource = videoSource;
         this.callback = callback;
         createTransceivers();

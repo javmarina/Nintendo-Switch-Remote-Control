@@ -11,8 +11,12 @@ import com.javmarina.webrtc.WebRtcLoader;
 import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.RTCStats;
 import dev.onvoid.webrtc.RTCStatsReport;
+import dev.onvoid.webrtc.media.Device;
 import dev.onvoid.webrtc.media.FourCC;
+import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.MediaStreamTrack;
+import dev.onvoid.webrtc.media.audio.AudioDevice;
+import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 import dev.onvoid.webrtc.media.video.VideoBufferConverter;
 import dev.onvoid.webrtc.media.video.VideoFrame;
 import dev.onvoid.webrtc.media.video.VideoFrameBuffer;
@@ -50,6 +54,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -57,8 +62,11 @@ import java.util.stream.Collectors;
 
 public final class Client {
 
+    private static final List<AudioDevice> AUDIO_DEVICES;
+
     static {
         WebRtcLoader.loadLibrary();
+        AUDIO_DEVICES = MediaDevices.getAudioRenderDevices();
     }
 
     public static void main(final String... arg) {
@@ -90,17 +98,22 @@ public final class Client {
         final JComboBox<ControllerService> jComboBox =
                 new JComboBox<>(services.toArray(new ControllerService[totalSize]));
 
+        final String[] audioDeviceNames = AUDIO_DEVICES.stream().map(Device::getName).toArray(String[]::new);
+        final JComboBox<String> jAudioComboBox = new JComboBox<>(audioDeviceNames);
+
         // add components
         jPanel.add(jButton);
         jPanel.add(jSessionId);
         jPanel.add(jSessionIdLabel);
         jPanel.add(jComboBox);
+        jPanel.add(jAudioComboBox);
 
         // set component bounds (only needed by Absolute Positioning)
         jSessionIdLabel.setBounds(10, 10, 80, 30);
         jSessionId.setBounds(110, 10, 80, 30);
         jComboBox.setBounds(10, 60, 180, 30);
-        jButton.setBounds(50, 110, 100, 30);
+        jAudioComboBox.setBounds(10, 110, 180, 30);
+        jButton.setBounds(50, 160, 100, 30);
 
         final JFrame frame = new JFrame("Client configuration");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -127,7 +140,8 @@ public final class Client {
             }
 
             final ControllerService service = (ControllerService) jComboBox.getSelectedItem();
-            showConnectionFrame(service, SessionId.fromString(sessionId));
+            final AudioDevice audioDevice = AUDIO_DEVICES.get(jAudioComboBox.getSelectedIndex());
+            showConnectionFrame(service, SessionId.fromString(sessionId), audioDevice);
             frame.setVisible(false);
         });
     }
@@ -176,9 +190,10 @@ public final class Client {
     }
 
     private static void showConnectionFrame(final ControllerService service,
-                                            final SessionId sessionId) {
+                                            final SessionId sessionId,
+                                            final AudioDevice audioDevice) {
         final ConnectionFrame connectionFrame =
-                new ConnectionFrame("Client", service, sessionId);
+                new ConnectionFrame("Client", service, sessionId, audioDevice);
         connectionFrame.setExtendedState(connectionFrame.getExtendedState() | Frame.MAXIMIZED_BOTH);
         connectionFrame.setVisible(true);
     }
@@ -192,7 +207,7 @@ public final class Client {
         private final DelayGraphPanel delayGraphPanel;
 
         private ConnectionFrame(final String title, final ControllerService service,
-                                final SessionId sessionId) {
+                                final SessionId sessionId, final AudioDevice audioDevice) {
             super(title);
 
             // construct components
@@ -207,7 +222,8 @@ public final class Client {
             jButton.addActionListener(new ConnectionFrame.ButtonListener(
                     service,
                     this,
-                    sessionId
+                    sessionId,
+                    audioDevice
             ));
 
             // adjust size and set layout
@@ -334,7 +350,7 @@ public final class Client {
             private final RtcClient rtcClient;
 
             private ButtonListener(final ControllerService service, final ConnectionFrame frame,
-                                   final SessionId sessionId) {
+                                   final SessionId sessionId, final AudioDevice audioDevice) {
                 final FrameProcessing frameProcessing = new FrameProcessing(
                         () -> frame.getWidth() - 240,
                         imageIcon -> SwingUtilities.invokeLater(() -> {
@@ -354,9 +370,14 @@ public final class Client {
                 };
                 final Timer timer = new Timer(1000, taskPerformer);
 
+                final AudioDeviceModule deviceModule = new AudioDeviceModule();
+                deviceModule.setPlayoutDevice(audioDevice);
+                // TODO: this doesn't currently work, defaults to speaker
+
                 this.rtcClient = new RtcClient(
                         sessionId,
                         service::getControllerStatus,
+                        deviceModule,
                         new RtcClient.Callback() {
                             @Override
                             public void onRttReplyReceived(final int milliseconds) {

@@ -18,6 +18,7 @@ import dev.onvoid.webrtc.RTCSessionDescription;
 import dev.onvoid.webrtc.RTCStatsCollectorCallback;
 import dev.onvoid.webrtc.SetSessionDescriptionObserver;
 import dev.onvoid.webrtc.media.MediaStreamTrack;
+import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 import dev.onvoid.webrtc.media.audio.AudioOptions;
 import dev.onvoid.webrtc.media.audio.AudioSource;
 import dev.onvoid.webrtc.media.audio.AudioTrack;
@@ -40,8 +41,9 @@ public class RtcClient extends RtcPeer {
 
     public RtcClient(final SessionId sessionId,
                      final PacketProvider packetProvider,
+                     final AudioDeviceModule audioDeviceModule,
                      final Callback callback) {
-        super(new SignalingPeer(sessionId, "register-client"));
+        super(new SignalingPeer(sessionId, "register-client"), audioDeviceModule);
         this.packetProvider = packetProvider;
         this.callback = callback;
 
@@ -156,11 +158,13 @@ public class RtcClient extends RtcPeer {
     protected void onConnected() {
         super.onConnected();
         threadOut.start();
+        // TODO: audioDeviceModule.initPlayout();
         callback.onSessionStarted();
     }
 
     @Override
     protected void onDisconnected() {
+        audioDeviceModule.dispose();
         clientOutRunnable.stop(callback::onSessionStopped);
     }
 
