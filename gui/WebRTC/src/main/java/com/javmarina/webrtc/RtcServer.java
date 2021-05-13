@@ -45,12 +45,12 @@ public class RtcServer extends RtcPeer {
         audioOptions.autoGainControl = false;
         audioOptions.noiseSuppression = false;
         final AudioSource audioSource = factory.createAudioSource(audioOptions);
-        final AudioTrack audioTrack = factory.createAudioTrack("audioTrack", audioSource);
-        final RTCRtpSender audioSender = peerConnection.addTrack(audioTrack, List.of("stream"));
+        final AudioTrack audioTrack = factory.createAudioTrack(AUDIO_TRACK_NAME, audioSource);
+        final RTCRtpSender audioSender = peerConnection.addTrack(audioTrack, List.of(STREAM_ID));
 
         // Add video
-        final VideoTrack videoTrack = factory.createVideoTrack("videoTrack", videoSource);
-        final RTCRtpSender videoSender = peerConnection.addTrack(videoTrack, List.of("stream"));
+        final VideoTrack videoTrack = factory.createVideoTrack(VIDEO_TRACK_NAME, videoSource);
+        final RTCRtpSender videoSender = peerConnection.addTrack(videoTrack, List.of(STREAM_ID));
 
         // TODO: we can block receiving media, even though client won't offer it
         /* for (final RTCRtpTransceiver transceiver : peerConnection.getTransceivers()) {
