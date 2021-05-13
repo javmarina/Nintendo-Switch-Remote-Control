@@ -1,14 +1,10 @@
 package com.javmarina.webrtc;
 
-import com.javmarina.util.Packet;
-import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
-import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 import dev.onvoid.webrtc.media.video.VideoCaptureCapability;
 import dev.onvoid.webrtc.media.video.VideoDevice;
 import dev.onvoid.webrtc.media.video.VideoDeviceSource;
-import dev.onvoid.webrtc.media.video.VideoFrame;
 
 import java.util.List;
 
@@ -21,88 +17,7 @@ public class WebRtcPlayground {
 
     public static void main(final String... args) {
         WebRtcLoader.loadLibrary();
-
         testDevices();
-
-        final AudioDeviceModule deviceModule = new AudioDeviceModule();
-        final AudioDevice audioDevice = MediaDevices.getAudioCaptureDevices().get(0);
-        deviceModule.setRecordingDevice(audioDevice);
-        final List<VideoDevice> videoDevices = MediaDevices.getVideoCaptureDevices();
-        final VideoDevice videoDevice = videoDevices.get(0);
-        final VideoDeviceSource videoSource = new VideoDeviceSource();
-        videoSource.setVideoCaptureDevice(videoDevice);
-        final VideoCaptureCapability capability = VideoCapabilitySelection.selectCapability(
-                MediaDevices.getVideoCaptureCapabilities(videoDevice),
-                VideoCapabilitySelection.Policy.BEST_RESOLUTION
-        );
-        videoSource.setVideoCaptureCapability(capability);
-        final RtcServer server = new RtcServer(SessionId.fromString("0000"), deviceModule, videoSource,
-                new RtcServer.Callback() {
-                    @Override
-                    public void onPacketReceived(final Packet packet) {
-                    }
-
-                    @Override
-                    public void onSessionStarted() {
-                    }
-
-                    @Override
-                    public void onSessionStopped() {
-                    }
-
-                    @Override
-                    public void onError(final Exception e) {
-                    }
-
-                    @Override
-                    public void onInvalidSessionId() {
-                    }
-                });
-
-        final RtcClient client = new RtcClient(
-                SessionId.fromString("0000"),
-                Packet.Companion::getEMPTY_PACKET,
-                new RtcClient.Callback() {
-                    @Override
-                    public void onRttReplyReceived(final int milliseconds) {
-                    }
-
-                    @Override
-                    public void onSessionStarted() {
-
-                    }
-
-                    @Override
-                    public void onSessionStopped() {
-
-                    }
-
-                    @Override
-                    public void onInvalidSessionId() {
-
-                    }
-
-                    @Override
-                    public void onVideoFrame(final VideoFrame frame) {
-                    }
-                }
-        );
-
-        new Thread(() -> {
-            try {
-                server.start();
-            } catch (final Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-
-        new Thread(() -> {
-            try {
-                client.start();
-            } catch (final Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
     }
 
     private static void testDevices() {
