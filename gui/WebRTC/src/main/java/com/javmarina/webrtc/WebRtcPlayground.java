@@ -13,6 +13,9 @@ import java.util.List;
 // https://github.com/devopvoid/webrtc-java/blob/master/webrtc-demo/webrtc-demo-api/src/main/java/dev/onvoid/webrtc/demo/net/PeerConnectionClient.java
 // https://w3c.github.io/webrtc-pc/
 // https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Connectivity
+// https://hpbn.co/webrtc/
+// https://webrtc.googlesource.com/src/
+// https://webrtc.github.io/webrtc-org/native-code/native-apis/
 public class WebRtcPlayground {
 
     public static void main(final String... args) {
