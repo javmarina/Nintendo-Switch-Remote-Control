@@ -1,180 +1,214 @@
 package com.javmarina.webrtc.signaling;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.javmarina.webrtc.JsonCodec;
 import dev.onvoid.webrtc.RTCIceCandidate;
 import dev.onvoid.webrtc.RTCSessionDescription;
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
-import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
-import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.concurrent.Future;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class SignalingPeer {
 
-    // TODO: use wss://
-    private static final String WEBSOCKET_ADDRESS = "ws://nintendo-switch-remote-control.appspot.com/signaling";
+    static {
+        final FirebaseOptions options;
+        try {
+            final InputStream stream = SignalingPeer.class.getClassLoader().getResourceAsStream("serviceAccountKey.json");
+            if (stream != null) {
+                options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(stream))
+                        .setDatabaseUrl("https://nintendo-switch-signaling-default-rtdb.europe-west1.firebasedatabase.app")
+                        .build();
+                FirebaseApp.initializeApp(options);
+            }
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-    private static final String COMMAND_REGISTER_OK = "register-ok";
-    private static final String COMMAND_REGISTER_INVALID = "register-invalid";
     private static final String COMMAND_OFFER = "offer";
     private static final String COMMAND_ANSWER = "answer";
     private static final String COMMAND_NEW_ICE_CANDIDATE = "candidate";
 
-    private static final String JSON_COMMAND = "command";
-    private static final String JSON_SESSION_ID = "session-id";
-    private static final String JSON_PAYLOAD = "payload";
-
     private final SessionId sessionId;
-    private final HttpClient httpClient;
-    private final WebSocketClient webSocketClient;
-    private final String registerCommandId;
-    private Session session;
+    private final Role role;
+    private EventListener eventListener;
+
+    public enum Role {
+        CLIENT, SERVER;
+
+        public String getRegisterCommand() {
+            if (this == CLIENT) {
+                return "register-client";
+            } else {
+                return "register-server";
+            }
+        }
+
+        public String getOutChild() {
+            if (this == CLIENT) {
+                return "toServer";
+            } else {
+                return "toClient";
+            }
+        }
+
+        public String getInChild() {
+            if (this == CLIENT) {
+                return "toClient";
+            } else {
+                return "toServer";
+            }
+        }
+    }
     
-    public SignalingPeer(final SessionId sessionId, final String registerCommandId) {
+    public SignalingPeer(final SessionId sessionId, final Role role) {
         this.sessionId = sessionId;
-        this.httpClient = createHttpClient();
-        this.webSocketClient = new WebSocketClient(this.httpClient);
-        this.registerCommandId = registerCommandId;
+        this.role = role;
     }
 
-    private static HttpClient createHttpClient() {
-        /* TODO: SSL
-        final SslContextFactory sslContextFactory = new SslContextFactory();
-        return new HttpClient(sslContextFactory);
-         */
-        return new HttpClient();
+    public void start(final Callback callback) {
+        final DatabaseReference ref = FirebaseDatabase.getInstance()
+                .getReference("sessions");
+
+        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(final DataSnapshot dataSnapshot) {
+                final boolean exists = dataSnapshot.hasChild(sessionId.toString());
+                switch (role) {
+                    case SERVER:
+                        if (exists) {
+                            callback.onInvalidRegister();
+                        } else {
+                            final Map<String, Object> data = new HashMap<>(2);
+                            data.put(role.getRegisterCommand(), "ok");
+                            data.put(role.getOutChild(), 0);
+                            ref.child(sessionId.toString()).updateChildren(data, (error, ref1) -> callback.onValidRegister());
+                        }
+                        break;
+                    case CLIENT:
+                        if (exists) {
+                            final Map<String, Object> data = new HashMap<>(2);
+                            data.put(role.getRegisterCommand(), "ok");
+                            data.put(role.getOutChild(), 0);
+                            ref.child(sessionId.toString()).updateChildren(data, (error, ref12) -> callback.onValidRegister());
+                        } else {
+                            callback.onInvalidRegister();
+                        }
+                        break;
+                }
+            }
+
+            @Override
+            public void onCancelled(final DatabaseError error) {
+                callback.onInvalidRegister();
+            }
+        });
+
+        eventListener = new EventListener(callback);
+        ref.child(sessionId.toString()).child(role.getInChild()).addChildEventListener(eventListener);
     }
 
-    public void start() throws Exception {
-        if (!httpClient.isRunning()) {
-            try {
-                httpClient.start();
-            } catch (final URISyntaxException e) {
-                e.printStackTrace();
+    private static final class EventListener implements ChildEventListener {
+
+        private final Callback callback;
+
+        private EventListener(final Callback callback) {
+            this.callback = callback;
+        }
+
+        private void processInput(final DataSnapshot dataSnapshot) {
+            final String key = dataSnapshot.getKey();
+            final JSONObject jo = new JSONObject(dataSnapshot.getValue().toString());
+            switch (key) {
+                case COMMAND_OFFER:
+                    final RTCSessionDescription offer = JsonCodec.decodeSessionDescription(jo);
+                    callback.onOfferReceived(offer);
+                    break;
+                case COMMAND_ANSWER:
+                    final RTCSessionDescription answer = JsonCodec.decodeSessionDescription(jo);
+                    callback.onAnswerReceived(answer);
+                    break;
+                case COMMAND_NEW_ICE_CANDIDATE:
+                    final RTCIceCandidate candidate = JsonCodec.decodeCandidate(jo);
+                    callback.onCandidateReceived(candidate);
+                    break;
             }
         }
-        if (!webSocketClient.isRunning()) {
-            try {
-                webSocketClient.start();
-            } catch (final URISyntaxException e) {
-                e.printStackTrace();
-            }
+
+        @Override
+        public void onChildAdded(final DataSnapshot snapshot, final String previousChildName) {
+            processInput(snapshot);
         }
-    }
 
-    public void connect(final Callback callback) throws Exception {
-        final ClientUpgradeRequest request = new ClientUpgradeRequest();
-        // Attempt connection
-        final Future<Session> future = webSocketClient.connect(
-                new ClientSocket(callback),
-                new URI(WEBSOCKET_ADDRESS),
-                request
-        );
-        // Wait for Connect
-        session = future.get();
-    }
+        @Override
+        public void onChildChanged(final DataSnapshot snapshot, final String previousChildName) {
+            processInput(snapshot);
+        }
 
-    public void sendMessage(final String message) throws IOException {
-        session.getRemote().sendString(message);
+        @Override
+        public void onChildRemoved(final DataSnapshot snapshot) {
+        }
+
+        @Override
+        public void onChildMoved(final DataSnapshot snapshot, final String previousChildName) {
+        }
+
+        @Override
+        public void onCancelled(final DatabaseError error) {
+        }
     }
 
     public void close() {
-        session.close();
-        session = null;
+        final DatabaseReference databaseReference = FirebaseDatabase.getInstance()
+                .getReference("sessions")
+                .child(sessionId.toString());
+        databaseReference.child(role.getInChild())
+                .removeEventListener(eventListener);
+        databaseReference.removeValueAsync();
     }
 
-    public void sendRegisterCommand() throws IOException {
-        sendCommand(registerCommandId, null);
-    }
-
-    public void sendOffer(final RTCSessionDescription description) throws IOException {
+    public void sendOffer(final RTCSessionDescription description) {
         sendCommand(
                 COMMAND_OFFER,
                 JsonCodec.encode(description)
         );
     }
 
-    public void sendAnswer(final RTCSessionDescription description) throws IOException {
+    public void sendAnswer(final RTCSessionDescription description) {
         sendCommand(
                 COMMAND_ANSWER,
                 JsonCodec.encode(description)
         );
     }
 
-    public void sendIceCandidate(final RTCIceCandidate candidate) throws IOException {
+    public void sendIceCandidate(final RTCIceCandidate candidate) {
         sendCommand(
                 COMMAND_NEW_ICE_CANDIDATE,
                 JsonCodec.encode(candidate)
         );
     }
 
-    public void sendCommand(final String commandId, final JSONObject payload) throws IOException {
-        final JSONObject jo = new JSONObject();
-        jo.put(JSON_COMMAND, commandId);
-        jo.put(JSON_SESSION_ID, sessionId.id);
-        jo.put(JSON_PAYLOAD, payload);
-        sendMessage(jo.toString());
-    }
-
-    @SuppressWarnings("unused")
-    @WebSocket(maxTextMessageSize = 64 * 1024)
-    public static final class ClientSocket {
-
-        private final Callback callback;
-        private Session session;
-
-        ClientSocket(final Callback callback) {
-            this.callback = callback;
-        }
-
-        @OnWebSocketClose
-        public void onClose(final int statusCode, final String reason) {
-            this.session = null;
-        }
-
-        @OnWebSocketConnect
-        public void onConnect(final Session session) {
-            this.session = session;
-        }
-
-        @OnWebSocketMessage
-        public void onMessage(final String msg) {
-            final JSONObject jo = new JSONObject(msg);
-            final String command = jo.getString(JSON_COMMAND);
-            switch (command) {
-                case COMMAND_REGISTER_INVALID:
-                    session.close();
-                    callback.onInvalidRegister();
-                    break;
-                case COMMAND_REGISTER_OK:
-                    break;
-                case COMMAND_OFFER:
-                case COMMAND_ANSWER:
-                    final RTCSessionDescription description =
-                            JsonCodec.decodeSessionDescription(jo.getJSONObject(JSON_PAYLOAD));
-                    if (COMMAND_OFFER.equals(command)) {
-                        callback.onOfferReceived(description);
-                    } else {
-                        callback.onAnswerReceived(description);
-                    }
-                    break;
-                case COMMAND_NEW_ICE_CANDIDATE:
-                    final RTCIceCandidate candidate =
-                            JsonCodec.decodeCandidate(jo.getJSONObject(JSON_PAYLOAD));
-                    callback.onCandidateReceived(candidate);
-                    break;
-            }
-        }
+    private void sendCommand(final String commandId, final JSONObject payload) {
+        final Map<String, Object> map = new HashMap<>(1);
+        map.put(commandId, payload.toString());
+        FirebaseDatabase.getInstance()
+                .getReference("sessions")
+                .child(sessionId.toString())
+                .child(role.getOutChild())
+                .updateChildrenAsync(map);
     }
 
     public interface Callback {
@@ -182,5 +216,6 @@ public class SignalingPeer {
         void onAnswerReceived(final RTCSessionDescription description);
         void onCandidateReceived(final RTCIceCandidate candidate);
         void onInvalidRegister();
+        void onValidRegister();
     }
 }

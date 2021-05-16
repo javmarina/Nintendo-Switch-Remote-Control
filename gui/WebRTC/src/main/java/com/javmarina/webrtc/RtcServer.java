@@ -33,7 +33,7 @@ public class RtcServer extends RtcPeer {
                      final AudioDeviceModule audioDeviceModule,
                      final VideoDeviceSource videoSource,
                      final Callback callback) {
-        super(new SignalingPeer(sessionId, "register-server"), audioDeviceModule);
+        super(new SignalingPeer(sessionId, SignalingPeer.Role.SERVER), audioDeviceModule);
         this.videoSource = videoSource;
         this.callback = callback;
         createTransceivers();
@@ -59,12 +59,6 @@ public class RtcServer extends RtcPeer {
     }
 
     @Override
-    public void start() throws Exception {
-        super.start();
-        signalingPeer.sendRegisterCommand();
-    }
-
-    @Override
     protected void onOfferReceived(final RTCSessionDescription description) {
         peerConnection.setRemoteDescription(description, new SetSessionDescriptionObserver() {
             @Override
@@ -76,11 +70,7 @@ public class RtcServer extends RtcPeer {
                         peerConnection.setLocalDescription(description, new SetSessionDescriptionObserver() {
                             @Override
                             public void onSuccess() {
-                                try {
-                                    signalingPeer.sendAnswer(description);
-                                } catch (final IOException e) {
-                                    callback.onError(e);
-                                }
+                                signalingPeer.sendAnswer(description);
                             }
 
                             @Override
@@ -156,6 +146,10 @@ public class RtcServer extends RtcPeer {
     @Override
     protected void onInvalidSessionId() {
         callback.onInvalidSessionId();
+    }
+
+    @Override
+    protected void onValidRegister() {
     }
 
     public interface Callback {

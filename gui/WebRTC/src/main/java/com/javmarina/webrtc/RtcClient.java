@@ -43,7 +43,7 @@ public class RtcClient extends RtcPeer {
                      final PacketProvider packetProvider,
                      final AudioDeviceModule audioDeviceModule,
                      final Callback callback) {
-        super(new SignalingPeer(sessionId, "register-client"), audioDeviceModule);
+        super(new SignalingPeer(sessionId, SignalingPeer.Role.CLIENT), audioDeviceModule);
         this.packetProvider = packetProvider;
         this.callback = callback;
 
@@ -93,44 +93,6 @@ public class RtcClient extends RtcPeer {
     }
 
     @Override
-    public void start() throws Exception {
-        try {
-            super.start();
-            signalingPeer.sendRegisterCommand();
-
-            // Create offer
-            final RTCOfferOptions offerOptions = new RTCOfferOptions();
-            peerConnection.createOffer(offerOptions, new CreateSessionDescriptionObserver() {
-                @Override
-                public void onSuccess(final RTCSessionDescription description) {
-                    peerConnection.setLocalDescription(description, new SetSessionDescriptionObserver() {
-                        @Override
-                        public void onSuccess() {
-                            try {
-                                signalingPeer.sendOffer(description);
-                            } catch (final IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(final String error) {
-                            log(error);
-                        }
-                    });
-                }
-
-                @Override
-                public void onFailure(final String error) {
-                    log(error);
-                }
-            });
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
     protected void onAnswerReceived(final RTCSessionDescription description) {
         peerConnection.setRemoteDescription(description, new SetSessionDescriptionObserver() {
             @Override
@@ -171,6 +133,33 @@ public class RtcClient extends RtcPeer {
     @Override
     protected void onInvalidSessionId() {
         callback.onInvalidSessionId();
+    }
+
+    @Override
+    protected void onValidRegister() {
+        // Create offer
+        final RTCOfferOptions offerOptions = new RTCOfferOptions();
+        peerConnection.createOffer(offerOptions, new CreateSessionDescriptionObserver() {
+            @Override
+            public void onSuccess(final RTCSessionDescription description) {
+                peerConnection.setLocalDescription(description, new SetSessionDescriptionObserver() {
+                    @Override
+                    public void onSuccess() {
+                        signalingPeer.sendOffer(description);
+                    }
+
+                    @Override
+                    public void onFailure(final String error) {
+                        log(error);
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(final String error) {
+                log(error);
+            }
+        });
     }
 
     public void getStats(final RTCStatsCollectorCallback callback) {

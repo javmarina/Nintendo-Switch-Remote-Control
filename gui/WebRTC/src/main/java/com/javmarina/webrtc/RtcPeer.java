@@ -13,7 +13,6 @@ import dev.onvoid.webrtc.RTCRtpTransceiver;
 import dev.onvoid.webrtc.RTCSessionDescription;
 import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -63,11 +62,7 @@ public abstract class RtcPeer {
         peerConnection = factory.createPeerConnection(defaultConfiguration, new PeerConnectionObserver() {
             @Override
             public void onIceCandidate(final RTCIceCandidate candidate) {
-                try {
-                    signalingPeer.sendIceCandidate(candidate);
-                } catch (final IOException e) {
-                    e.printStackTrace();
-                }
+                signalingPeer.sendIceCandidate(candidate);
             }
 
             @Override
@@ -93,8 +88,7 @@ public abstract class RtcPeer {
     }
 
     public void start() throws Exception {
-        signalingPeer.start();
-        signalingPeer.connect(new SignalingPeer.Callback() {
+        signalingPeer.start(new SignalingPeer.Callback() {
             @Override
             public void onOfferReceived(final RTCSessionDescription description) {
                 RtcPeer.this.onOfferReceived(description);
@@ -113,6 +107,11 @@ public abstract class RtcPeer {
             @Override
             public void onInvalidRegister() {
                 RtcPeer.this.onInvalidSessionId();
+            }
+
+            @Override
+            public void onValidRegister() {
+                RtcPeer.this.onValidRegister();
             }
         });
     }
@@ -140,4 +139,5 @@ public abstract class RtcPeer {
 
     protected abstract void onDisconnected();
     protected abstract void onInvalidSessionId();
+    protected abstract void onValidRegister();
 }
