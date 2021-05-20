@@ -90,6 +90,29 @@ public class RtcClient extends RtcPeer {
         videoTransceiverInit.direction = RTCRtpTransceiverDirection.RECV_ONLY;
         videoTransceiverInit.streamIds.add(STREAM_ID);
         final RTCRtpTransceiver videoTransceiver = peerConnection.addTransceiver(videoTrack, videoTransceiverInit);
+
+        /* Doesn't currently work
+        final List<RTCRtpCodecCapability> videoCodecs = factory.getRtpReceiverCapabilities(MediaType.VIDEO)
+                .getCodecs()
+                .stream()
+                .sorted((o1, o2) -> {
+                    final boolean is1 = o1.getName().contains("VP9");
+                    final boolean is2 = o2.getName().contains("VP9");
+                    if (is1 && is2) {
+                        return -Integer.compare(
+                                Integer.parseInt(o1.getSDPFmtp().get("profile-id")),
+                                Integer.parseInt(o2.getSDPFmtp().get("profile-id"))
+                        );
+                    } else if (is1) {
+                        return -1;
+                    } else if (is2) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                })
+                .collect(Collectors.toList());
+        videoTransceiver.setCodecPreferences(videoCodecs); */
     }
 
     @Override
