@@ -165,8 +165,6 @@ public class RtcServer extends RtcPeer {
     @Override
     protected void onDisconnected() {
         videoSource.stop();
-        videoSource.dispose();
-        audioDeviceModule.dispose();
         callback.onSessionStopped();
     }
 

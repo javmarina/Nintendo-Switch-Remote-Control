@@ -149,7 +149,6 @@ public class RtcClient extends RtcPeer {
 
     @Override
     protected void onDisconnected() {
-        audioDeviceModule.dispose();
         clientOutRunnable.stop(callback::onSessionStopped);
     }
 
@@ -194,7 +193,7 @@ public class RtcClient extends RtcPeer {
     private final class ClientOut extends StoppableLoop {
 
         private static final int PERIOD_MS = 5;
-        private static final int RTT_PACKET_COUNTER = 50;
+        private static final int RTT_PACKET_COUNTER = 500;
 
         private long millis = 0;
         /*

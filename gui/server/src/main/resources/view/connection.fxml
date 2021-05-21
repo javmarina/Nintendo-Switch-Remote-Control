@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+
+<?import javafx.scene.Group?>
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.javmarina.server.fx.PanelController" prefWidth="500" prefHeight="380">
+    <StackPane layoutX="450" layoutY="135">
+        <Circle fx:id="a" fill="lightgray" radius="15.0" />
+        <Label text="A" />
+    </StackPane>
+
+    <StackPane layoutX="415" layoutY="170">
+        <Circle fx:id="b" fill="lightgray" radius="15.0" />
+        <Label text="B" />
+    </StackPane>
+
+    <StackPane layoutX="415" layoutY="100">
+        <Circle fx:id="x" fill="lightgray" radius="15.0" />
+        <Label text="X" />
+    </StackPane>
+
+    <StackPane layoutX="380" layoutY="135">
+        <Circle fx:id="y" fill="lightgray" radius="15.0" />
+        <Label text="Y" />
+    </StackPane>
+
+    <StackPane layoutX="20" layoutY="60">
+        <Rectangle fx:id="l" fill="lightgray" width="100" height="30" />
+        <Label text="L" />
+    </StackPane>
+
+    <StackPane layoutX="20" layoutY="20">
+        <Rectangle fx:id="zl" fill="lightgray" width="100" height="30" />
+        <Label text="ZL" />
+    </StackPane>
+
+    <StackPane layoutX="380" layoutY="60">
+        <Rectangle fx:id="r" fill="lightgray" width="100" height="30" />
+        <Label text="R" />
+    </StackPane>
+
+    <StackPane layoutX="380" layoutY="20">
+        <Rectangle fx:id="zr" fill="lightgray" width="100" height="30" />
+        <Label text="ZR" />
+    </StackPane>
+
+    <StackPane layoutX="340" layoutY="100">
+        <Circle fx:id="plus" fill="lightgray" radius="15.0" />
+        <Label text="+" />
+    </StackPane>
+
+    <StackPane layoutX="130" layoutY="100">
+        <Circle fx:id="minus" fill="lightgray" radius="15.0" />
+        <Label text="-" />
+    </StackPane>
+
+    <StackPane layoutX="300" layoutY="140">
+        <Circle fx:id="home" fill="lightgray" radius="15.0" />
+        <Label text="⌂" />
+    </StackPane>
+
+    <StackPane layoutX="170" layoutY="140">
+        <Circle fx:id="capture" fill="lightgray" radius="15.0" />
+        <Label text="○" />
+    </StackPane>
+
+    <Group layoutX="110" layoutY="210">
+        <Rectangle fx:id="dpadUp" layoutX="27" width="27" height="27" fill="lightgray" />
+        <Rectangle fx:id="dpadRight" layoutX="54" layoutY="27" width="27" height="27" fill="lightgray" />
+        <Rectangle fx:id="dpadDown" layoutX="27" layoutY="54" width="27" height="27" fill="lightgray" />
+        <Rectangle fx:id="dpadLeft" layoutY="27" width="27" height="27" fill="lightgray" />
+        <Rectangle layoutX="27" layoutY="27" width="27" height="27" fill="lightgray" />
+    </Group>
+
+    <Group layoutX="20" layoutY="100">
+        <Circle fill="lightgray" radius="50" centerX="50" centerY="50"/>
+        <Circle fx:id="leftJoystick" fill="darkgray" radius="20.0" centerX="50" centerY="50" />
+    </Group>
+
+    <Group layoutX="300" layoutY="200">
+        <Circle fill="lightgray" radius="50" centerX="50" centerY="50"/>
+        <Circle fx:id="rightJoystick" fill="darkgray" radius="20.0" centerX="50" centerY="50" />
+    </Group>
+
+    <Label fx:id="serialLabel" text="Searching for serial adapter" layoutX="20" layoutY="320" />
+    <Label fx:id="connectionLabel" text="Waiting for the client request" layoutX="20" layoutY="340" />
+    <Button fx:id="lostConnection" text="Simulate lost connection" layoutX="250" layoutY="320" prefHeight="40" />
+
+</AnchorPane>

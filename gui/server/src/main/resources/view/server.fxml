@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane alignment="center" hgap="16" vgap="16" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.javmarina.server.fx.ServerController">
+
+    <padding><Insets bottom="16" left="16" right="16" top="16" /></padding>
+
+    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="Session ID" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+    <TextField fx:id="sessionIdField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="Baudrate" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+    <TextField fx:id="baudrateField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="Serial port" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+    <ChoiceBox fx:id="serialPort" maxWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="Video input" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+    <ChoiceBox fx:id="videoInput" maxWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="Resolution" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+    <ChoiceBox fx:id="videoCapability" maxWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+
+    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="Audio input" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+    <ChoiceBox fx:id="audioInput" maxWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+    <HBox alignment="CENTER" spacing="10" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="6">
+        <Button fx:id="openServerButton" minWidth="80.0" style="-fx-background-color: #457ecd; -fx-text-fill: #ffffff; -fx-font-weight: bold;" text="Open server" />
+    </HBox>
+
+    <ImageView fx:id="videoPreview" fitHeight="240.0" fitWidth="320.0" preserveRatio="true" GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.rowSpan="7" GridPane.valignment="TOP" />
+
+</GridPane>
