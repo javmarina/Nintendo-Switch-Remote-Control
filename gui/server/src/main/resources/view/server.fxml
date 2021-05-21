@@ -31,6 +31,6 @@
         <Button fx:id="openServerButton" minWidth="80.0" style="-fx-background-color: #457ecd; -fx-text-fill: #ffffff; -fx-font-weight: bold;" text="Open server" />
     </HBox>
 
-    <ImageView fx:id="videoPreview" fitHeight="240.0" fitWidth="320.0" preserveRatio="true" GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.rowSpan="7" GridPane.valignment="TOP" />
+    <ImageView fx:id="videoPreview" fitHeight="240.0" fitWidth="320.0" preserveRatio="true" cache="true" cacheHint="SPEED" smooth="false" GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.rowSpan="7" GridPane.valignment="TOP" />
 
 </GridPane>
