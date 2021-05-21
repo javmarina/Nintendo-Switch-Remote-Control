@@ -34,7 +34,7 @@ public class ConnectionController {
     @FXML
     private ImageView frames;
 
-    private static final int MAX_ITEMS = 10;
+    private static final int MAX_ITEMS = 16;
 
     XYChart.Series<Number, Integer> series = new XYChart.Series<>();
 
