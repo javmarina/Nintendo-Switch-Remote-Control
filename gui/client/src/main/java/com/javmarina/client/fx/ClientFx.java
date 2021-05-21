@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Properties;
 
 
-public class ClientFx extends Application {
+public final class ClientFx extends Application {
 
     private static List<AudioDevice> AUDIO_DEVICES = new ArrayList<>(0);
     public static AudioDeviceModule deviceModule;

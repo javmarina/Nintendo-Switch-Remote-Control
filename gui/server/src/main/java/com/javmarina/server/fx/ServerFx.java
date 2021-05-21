@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class ServerFx extends Application {
+public final class ServerFx extends Application {
 
     private static List<AudioDevice> AUDIO_DEVICES = new ArrayList<>(0);
     public static AudioDeviceModule deviceModule;
