@@ -12,7 +12,7 @@
     <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="Session ID" GridPane.columnIndex="0" GridPane.rowIndex="0" />
     <TextField fx:id="sessionIdField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
 
-    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="Baudrate" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="Baud rate" GridPane.columnIndex="0" GridPane.rowIndex="1" />
     <TextField fx:id="baudrateField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 
     <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="Serial port" GridPane.columnIndex="0" GridPane.rowIndex="2" />
