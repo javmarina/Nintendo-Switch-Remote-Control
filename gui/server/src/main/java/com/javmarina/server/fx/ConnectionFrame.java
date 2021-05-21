@@ -64,8 +64,8 @@ public class ConnectionFrame implements RtcServer.Callback {
         try {
             panelController.setSerialInfo("Trying to sync");
             serialAdapter.sync(true);
-            panelController.setSerialInfo("Synced!");
-            System.out.println("Synced!");
+            panelController.setSerialInfo("Synced with serial adapter");
+            System.out.println("Synced with serial adapter");
         } catch (final IOException e) {
             final Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setContentText(e.getMessage());
@@ -116,7 +116,7 @@ public class ConnectionFrame implements RtcServer.Callback {
         // Send to MCU
         if (!panelController.isButtonPressed()) {
             final boolean result = serialAdapter.sendPacket(packet);
-            panelController.setSerialInfo(result ? "Synced!" : "Packet error");
+            panelController.setSerialInfo(result ? "Synced with serial adapter" : "Serial packet error");
         }
     }
 
