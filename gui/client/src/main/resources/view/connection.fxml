@@ -26,6 +26,6 @@
     </VBox>
 
     <Pane fx:id="container" prefHeight="480.0" prefWidth="640.0" HBox.hgrow="ALWAYS">
-        <ImageView id="frames" fx:id="frames" cache="true" cacheHint="SPEED" depthTest="ENABLE" fitHeight="${container.height}" fitWidth="${container.width}" managed="false" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true" smooth="false" />
+        <ImageView id="frames" fx:id="frames" cache="true" cacheHint="SPEED" fitHeight="${container.height}" fitWidth="${container.width}" managed="false" nodeOrientation="INHERIT" pickOnBounds="true" preserveRatio="true" smooth="false" />
     </Pane>
 </HBox>
