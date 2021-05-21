@@ -1,18 +1,26 @@
-apply plugin: 'java'
-apply plugin: 'application'
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.9'
+}
 
-mainClassName = 'com.javmarina.server.Server'
+mainClassName = 'com.javmarina.server.fx.ServerFx'
 
 jar {
     manifest {
         attributes(
-                'Main-Class': 'com.javmarina.server.Server'
+                'Main-Class': 'com.javmarina.server.fx.ServerFx'
         )
     }
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
     destinationDirectory.set(file("$rootDir"))
+}
+
+javafx {
+    version = "13.0.2"
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
 compileJava.options.encoding = "UTF-8"

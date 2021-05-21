@@ -17,6 +17,7 @@ import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 
@@ -57,6 +58,7 @@ public abstract class RtcPeer {
 
     public RtcPeer(final SignalingPeer signalingPeer, final AudioDeviceModule audioDeviceModule) {
         this.signalingPeer = signalingPeer;
+        Objects.requireNonNull(audioDeviceModule);
         this.audioDeviceModule = audioDeviceModule;
 
         factory = new PeerConnectionFactory(this.audioDeviceModule);

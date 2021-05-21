@@ -461,7 +461,7 @@ public final class Server {
         }
     }
 
-    private static final class VideoCapabilityUtils {
+    public static final class VideoCapabilityUtils {
 
         private static final String FORMAT = "%dx%d@%d";
 
@@ -490,7 +490,7 @@ public final class Server {
             return new VideoCaptureCapability(width, height, framerate);
         }
 
-        private static Comparator<VideoCaptureCapability> getComparator() {
+        public static Comparator<VideoCaptureCapability> getComparator() {
             return comparator;
         }
     }
