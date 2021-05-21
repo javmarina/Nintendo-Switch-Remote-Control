@@ -6,6 +6,7 @@ import dev.onvoid.webrtc.PeerConnectionObserver;
 import dev.onvoid.webrtc.RTCConfiguration;
 import dev.onvoid.webrtc.RTCDataChannel;
 import dev.onvoid.webrtc.RTCIceCandidate;
+import dev.onvoid.webrtc.RTCIceConnectionState;
 import dev.onvoid.webrtc.RTCIceServer;
 import dev.onvoid.webrtc.RTCPeerConnection;
 import dev.onvoid.webrtc.RTCPeerConnectionState;
@@ -61,6 +62,13 @@ public abstract class RtcPeer {
         factory = new PeerConnectionFactory(this.audioDeviceModule);
         peerConnection = factory.createPeerConnection(defaultConfiguration, new PeerConnectionObserver() {
             @Override
+            public void onIceConnectionChange(final RTCIceConnectionState state) {
+                if (state == RTCIceConnectionState.DISCONNECTED || state == RTCIceConnectionState.CLOSED) {
+                    onDisconnected();
+                }
+            }
+
+            @Override
             public void onIceCandidate(final RTCIceCandidate candidate) {
                 signalingPeer.sendIceCandidate(candidate);
             }
@@ -74,9 +82,6 @@ public abstract class RtcPeer {
             public void onConnectionChange(final RTCPeerConnectionState state) {
                 if (state == RTCPeerConnectionState.CONNECTED) {
                     onConnected();
-                }
-                if (state == RTCPeerConnectionState.CLOSED || state == RTCPeerConnectionState.DISCONNECTED) {
-                    onDisconnected();
                 }
             }
 
