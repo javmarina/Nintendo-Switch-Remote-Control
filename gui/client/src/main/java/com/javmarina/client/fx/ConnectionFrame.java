@@ -107,6 +107,7 @@ public class ConnectionFrame implements RtcClient.Callback {
         stage.setTitle("Client");
         stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
         stage.setScene(scene);
+        stage.setMaximized(true);
         stage.show();
     }
 
