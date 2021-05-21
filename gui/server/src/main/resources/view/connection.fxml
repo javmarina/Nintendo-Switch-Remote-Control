@@ -27,22 +27,22 @@
     </StackPane>
 
     <StackPane layoutX="20" layoutY="60">
-        <Rectangle fx:id="l" fill="lightgray" width="100" height="30" />
+        <Rectangle fx:id="l" fill="lightgray" width="100" height="30" arcWidth="5" arcHeight="5" />
         <Label text="L" />
     </StackPane>
 
     <StackPane layoutX="20" layoutY="20">
-        <Rectangle fx:id="zl" fill="lightgray" width="100" height="30" />
+        <Rectangle fx:id="zl" fill="lightgray" width="100" height="30" arcWidth="5" arcHeight="5" />
         <Label text="ZL" />
     </StackPane>
 
     <StackPane layoutX="380" layoutY="60">
-        <Rectangle fx:id="r" fill="lightgray" width="100" height="30" />
+        <Rectangle fx:id="r" fill="lightgray" width="100" height="30" arcWidth="5" arcHeight="5" />
         <Label text="R" />
     </StackPane>
 
     <StackPane layoutX="380" layoutY="20">
-        <Rectangle fx:id="zr" fill="lightgray" width="100" height="30" />
+        <Rectangle fx:id="zr" fill="lightgray" width="100" height="30" arcWidth="5" arcHeight="5" />
         <Label text="ZR" />
     </StackPane>
 
