@@ -154,6 +154,7 @@ public class ConnectionFrame implements RtcServer.Callback {
             alert.setHeaderText(null);
             alert.showAndWait();
 
+            serialAdapter.closePort();
             close();
         });
     }
