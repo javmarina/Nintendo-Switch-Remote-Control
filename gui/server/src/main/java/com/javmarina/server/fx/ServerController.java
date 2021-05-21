@@ -119,8 +119,8 @@ public class ServerController {
             }
         });
 
-        videoInput.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
-            currentVideoDevice = videoInput.getItems().get((Integer) newValue);
+        videoInput.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            currentVideoDevice = newValue;
             videoDeviceSource.setVideoCaptureDevice(currentVideoDevice);
 
             final List<VideoCaptureCapability> capabilities =
@@ -145,8 +145,8 @@ public class ServerController {
             }
         });
 
-        videoCapability.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> {
-            currentVideoCapability = videoCapability.getItems().get((Integer) newValue);
+        videoCapability.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            currentVideoCapability = newValue;
 
             if (videoTrack != null) {
                 videoTrack.dispose();
