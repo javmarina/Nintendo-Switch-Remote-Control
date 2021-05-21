@@ -39,6 +39,7 @@ public class ConnectionFrame implements RtcServer.Callback {
                            final VideoDeviceSource videoDeviceSource,
                            final AudioDevice audioDevice,
                            final Callback callback) {
+        // TODO: this doesn't seem to work
         ServerFx.deviceModule.setRecordingDevice(audioDevice);
 
         rtcServer = new RtcServer(
