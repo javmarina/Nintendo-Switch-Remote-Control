@@ -1,6 +1,5 @@
 package com.javmarina.client.fx;
 
-import com.javmarina.client.Client;
 import com.javmarina.client.JamepadManager;
 import com.javmarina.client.services.ControllerService;
 import com.javmarina.client.services.DefaultJamepadService;
@@ -110,7 +109,7 @@ public class ClientFx extends Application {
     @Nullable
     private static String getDiscordToken() {
         try (final InputStream input
-                     = Client.class.getClassLoader().getResourceAsStream("discord.properties")) {
+                     = ClientFx.class.getClassLoader().getResourceAsStream("discord.properties")) {
 
             final Properties prop = new Properties();
             if (input == null) {
