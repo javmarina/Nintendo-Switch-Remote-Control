@@ -200,7 +200,6 @@ public class ConnectionFrame implements RtcServer.Callback {
                 } catch (final IOException ignored) {
                 }
             }
-            alert.showAndWait();
         } else {
             final Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setContentText(msg);
