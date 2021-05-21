@@ -62,7 +62,7 @@
     </StackPane>
 
     <StackPane layoutX="170" layoutY="140">
-        <Circle fx:id="capture" fill="lightgray" radius="15.0" />
+        <Rectangle fx:id="capture" fill="lightgray" width="30.0" height="30.0" arcWidth="5" arcHeight="5" />
         <Label text="○" />
     </StackPane>
 

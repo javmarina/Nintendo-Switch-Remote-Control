@@ -35,7 +35,7 @@ public class PanelController {
     @FXML
     private Circle home;
     @FXML
-    private Circle capture;
+    private Rectangle capture;
     @FXML
     private Rectangle dpadUp;
     @FXML
