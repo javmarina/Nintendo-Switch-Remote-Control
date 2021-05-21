@@ -101,6 +101,14 @@ public class ConnectionFrame implements RtcClient.Callback {
             rtcClient.start(); // onSessionStarted() will be called if successful
         } catch (final Exception e) {
             e.printStackTrace();
+            Platform.runLater(() -> {
+                final Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setContentText("An error occurred, please try again later");
+                alert.setHeaderText(null);
+                alert.showAndWait();
+
+                close();
+            });
         }
 
         stage = new Stage();
