@@ -1,7 +1,6 @@
-package com.javmarina.server.fx;
+package com.javmarina.server;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.javmarina.server.SerialAdapter;
 import com.javmarina.webrtc.WebRtcLoader;
 import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
@@ -21,7 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public final class ServerFx extends Application {
+public final class Server extends Application {
 
     private static List<AudioDevice> AUDIO_DEVICES = new ArrayList<>(0);
     public static AudioDeviceModule deviceModule;
@@ -42,7 +41,7 @@ public final class ServerFx extends Application {
     @Override
     public void start(final Stage primaryStage) throws Exception {
         final FXMLLoader loader = new FXMLLoader(
-                ServerFx.class.getResource("/view/server.fxml"));
+                Server.class.getResource("/view/server.fxml"));
         final GridPane page = loader.load();
         final Scene scene = new Scene(page);
 

@@ -1,4 +1,4 @@
-package com.javmarina.server.fx;
+package com.javmarina.server;
 
 import com.javmarina.util.Packet;
 import javafx.application.Platform;

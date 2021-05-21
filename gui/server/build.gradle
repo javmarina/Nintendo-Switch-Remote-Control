@@ -4,12 +4,12 @@ plugins {
     id 'org.openjfx.javafxplugin' version '0.0.9'
 }
 
-mainClassName = 'com.javmarina.server.fx.ServerFx'
+mainClassName = 'com.javmarina.server.Server'
 
 jar {
     manifest {
         attributes(
-                'Main-Class': 'com.javmarina.server.fx.ServerFx'
+                'Main-Class': 'com.javmarina.server.Server'
         )
     }
     from {

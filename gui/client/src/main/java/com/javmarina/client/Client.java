@@ -1,6 +1,5 @@
-package com.javmarina.client.fx;
+package com.javmarina.client;
 
-import com.javmarina.client.JamepadManager;
 import com.javmarina.client.services.ControllerService;
 import com.javmarina.client.services.DefaultJamepadService;
 import com.javmarina.client.services.KeyboardService;
@@ -27,7 +26,7 @@ import java.util.List;
 import java.util.Properties;
 
 
-public final class ClientFx extends Application {
+public final class Client extends Application {
 
     private static List<AudioDevice> AUDIO_DEVICES = new ArrayList<>(0);
     public static AudioDeviceModule deviceModule;
@@ -48,7 +47,7 @@ public final class ClientFx extends Application {
     @Override
     public void start(final Stage primaryStage) throws Exception {
         final FXMLLoader loader = new FXMLLoader(
-                ClientFx.class.getResource("/view/client.fxml"));
+                Client.class.getResource("/view/client.fxml"));
         final GridPane page = loader.load();
         final Scene scene = new Scene(page);
 
@@ -109,7 +108,7 @@ public final class ClientFx extends Application {
     @Nullable
     private static String getDiscordToken() {
         try (final InputStream input
-                     = ClientFx.class.getClassLoader().getResourceAsStream("discord.properties")) {
+                     = Client.class.getClassLoader().getResourceAsStream("discord.properties")) {
 
             final Properties prop = new Properties();
             if (input == null) {
