@@ -1,7 +1,6 @@
 package com.javmarina.server.fx;
 
 import com.fazecast.jSerialComm.SerialPort;
-import com.javmarina.server.Server;
 import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.PeerConnectionFactory;
 import dev.onvoid.webrtc.media.FourCC;
@@ -28,6 +27,7 @@ import javafx.scene.image.WritableImage;
 import javafx.util.StringConverter;
 
 import java.nio.ByteBuffer;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.UnaryOperator;
 import java.util.prefs.Preferences;
@@ -41,6 +41,18 @@ public class ServerController {
 
     private static final int DEFAULT_BAUDRATE = 1000000; // 1 Mbps
     private static final String KEY_BAUDRATE = "key_baudrate";
+
+    private static final Comparator<VideoCaptureCapability> CAPABILITY_COMPARATOR = (o1, o2) -> {
+        final int compare1 = Integer.compare(
+                o1.width*o1.height,
+                o2.width*o2.height
+        );
+        if (compare1 == 0) {
+            return Integer.compare(o1.frameRate, o2.frameRate);
+        } else {
+            return compare1;
+        }
+    };
 
     @FXML
     private TextField sessionIdField;
@@ -126,7 +138,7 @@ public class ServerController {
             final List<VideoCaptureCapability> capabilities =
                     MediaDevices.getVideoCaptureCapabilities(currentVideoDevice).stream()
                             .distinct()
-                            .sorted(Server.VideoCapabilityUtils.getComparator())
+                            .sorted(CAPABILITY_COMPARATOR)
                             .collect(Collectors.toList());
             videoCapability.setItems(FXCollections.observableList(capabilities));
         });
