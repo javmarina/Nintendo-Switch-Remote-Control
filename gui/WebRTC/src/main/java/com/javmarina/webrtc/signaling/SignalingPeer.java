@@ -96,6 +96,8 @@ public class SignalingPeer {
                             data.put(role.getRegisterCommand(), "ok");
                             data.put(role.getOutChild(), 0);
                             ref.child(sessionId.toString()).updateChildren(data, (error, ref1) -> callback.onValidRegister());
+                            eventListener = new EventListener(callback);
+                            ref.child(sessionId.toString()).child(role.getInChild()).addChildEventListener(eventListener);
                         }
                         break;
                     case CLIENT:
@@ -104,6 +106,8 @@ public class SignalingPeer {
                             data.put(role.getRegisterCommand(), "ok");
                             data.put(role.getOutChild(), 0);
                             ref.child(sessionId.toString()).updateChildren(data, (error, ref12) -> callback.onValidRegister());
+                            eventListener = new EventListener(callback);
+                            ref.child(sessionId.toString()).child(role.getInChild()).addChildEventListener(eventListener);
                         } else {
                             callback.onInvalidRegister();
                         }
@@ -116,9 +120,6 @@ public class SignalingPeer {
                 callback.onInvalidRegister();
             }
         });
-
-        eventListener = new EventListener(callback);
-        ref.child(sessionId.toString()).child(role.getInChild()).addChildEventListener(eventListener);
     }
 
     private static final class EventListener implements ChildEventListener {
