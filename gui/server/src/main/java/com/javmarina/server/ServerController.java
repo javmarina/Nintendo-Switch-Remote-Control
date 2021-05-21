@@ -1,4 +1,4 @@
-package com.javmarina.server.fx;
+package com.javmarina.server;
 
 import com.fazecast.jSerialComm.SerialPort;
 import com.javmarina.webrtc.signaling.SessionId;

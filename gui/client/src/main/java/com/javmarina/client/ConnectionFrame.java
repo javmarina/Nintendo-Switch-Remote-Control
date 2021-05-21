@@ -1,4 +1,4 @@
-package com.javmarina.client.fx;
+package com.javmarina.client;
 
 import com.javmarina.client.services.ControllerService;
 import com.javmarina.client.services.KeyboardService;
@@ -50,13 +50,13 @@ public class ConnectionFrame implements RtcClient.Callback {
         this.service = service;
         this.callback = callback;
 
-        ClientFx.deviceModule.setPlayoutDevice(audioDevice);
+        Client.deviceModule.setPlayoutDevice(audioDevice);
         // TODO: this doesn't currently work, defaults to speaker
 
         this.rtcClient = new RtcClient(
                 sessionId,
                 service::getControllerStatus,
-                ClientFx.deviceModule,
+                Client.deviceModule,
                 this
         );
     }

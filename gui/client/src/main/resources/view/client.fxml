@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<GridPane alignment="center" hgap="16" vgap="16" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.javmarina.client.fx.ClientController">
+<GridPane alignment="center" hgap="16" vgap="16" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.javmarina.client.ClientController">
 
     <padding><Insets bottom="16" left="16" right="16" top="16" /></padding>
 

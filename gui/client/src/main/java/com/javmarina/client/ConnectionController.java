@@ -1,4 +1,4 @@
-package com.javmarina.client.fx;
+package com.javmarina.client;
 
 import dev.onvoid.webrtc.RTCStats;
 import dev.onvoid.webrtc.RTCStatsReport;

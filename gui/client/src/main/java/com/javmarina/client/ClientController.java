@@ -1,4 +1,4 @@
-package com.javmarina.client.fx;
+package com.javmarina.client;
 
 import com.javmarina.client.services.ControllerService;
 import com.javmarina.webrtc.signaling.SessionId;

@@ -1,6 +1,5 @@
-package com.javmarina.server.fx;
+package com.javmarina.server;
 
-import com.javmarina.server.SerialAdapter;
 import com.javmarina.util.GeneralUtils;
 import com.javmarina.util.Packet;
 import com.javmarina.webrtc.RtcServer;
@@ -40,11 +39,11 @@ public class ConnectionFrame implements RtcServer.Callback {
                            final AudioDevice audioDevice,
                            final Callback callback) {
         // TODO: this doesn't seem to work
-        ServerFx.deviceModule.setRecordingDevice(audioDevice);
+        Server.deviceModule.setRecordingDevice(audioDevice);
 
         rtcServer = new RtcServer(
                 sessionId,
-                ServerFx.deviceModule,
+                Server.deviceModule,
                 videoDeviceSource,
                 this
         );
