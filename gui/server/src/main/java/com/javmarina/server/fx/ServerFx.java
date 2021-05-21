@@ -49,7 +49,7 @@ public final class ServerFx extends Application {
         final ServerController serverController = loader.getController();
 
         final List<SerialPort> ports = new ArrayList<>(Arrays.asList(SerialPort.getCommPorts()));
-        ports.add(0, null);
+        ports.add(0, null); // Add "None" option
         serverController.setSerialPorts(ports);
         serverController.setVideoInputDevices(MediaDevices.getVideoCaptureDevices());
         serverController.setAudioInputDevices(AUDIO_DEVICES);
