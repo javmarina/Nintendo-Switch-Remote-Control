@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.9'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
 }
 
 mainClassName = 'com.javmarina.client.Client'
@@ -9,15 +9,17 @@ mainClassName = 'com.javmarina.client.Client'
 jar {
     manifest {
         attributes(
-                'Main-Class': 'com.javmarina.client.Client'
+                'Main-Class': 'com.javmarina.client.Launcher'
         )
     }
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
+    exclude 'META-INF/*.RSA'
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
     destinationDirectory.set(file("$rootDir"))
 }
-
 
 javafx {
     version = "13.0.2"
@@ -46,4 +48,8 @@ dependencies {
     implementation 'com.discord4j:discord4j-core:3.0.15'
     implementation project(':util')
     implementation project(':WebRTC')
+
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:win"
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
 }
