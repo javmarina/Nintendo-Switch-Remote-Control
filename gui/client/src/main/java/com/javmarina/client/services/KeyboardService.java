@@ -5,8 +5,7 @@ import com.javmarina.util.Packet;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.EnumSet;
 
 
 /**
@@ -15,7 +14,7 @@ import java.util.Set;
  */
 public class KeyboardService extends ControllerService {
 
-    private static final Set<KeyCode> pressedKeys = new HashSet<>(10);
+    private static final EnumSet<KeyCode> pressedKeys = EnumSet.noneOf(KeyCode.class);
 
     private Scene scene;
 
