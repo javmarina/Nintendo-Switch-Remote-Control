@@ -37,14 +37,11 @@ Additional information can be found on the specific README files.
 
 List of things that I might do in the future, no guarantee. Pull requests are welcome.
 
-* More flexible communication between server and client. Maybe requests to increase or decrease send rate (basic flow control).
 * Automatically decrease read timeout for FTDI-based serial adapters (see https://github.com/projectgus/hairless-midiserial/blob/master/src/PortLatency_win32.cpp).
 * Power the board from the serial adapter and not USB (Switch), so that console can suspend without turning off the MCU. In that case, the Switch could be remotely turned on by long pressing the HOME button.
 * Power reduction techniques (section 9.9 from ATmega16U2 datasheet).
 * Refactoring of SerialAdapter.java. Blocking/non-blocking operations, use default procedures for syncing.
 * Migrate from Jamepad to sdl2gdx (?).
-* Java i18n (ResourceBundle?).
-* Remove absolute positioning in layouts.
 
 ### Acknowledgments
 
