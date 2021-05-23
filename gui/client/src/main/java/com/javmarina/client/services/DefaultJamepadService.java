@@ -1,5 +1,6 @@
 package com.javmarina.client.services;
 
+import com.javmarina.client.Client;
 import com.javmarina.client.JamepadManager;
 import com.javmarina.util.Packet;
 import com.studiohartman.jamepad.ControllerAxis;
@@ -87,7 +88,7 @@ public class DefaultJamepadService extends ControllerService {
             return controller.getName();
         } catch (final ControllerUnpluggedException e) {
             e.printStackTrace();
-            return "Disconnected";
+            return Client.RESOURCE_BUNDLE.getString("client.disconnected");
         }
     }
 

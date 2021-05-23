@@ -111,7 +111,7 @@ public class ServerController {
         
         serialPort.setConverter(new StringConverter<>() {
             
-            private static final String NULL_NAME = "None";
+            private final String NULL_NAME = Server.RESOURCE_BUNDLE.getString("server.portNone");
             
             @Override
             public String toString(final SerialPort serialPort) {

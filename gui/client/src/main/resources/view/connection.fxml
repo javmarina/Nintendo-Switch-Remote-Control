@@ -12,8 +12,8 @@
     </padding>
 
     <VBox id="VBox1" alignment="TOP_CENTER" spacing="5.0">
-        <Button fx:id="closeButton" style="-fx-background-color: #f44336; -fx-text-fill: #ffffff; -fx-font-weight: bold;" text="Close" focusTraversable="false" />
-        <LineChart fx:id="chart" maxHeight="200.0" maxWidth="100.0" title="RTT (ms)">
+        <Button fx:id="closeButton" style="-fx-background-color: #f44336; -fx-text-fill: #ffffff; -fx-font-weight: bold;" text="%connection.close" focusTraversable="false" />
+        <LineChart fx:id="chart" maxHeight="200.0" maxWidth="100.0" title="%connection.chart">
             <xAxis>
                 <NumberAxis side="BOTTOM" />
             </xAxis>

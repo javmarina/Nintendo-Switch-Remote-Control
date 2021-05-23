@@ -1,5 +1,6 @@
 package com.javmarina.client.services;
 
+import com.javmarina.client.Client;
 import com.javmarina.util.Packet;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
@@ -60,6 +61,6 @@ public class KeyboardService extends ControllerService {
 
     @Override
     public String toString() {
-        return "Keyboard";
+        return Client.RESOURCE_BUNDLE.getString("client.keyboard");
     }
 }

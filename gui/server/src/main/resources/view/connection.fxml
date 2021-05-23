@@ -84,8 +84,8 @@
         <Circle fx:id="rightJoystick" fill="darkgray" radius="20.0" centerX="50" centerY="50" />
     </Group>
 
-    <Label fx:id="serialLabel" text="Searching for serial adapter" layoutX="20" layoutY="320" />
-    <Label fx:id="connectionLabel" text="Waiting for the client request" layoutX="20" layoutY="340" />
-    <Button fx:id="lostConnection" text="Simulate lost connection" layoutX="250" layoutY="320" prefHeight="40" />
+    <Label fx:id="serialLabel" text="%connection.serialLabel" layoutX="20" layoutY="320" />
+    <Label fx:id="connectionLabel" text="%connection.connectionLabel" layoutX="20" layoutY="340" />
+    <Button fx:id="lostConnection" text="%connection.lostConnection" layoutX="250" layoutY="320" prefHeight="40" />
 
 </AnchorPane>

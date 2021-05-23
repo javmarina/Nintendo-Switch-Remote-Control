@@ -29,9 +29,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 
 public class ConnectionFrame implements RtcClient.Callback {
+
+    static final ResourceBundle RESOURCE_BUNDLE =
+            ResourceBundle.getBundle("connection", Locale.getDefault());
 
     private final RtcClient rtcClient;
     private final ControllerService service;
@@ -63,13 +68,13 @@ public class ConnectionFrame implements RtcClient.Callback {
 
     public void show() throws IOException {
         final FXMLLoader loader = new FXMLLoader(
-                ConnectionFrame.class.getResource("/view/connection.fxml"));
+                ConnectionFrame.class.getResource("/view/connection.fxml"), RESOURCE_BUNDLE);
         final HBox page = loader.load();
         final Scene scene = new Scene(page);
 
         connectionController = loader.getController();
         connectionController.setButtonListener(() -> {
-            System.out.println("Stopping session");
+            System.out.println(RESOURCE_BUNDLE.getString("connection.stoppingSession"));
             rtcClient.stop();
         });
         connectionController.setButtonEnabled(false);
@@ -103,7 +108,7 @@ public class ConnectionFrame implements RtcClient.Callback {
             e.printStackTrace();
             Platform.runLater(() -> {
                 final Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setContentText("An error occurred, please try again later");
+                alert.setContentText(RESOURCE_BUNDLE.getString("connection.error"));
                 alert.setHeaderText(null);
                 alert.showAndWait();
 
@@ -112,7 +117,7 @@ public class ConnectionFrame implements RtcClient.Callback {
         }
 
         stage = new Stage();
-        stage.setTitle("Client");
+        stage.setTitle(RESOURCE_BUNDLE.getString("connection.title"));
         stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
         stage.setScene(scene);
         stage.setMaximized(true);
@@ -143,7 +148,7 @@ public class ConnectionFrame implements RtcClient.Callback {
     public void onInvalidSessionId() {
         Platform.runLater(() -> {
             final Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setContentText("Invalid session ID");
+            alert.setContentText(RESOURCE_BUNDLE.getString("connection.invalidSessionID"));
             alert.setHeaderText(null);
             alert.showAndWait();
 

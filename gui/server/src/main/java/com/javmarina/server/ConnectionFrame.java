@@ -21,10 +21,15 @@ import javafx.stage.Stage;
 import java.awt.Desktop;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.ResourceBundle;
 
 
 public class ConnectionFrame implements RtcServer.Callback {
+
+    private static final ResourceBundle RESOURCE_BUNDLE =
+            ResourceBundle.getBundle("connection", Locale.getDefault());
 
     private final RtcServer rtcServer;
     private final SerialAdapter serialAdapter;
@@ -55,17 +60,17 @@ public class ConnectionFrame implements RtcServer.Callback {
 
     public void show() throws IOException {
         final FXMLLoader loader = new FXMLLoader(
-                ConnectionFrame.class.getResource("/view/connection.fxml"));
+                ConnectionFrame.class.getResource("/view/connection.fxml"), RESOURCE_BUNDLE);
         final AnchorPane page = loader.load();
         final Scene scene = new Scene(page);
 
         panelController = loader.getController();
 
         try {
-            panelController.setSerialInfo("Trying to sync");
+            panelController.setSerialInfo(RESOURCE_BUNDLE.getString("connection.serialSyncing"));
             serialAdapter.sync(true);
-            panelController.setSerialInfo("Synced with serial adapter");
-            System.out.println("Synced with serial adapter");
+            panelController.setSerialInfo(RESOURCE_BUNDLE.getString("connection.serialSynced"));
+            System.out.println(RESOURCE_BUNDLE.getString("connection.serialSynced"));
         } catch (final IOException e) {
             final Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setContentText(e.getMessage());
@@ -86,7 +91,7 @@ public class ConnectionFrame implements RtcServer.Callback {
                 rtcServer.start();
             } catch (final Exception e) {
                 final Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setContentText("An error occurred, please try again later");
+                alert.setContentText(RESOURCE_BUNDLE.getString("connection.error"));
                 alert.setHeaderText(null);
                 alert.showAndWait();
 
@@ -96,7 +101,7 @@ public class ConnectionFrame implements RtcServer.Callback {
         }).start();
 
         stage = new Stage();
-        stage.setTitle(String.format("Server (session ID: %s)", sessionId.toString()));
+        stage.setTitle(String.format(RESOURCE_BUNDLE.getString("connection.title"), sessionId.toString()));
         stage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
         stage.setScene(scene);
         stage.setResizable(false);
@@ -110,13 +115,15 @@ public class ConnectionFrame implements RtcServer.Callback {
     @Override
     public void onPacketReceived(final Packet packet) {
         final String message = GeneralUtils.byteArrayToString(packet.getBuffer());
-        panelController.setConnectionInfo("From client: " + message);
+        panelController.setConnectionInfo(String.format(RESOURCE_BUNDLE.getString("connection.fromClient"), message));
         // Update UI
         panelController.updateUi(packet);
         // Send to MCU
         if (!panelController.isButtonPressed()) {
             final boolean result = serialAdapter.sendPacket(packet);
-            panelController.setSerialInfo(result ? "Synced with serial adapter" : "Serial packet error");
+            panelController.setSerialInfo(
+                    RESOURCE_BUNDLE.getString(result ? "connection.serialSynced" : "connection.serialError")
+            );
         }
     }
 
@@ -127,7 +134,7 @@ public class ConnectionFrame implements RtcServer.Callback {
     @Override
     public void onSessionStopped() {
         Platform.runLater(() -> {
-            System.out.println("Session stopped");
+            System.out.println(RESOURCE_BUNDLE.getString("connection.sessionStopped"));
             serialAdapter.closePort();
             close();
         });
@@ -150,7 +157,7 @@ public class ConnectionFrame implements RtcServer.Callback {
     public void onInvalidSessionId() {
         Platform.runLater(() -> {
             final Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setContentText("Invalid session ID");
+            alert.setContentText(RESOURCE_BUNDLE.getString("connection.invalidSessionID"));
             alert.setHeaderText(null);
             alert.showAndWait();
 
@@ -165,24 +172,23 @@ public class ConnectionFrame implements RtcServer.Callback {
         String url = null;
         switch (testResults.errorType) {
             case NONE:
-                final String temp = String.format("Minimum: %d ms\r\nMaximum: %d ms\r\nAverage: %.3f ms\r\nError count: %d",
+                final String temp = String.format(RESOURCE_BUNDLE.getString("connection.serialTestResult"),
                         testResults.min, testResults.max, testResults.avg, testResults.errorCount);
                 if (testResults.avg > 10.0) {
                     url = "https://projectgus.com/2011/10/notes-on-ftdi-latency-with-arduino/";
-                    msg = temp + "\r\nAverage is high. You might need to adjust the latency timer of the FTDI adapter." +
-                            "\r\nSee " + url + " for more info.";
+                    msg = temp + String.format(RESOURCE_BUNDLE.getString("connection.serialTestResultExtra"), url);
                 } else {
                     msg = temp;
                 }
                 break;
             case NO_ACKS:
-                msg = "No packets were sent correctly";
+                msg = RESOURCE_BUNDLE.getString("connection.serialTestNoAcks");
                 break;
             case SYNC_ERROR:
-                msg = "Sync error, test aborted";
+                msg = RESOURCE_BUNDLE.getString("connection.serialTestSyncError");
                 break;
             default:
-                msg = "Unknown error";
+                msg = RESOURCE_BUNDLE.getString("connection.serialTestUnknownError");
                 break;
         }
         if (url != null) {
@@ -190,8 +196,11 @@ public class ConnectionFrame implements RtcServer.Callback {
             alert.setContentText(msg);
             alert.setHeaderText(null);
 
-            final ButtonType buttonOk = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
-            final ButtonType buttonOpen = new ButtonType("Open");
+            final ButtonType buttonOk = new ButtonType(
+                    RESOURCE_BUNDLE.getString("connection.buttonOk"),
+                    ButtonBar.ButtonData.OK_DONE
+            );
+            final ButtonType buttonOpen = new ButtonType(RESOURCE_BUNDLE.getString("connection.buttonOpen"));
             alert.getButtonTypes().setAll(buttonOk, buttonOpen);
 
             final Optional<ButtonType> result = alert.showAndWait();
