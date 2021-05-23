@@ -100,11 +100,14 @@ public class ConnectionController {
                 final RTCStats codecStats = map.get(videoStats.getMembers().get("codecId"));
                 final String codec = (String) codecStats.getMembers().get("mimeType");
                 final long clockRate = (long) codecStats.getMembers().get("clockRate");
-                displayInfo.put("Video codec", String.format("%s (%d kHz)", codec, clockRate/1000));
+                displayInfo.put(ConnectionFrame.RESOURCE_BUNDLE.getString("connection.videoCodec"),
+                        String.format("%s (%d kHz)", codec, clockRate/1000));
             }
-            displayInfo.put("Frames decoded", videoStats.getMembers().get("framesDecoded").toString());
+            displayInfo.put(ConnectionFrame.RESOURCE_BUNDLE.getString("connection.framesDecoded"),
+                    videoStats.getMembers().get("framesDecoded").toString());
             if (videoStats.getMembers().containsKey("framesPerSecond")) {
-                displayInfo.put("FPS", videoStats.getMembers().get("framesPerSecond").toString());
+                displayInfo.put(ConnectionFrame.RESOURCE_BUNDLE.getString("connection.fps"),
+                        videoStats.getMembers().get("framesPerSecond").toString());
             }
         }
 
@@ -142,7 +145,8 @@ public class ConnectionController {
             // dtlsState, localCertificateId, tlsVersion,
             // selectedCandidatePairChanges, bytesSent, selectedCandidatePairId,
             // dtlsCipher, srtpCipher, remoteCertificateId
-            displayInfo.put("Bytes sent", transportStats.getMembers().get("bytesSent").toString());
+            displayInfo.put(ConnectionFrame.RESOURCE_BUNDLE.getString("connection.bytesSent"),
+                    transportStats.getMembers().get("bytesSent").toString());
         }
 
         final String streamKey = map.keySet().stream()
@@ -161,7 +165,8 @@ public class ConnectionController {
                 if (kind.equals(MediaStreamTrack.VIDEO_TRACK_KIND) && remote) {
                     final long width = (long) trackStats.getMembers().get("frameWidth");
                     final long height = (long) trackStats.getMembers().get("frameHeight");
-                    displayInfo.put("Frame size", String.format("%d x %d", width, height));
+                    displayInfo.put(ConnectionFrame.RESOURCE_BUNDLE.getString("connection.frameSize"),
+                            String.format("%d x %d", width, height));
                 }
             }
         }

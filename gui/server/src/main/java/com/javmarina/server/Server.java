@@ -18,12 +18,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 
 public final class Server extends Application {
 
     private static List<AudioDevice> AUDIO_DEVICES = new ArrayList<>(0);
     public static AudioDeviceModule deviceModule;
+
+    static final ResourceBundle RESOURCE_BUNDLE =
+            ResourceBundle.getBundle("server", Locale.getDefault());
 
     static {
         WebRtcLoader.loadLibrary();
@@ -41,7 +46,7 @@ public final class Server extends Application {
     @Override
     public void start(final Stage primaryStage) throws Exception {
         final FXMLLoader loader = new FXMLLoader(
-                Server.class.getResource("/view/server.fxml"));
+                Server.class.getResource("/view/server.fxml"), RESOURCE_BUNDLE);
         final GridPane page = loader.load();
         final Scene scene = new Scene(page);
 
@@ -74,7 +79,7 @@ public final class Server extends Application {
             }
         });
 
-        primaryStage.setTitle("Server configuration");
+        primaryStage.setTitle(RESOURCE_BUNDLE.getString("server.title"));
         primaryStage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("icon.png")));
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
