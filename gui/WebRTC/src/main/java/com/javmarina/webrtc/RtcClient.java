@@ -27,7 +27,6 @@ import dev.onvoid.webrtc.media.video.VideoSource;
 import dev.onvoid.webrtc.media.video.VideoTrack;
 import dev.onvoid.webrtc.media.video.VideoTrackSink;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 
