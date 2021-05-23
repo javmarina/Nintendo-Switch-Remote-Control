@@ -36,7 +36,7 @@ public class ConnectionController {
 
     private static final int MAX_ITEMS = 16;
 
-    XYChart.Series<Number, Integer> series = new XYChart.Series<>();
+    private final XYChart.Series<Number, Integer> series = new XYChart.Series<>();
 
     @FXML
     private void initialize() {
