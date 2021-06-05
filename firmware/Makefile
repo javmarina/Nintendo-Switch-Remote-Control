@@ -99,12 +99,7 @@ include $(LUFA_PATH)/Build/lufa_hid.mk
 include $(LUFA_PATH)/Build/lufa_avrdude.mk
 include $(LUFA_PATH)/Build/lufa_atprogram.mk
 
-# Cleans all build files, leaving only the original source code
-# Also removes obj folder, which standard 'make clean' doesn't do
-clean: myclean
-myclean: mostlyclean
-	@echo $(MSG_REMOVE_CMD) Removing \"obj\" folder
-	rm -rf $(OBJDIR)
+clean: mostlyclean
 
 flash: all
 	sudo dfu-programmer $(MCU) erase
