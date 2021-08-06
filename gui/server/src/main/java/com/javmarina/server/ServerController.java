@@ -18,6 +18,7 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.image.ImageView;
@@ -55,7 +56,7 @@ public class ServerController {
     };
 
     @FXML
-    private TextField sessionIdField;
+    private Label sessionIdField;
     @FXML
     private TextField baudrateField;
     @FXML

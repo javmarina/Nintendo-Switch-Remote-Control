@@ -10,7 +10,7 @@
     <padding><Insets bottom="16" left="16" right="16" top="16" /></padding>
 
     <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="%server.sessionID" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-    <TextField fx:id="sessionIdField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+    <Label fx:id="sessionIdField" GridPane.columnIndex="1" GridPane.rowIndex="0" />
 
     <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="%server.baudrate" GridPane.columnIndex="0" GridPane.rowIndex="1" />
     <TextField fx:id="baudrateField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
