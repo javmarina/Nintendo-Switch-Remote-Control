@@ -5,6 +5,7 @@ import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
@@ -58,6 +59,13 @@ public class ClientController {
                         .orElse(null);
             }
         });
+    }
+
+    @FXML
+    public void onEnter(final ActionEvent ae){
+        if (!startButton.isDisabled()) {
+            startButton.getOnAction().handle(ae);
+        }
     }
 
     public void setControllerServices(final List<ControllerService> controllerServices) {
