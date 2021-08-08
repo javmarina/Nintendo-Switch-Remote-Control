@@ -12,6 +12,7 @@ import dev.onvoid.webrtc.media.video.VideoDevice;
 import dev.onvoid.webrtc.media.video.VideoDeviceSource;
 import dev.onvoid.webrtc.media.video.VideoFrameBuffer;
 import dev.onvoid.webrtc.media.video.VideoTrack;
+import dev.onvoid.webrtc.media.video.VideoTrackSink;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
@@ -79,6 +80,7 @@ public class ServerController {
     private final VideoDeviceSource videoDeviceSource = new VideoDeviceSource();
     private VideoCaptureCapability currentVideoCapability;
     private VideoTrack videoTrack;
+    private VideoTrackSink videoTrackSink;
 
     private final Preferences prefs = Preferences.userNodeForPackage(ServerController.class);
 
@@ -162,14 +164,16 @@ public class ServerController {
             currentVideoCapability = newValue;
 
             if (videoTrack != null) {
+                videoTrack.removeSink(videoTrackSink);
                 videoTrack.dispose();
+                videoTrack = null;
             }
             videoDeviceSource.stop();
             videoDeviceSource.setVideoCaptureDevice(currentVideoDevice);
             videoDeviceSource.setVideoCaptureCapability(currentVideoCapability);
 
             videoTrack = factory.createVideoTrack("videoTrack", videoDeviceSource);
-            videoTrack.addSink(frame -> {
+            videoTrackSink = frame -> {
                 frame.retain();
                 final VideoFrameBuffer buffer = frame.buffer;
                 final int width = buffer.getWidth();
@@ -191,7 +195,8 @@ public class ServerController {
                 Platform.runLater(() -> pixelBuffer.updateBuffer(pixBuffer -> null));
 
                 frame.release();
-            });
+            };
+            videoTrack.addSink(videoTrackSink);
             videoDeviceSource.start();
         });
         videoCapability.setConverter(new StringConverter<>() {
@@ -274,5 +279,11 @@ public class ServerController {
         videoDeviceSource.start();
         final SessionId sessionId = new SessionId();
         sessionIdField.setText(sessionId.toString());
+    }
+
+    public void stop() {
+        factory.dispose();
+        videoDeviceSource.stop();
+        videoDeviceSource.dispose();
     }
 }

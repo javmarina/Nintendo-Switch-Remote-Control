@@ -80,6 +80,12 @@ public final class Client extends Application {
         primaryStage.setY((bounds.getHeight() - primaryStage.getHeight()) / 2);
     }
 
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        System.exit(0);
+    }
+
     /**
      * Gets a list of available {@link ControllerService}. Keyboard and Discord bot are always
      * available. Additional {@link DefaultJamepadService} are added if there are connected controllers.
