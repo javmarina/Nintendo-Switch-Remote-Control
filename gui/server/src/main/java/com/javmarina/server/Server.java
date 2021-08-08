@@ -27,6 +27,8 @@ public final class Server extends Application {
     static final ResourceBundle RESOURCE_BUNDLE =
             ResourceBundle.getBundle("server", Locale.getDefault());
 
+    private ServerController serverController;
+
     static {
         WebRtcLoader.loadLibrary();
     }
@@ -42,7 +44,7 @@ public final class Server extends Application {
         final GridPane page = loader.load();
         final Scene scene = new Scene(page);
 
-        final ServerController serverController = loader.getController();
+        serverController = loader.getController();
 
         final List<SerialPort> ports = new ArrayList<>(Arrays.asList(SerialPort.getCommPorts()));
         ports.add(0, null); // Add "None" option
@@ -81,5 +83,13 @@ public final class Server extends Application {
         final Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
         primaryStage.setX(bounds.getWidth()/2);
         primaryStage.setY((bounds.getHeight() - primaryStage.getHeight()) / 2);
+    }
+
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        serverController.stop();
+        // Thread-5 prevents the app from closing gracefully
+        System.exit(0);
     }
 }
