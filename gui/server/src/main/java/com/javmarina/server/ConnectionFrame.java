@@ -86,19 +86,7 @@ public class ConnectionFrame implements RtcServer.Callback {
             runSerialPortTests(serialAdapter);
         }
 
-        new Thread(() -> {
-            try {
-                rtcServer.start();
-            } catch (final Exception e) {
-                final Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setContentText(RESOURCE_BUNDLE.getString("connection.error"));
-                alert.setHeaderText(null);
-                alert.showAndWait();
-
-                serialAdapter.closePort();
-                close();
-            }
-        }).start();
+        new Thread(rtcServer::start).start();
 
         stage = new Stage();
         stage.setTitle(String.format(RESOURCE_BUNDLE.getString("connection.title"), sessionId.toString()));
