@@ -5,6 +5,7 @@ import com.javmarina.client.services.KeyboardService;
 import com.javmarina.util.StoppableLoop;
 import com.javmarina.webrtc.FramerateEstimator;
 import com.javmarina.webrtc.RtcClient;
+import com.javmarina.webrtc.RtcUtils;
 import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.media.FourCC;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
@@ -38,10 +39,12 @@ public class ConnectionFrame implements RtcClient.Callback {
     static final ResourceBundle RESOURCE_BUNDLE =
             ResourceBundle.getBundle("connection", Locale.getDefault());
 
-    private final RtcClient rtcClient;
     private final ControllerService service;
+    private final SessionId sessionId;
+    private final AudioDevice audioDevice;
     private final Callback callback;
 
+    private RtcClient rtcClient;
     private Timeline timeline;
     private Thread thread;
     private FrameProcessing frameProcessing;
@@ -53,17 +56,9 @@ public class ConnectionFrame implements RtcClient.Callback {
                            final AudioDevice audioDevice,
                            final Callback callback) {
         this.service = service;
+        this.sessionId = sessionId;
+        this.audioDevice = audioDevice;
         this.callback = callback;
-
-        Client.deviceModule.setPlayoutDevice(audioDevice);
-        // TODO: this doesn't currently work, defaults to speaker
-
-        this.rtcClient = new RtcClient(
-                sessionId,
-                service::getControllerStatus,
-                Client.deviceModule,
-                this
-        );
     }
 
     public void show() throws IOException {
@@ -102,7 +97,18 @@ public class ConnectionFrame implements RtcClient.Callback {
         ));
         timeline.setCycleCount(Animation.INDEFINITE);
 
-        rtcClient.start(); // onSessionStarted() will be called if successful
+        RtcUtils.getAudioDeviceModule(audioDeviceModule -> {
+            audioDeviceModule.setPlayoutDevice(audioDevice);
+            // TODO: this doesn't currently work, defaults to speaker
+
+            rtcClient = new RtcClient(
+                    sessionId,
+                    service::getControllerStatus,
+                    audioDeviceModule,
+                    this
+            );
+            rtcClient.start(); // onSessionStarted() will be called if successful
+        });
 
         stage = new Stage();
         stage.setTitle(RESOURCE_BUNDLE.getString("connection.title"));

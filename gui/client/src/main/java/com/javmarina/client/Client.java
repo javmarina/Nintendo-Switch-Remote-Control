@@ -4,12 +4,12 @@ import com.javmarina.client.services.ControllerService;
 import com.javmarina.client.services.DefaultJamepadService;
 import com.javmarina.client.services.KeyboardService;
 import com.javmarina.client.services.bot.DiscordService;
+import com.javmarina.webrtc.RtcUtils;
 import com.javmarina.webrtc.WebRtcLoader;
 import com.javmarina.webrtc.signaling.SessionId;
-import dev.onvoid.webrtc.media.MediaDevices;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
-import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
@@ -22,16 +22,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
 
 public final class Client extends Application {
-
-    private static List<AudioDevice> AUDIO_DEVICES = new ArrayList<>(0);
-    public static AudioDeviceModule deviceModule;
 
     public static final ResourceBundle RESOURCE_BUNDLE =
             ResourceBundle.getBundle("client", Locale.getDefault());
@@ -41,11 +37,6 @@ public final class Client extends Application {
     }
 
     public static void main(final String[] args) {
-        try {
-            AUDIO_DEVICES = MediaDevices.getAudioRenderDevices();
-            deviceModule = new AudioDeviceModule();
-        } catch (final Exception ignored) {
-        }
         launch(args);
     }
 
@@ -60,7 +51,8 @@ public final class Client extends Application {
 
         final ArrayList<ControllerService> services = getAvailableServices();
         clientController.setControllerServices(services);
-        clientController.setAudioOutputDevices(AUDIO_DEVICES);
+        RtcUtils.getAudioRenderDevices(audioDevices ->
+                Platform.runLater(() -> clientController.setAudioOutputDevices(audioDevices)));
         clientController.setButtonAction(() -> {
             final ControllerService service = clientController.getSelectedControllerService();
             final AudioDevice audioDevice = clientController.getSelectedAudioDevice();
