@@ -15,7 +15,7 @@ dependencies {
     api fileTree(dir: 'lib', include: '*.jar')
     api group: 'dev.onvoid.webrtc', name: 'webrtc-java', version: '0.2.0'
     implementation group: 'org.json', name: 'json', version: '20210307'
-    implementation 'com.google.firebase:firebase-admin:7.2.0'
+    implementation 'io.socket:socket.io-client:2.0.1'
 }
 
 test {
