@@ -1,11 +1,11 @@
 package com.javmarina.server;
 
 import com.fazecast.jSerialComm.SerialPort;
+import com.javmarina.webrtc.RtcUtils;
 import com.javmarina.webrtc.WebRtcLoader;
 import dev.onvoid.webrtc.media.MediaDevices;
-import dev.onvoid.webrtc.media.audio.AudioDevice;
-import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
@@ -24,9 +24,6 @@ import java.util.ResourceBundle;
 
 public final class Server extends Application {
 
-    private static List<AudioDevice> AUDIO_DEVICES = new ArrayList<>(0);
-    public static AudioDeviceModule deviceModule;
-
     static final ResourceBundle RESOURCE_BUNDLE =
             ResourceBundle.getBundle("server", Locale.getDefault());
 
@@ -35,11 +32,6 @@ public final class Server extends Application {
     }
 
     public static void main(final String[] args) {
-        try {
-            AUDIO_DEVICES = MediaDevices.getAudioCaptureDevices();
-            deviceModule = new AudioDeviceModule();
-        } catch (final Exception ignored) {
-        }
         launch(args);
     }
 
@@ -56,7 +48,8 @@ public final class Server extends Application {
         ports.add(0, null); // Add "None" option
         serverController.setSerialPorts(ports);
         serverController.setVideoInputDevices(MediaDevices.getVideoCaptureDevices());
-        serverController.setAudioInputDevices(AUDIO_DEVICES);
+        RtcUtils.getAudioCaptureDevices(audioDevices ->
+                Platform.runLater(() -> serverController.setAudioInputDevices(audioDevices)));
         serverController.setButtonAction(() -> {
             final SerialPort serialPort = serverController.getSelectedSerialPort();
             serverController.stopVideoPreview();

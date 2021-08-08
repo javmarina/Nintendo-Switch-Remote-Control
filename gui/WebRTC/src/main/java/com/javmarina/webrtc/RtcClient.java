@@ -142,7 +142,6 @@ public class RtcClient extends RtcPeer {
     protected void onConnected() {
         super.onConnected();
         threadOut.start();
-        // TODO: audioDeviceModule.initPlayout();
         callback.onSessionStarted();
     }
 

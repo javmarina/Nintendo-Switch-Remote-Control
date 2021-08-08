@@ -125,6 +125,8 @@ public abstract class RtcPeer {
 
     public void stop() {
         peerConnection.close();
+        factory.dispose();
+        signalingPeer.close();
     }
 
     public static void log(final String error) {

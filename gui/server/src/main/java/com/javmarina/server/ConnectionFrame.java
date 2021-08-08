@@ -3,6 +3,7 @@ package com.javmarina.server;
 import com.javmarina.util.GeneralUtils;
 import com.javmarina.util.Packet;
 import com.javmarina.webrtc.RtcServer;
+import com.javmarina.webrtc.RtcUtils;
 import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
 import dev.onvoid.webrtc.media.video.VideoDeviceSource;
@@ -31,9 +32,10 @@ public class ConnectionFrame implements RtcServer.Callback {
     private static final ResourceBundle RESOURCE_BUNDLE =
             ResourceBundle.getBundle("connection", Locale.getDefault());
 
-    private final RtcServer rtcServer;
     private final SerialAdapter serialAdapter;
     private final SessionId sessionId;
+    private final VideoDeviceSource videoDeviceSource;
+    private final AudioDevice audioDevice;
     private final Callback callback;
 
     private PanelController panelController;
@@ -43,18 +45,10 @@ public class ConnectionFrame implements RtcServer.Callback {
                            final VideoDeviceSource videoDeviceSource,
                            final AudioDevice audioDevice,
                            final Callback callback) {
-        // TODO: this doesn't seem to work
-        Server.deviceModule.setRecordingDevice(audioDevice);
-
-        rtcServer = new RtcServer(
-                sessionId,
-                Server.deviceModule,
-                videoDeviceSource,
-                this
-        );
-
         this.serialAdapter = serialAdapter;
         this.sessionId = sessionId;
+        this.videoDeviceSource = videoDeviceSource;
+        this.audioDevice = audioDevice;
         this.callback = callback;
     }
 
@@ -86,7 +80,17 @@ public class ConnectionFrame implements RtcServer.Callback {
             runSerialPortTests(serialAdapter);
         }
 
-        new Thread(rtcServer::start).start();
+        RtcUtils.getAudioDeviceModule(audioDeviceModule -> {
+            audioDeviceModule.setRecordingDevice(audioDevice);
+
+            final RtcServer rtcServer = new RtcServer(
+                    sessionId,
+                    audioDeviceModule,
+                    videoDeviceSource,
+                    this
+            );
+            new Thread(rtcServer::start).start();
+        });
 
         stage = new Stage();
         stage.setTitle(String.format(RESOURCE_BUNDLE.getString("connection.title"), sessionId.toString()));

@@ -158,7 +158,6 @@ public class RtcServer extends RtcPeer {
     protected void onConnected() {
         super.onConnected();
         videoSource.start();
-        audioDeviceModule.initRecording();
         callback.onSessionStarted();
     }
 
