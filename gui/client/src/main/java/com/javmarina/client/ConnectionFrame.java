@@ -102,19 +102,7 @@ public class ConnectionFrame implements RtcClient.Callback {
         ));
         timeline.setCycleCount(Animation.INDEFINITE);
 
-        try {
-            rtcClient.start(); // onSessionStarted() will be called if successful
-        } catch (final Exception e) {
-            e.printStackTrace();
-            Platform.runLater(() -> {
-                final Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setContentText(RESOURCE_BUNDLE.getString("connection.error"));
-                alert.setHeaderText(null);
-                alert.showAndWait();
-
-                close();
-            });
-        }
+        rtcClient.start(); // onSessionStarted() will be called if successful
 
         stage = new Stage();
         stage.setTitle(RESOURCE_BUNDLE.getString("connection.title"));

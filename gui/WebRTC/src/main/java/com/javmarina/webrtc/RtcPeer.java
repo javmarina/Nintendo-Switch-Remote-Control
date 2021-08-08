@@ -94,7 +94,7 @@ public abstract class RtcPeer {
         });
     }
 
-    public void start() throws Exception {
+    public void start() {
         signalingPeer.start(new SignalingPeer.Callback() {
             @Override
             public void onOfferReceived(final RTCSessionDescription description) {
