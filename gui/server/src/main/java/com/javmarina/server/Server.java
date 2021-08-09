@@ -50,8 +50,7 @@ public final class Server extends Application {
         ports.add(0, null); // Add "None" option
         serverController.setSerialPorts(ports);
         serverController.setVideoInputDevices(MediaDevices.getVideoCaptureDevices());
-        RtcUtils.getAudioCaptureDevices(audioDevices ->
-                Platform.runLater(() -> serverController.setAudioInputDevices(audioDevices)));
+        serverController.setAudioInputDevices(RtcUtils.getAudioCaptureDevicesBlocking());
         serverController.setButtonAction(() -> {
             final SerialPort serialPort = serverController.getSelectedSerialPort();
             serverController.stopVideoPreview();
