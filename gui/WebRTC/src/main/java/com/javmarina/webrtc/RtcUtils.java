@@ -5,6 +5,7 @@ import dev.onvoid.webrtc.media.audio.AudioDevice;
 import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 
 /**
@@ -27,6 +28,12 @@ public final class RtcUtils {
         }).start();
     }
 
+    public static AudioDeviceModule getAudioDeviceModuleBlocking() {
+        final CompletableFuture<AudioDeviceModule> future = new CompletableFuture<>();
+        getAudioDeviceModule(future::complete);
+        return future.join();
+    }
+
     public static void getAudioCaptureDevices(final AudioDevicesCallback callback) {
         new Thread(() -> {
             final List<AudioDevice> list = MediaDevices.getAudioCaptureDevices();
@@ -34,10 +41,22 @@ public final class RtcUtils {
         }).start();
     }
 
+    public static List<AudioDevice> getAudioCaptureDevicesBlocking() {
+        final CompletableFuture<List<AudioDevice>> future = new CompletableFuture<>();
+        getAudioCaptureDevices(future::complete);
+        return future.join();
+    }
+
     public static void getAudioRenderDevices(final AudioDevicesCallback callback) {
         new Thread(() -> {
             final List<AudioDevice> list = MediaDevices.getAudioRenderDevices();
             callback.onReady(list);
         }).start();
+    }
+
+    public static List<AudioDevice> getAudioRenderDevicesBlocking() {
+        final CompletableFuture<List<AudioDevice>> future = new CompletableFuture<>();
+        getAudioRenderDevices(future::complete);
+        return future.join();
     }
 }

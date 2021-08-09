@@ -51,8 +51,7 @@ public final class Client extends Application {
 
         final ArrayList<ControllerService> services = getAvailableServices();
         clientController.setControllerServices(services);
-        RtcUtils.getAudioRenderDevices(audioDevices ->
-                Platform.runLater(() -> clientController.setAudioOutputDevices(audioDevices)));
+        clientController.setAudioOutputDevices(RtcUtils.getAudioRenderDevicesBlocking());
         clientController.setButtonAction(() -> {
             final ControllerService service = clientController.getSelectedControllerService();
             final AudioDevice audioDevice = clientController.getSelectedAudioDevice();
