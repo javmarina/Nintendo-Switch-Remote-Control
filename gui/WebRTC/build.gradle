@@ -13,8 +13,8 @@ java {
 dependencies {
     implementation project(':util')
     api fileTree(dir: 'lib', include: '*.jar')
-    api group: 'dev.onvoid.webrtc', name: 'webrtc-java', version: '0.2.0'
-    implementation group: 'org.json', name: 'json', version: '20210307'
+    api 'dev.onvoid.webrtc:webrtc-java:0.2.0'
+    implementation 'org.json:json:20210307'
     implementation 'io.socket:socket.io-client:2.0.1'
 }
 
