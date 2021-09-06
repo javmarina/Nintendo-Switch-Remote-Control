@@ -78,6 +78,7 @@ public class ServerController {
     private final PeerConnectionFactory factory = new PeerConnectionFactory();
     private VideoDevice currentVideoDevice;
     private final VideoDeviceSource videoDeviceSource = new VideoDeviceSource();
+    private boolean videoDeviceSourceCaptureSet = false;
     private VideoCaptureCapability currentVideoCapability;
     private VideoTrack videoTrack;
     private VideoTrackSink videoTrackSink;
@@ -198,6 +199,7 @@ public class ServerController {
             };
             videoTrack.addSink(videoTrackSink);
             videoDeviceSource.start();
+            videoDeviceSourceCaptureSet = true;
         });
         videoCapability.setConverter(new StringConverter<>() {
             @Override
@@ -283,7 +285,9 @@ public class ServerController {
 
     public void stop() {
         factory.dispose();
-        videoDeviceSource.stop();
-        videoDeviceSource.dispose();
+        if (videoDeviceSourceCaptureSet) {
+            videoDeviceSource.stop();
+            videoDeviceSource.dispose();
+        }
     }
 }
