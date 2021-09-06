@@ -10,10 +10,19 @@ java {
     }
 }
 
+ext {
+    webRtcVersion = '0.2.0'
+}
+
 dependencies {
     implementation project(':util')
-    api fileTree(dir: 'lib', include: '*.jar')
-    api 'dev.onvoid.webrtc:webrtc-java:0.2.0'
+
+    // WebRTC
+    api "dev.onvoid.webrtc:webrtc-java:$webRtcVersion"
+    implementation "dev.onvoid.webrtc:webrtc-java:$webRtcVersion:windows-x86_64"
+    implementation "dev.onvoid.webrtc:webrtc-java:$webRtcVersion:macos-x86_64"
+    implementation "dev.onvoid.webrtc:webrtc-java:$webRtcVersion:linux-x86_64"
+
     implementation 'org.json:json:20210307'
     implementation 'io.socket:socket.io-client:2.0.1'
 }
