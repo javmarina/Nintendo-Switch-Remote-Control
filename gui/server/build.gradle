@@ -41,7 +41,6 @@ java {
 
 dependencies {
     implementation 'com.intellij:annotations:+@jar'
-    //testCompile group: 'junit', name: 'junit', version: '4.11'
     implementation project(':util')
     implementation 'com.fazecast:jSerialComm:[2.0.0,3.0.0)'
     implementation project(':WebRTC')

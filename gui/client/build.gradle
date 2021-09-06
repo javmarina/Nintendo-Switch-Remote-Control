@@ -42,7 +42,6 @@ java {
 
 dependencies {
     implementation 'com.intellij:annotations:+@jar'
-    //testCompile group: 'junit', name: 'junit', version: '4.11'
     implementation 'com.github.WilliamAHartman:Jamepad:1.4.0'
     implementation "uk.co.electronstudio.sdl2gdx:sdl2gdx:1.0.4"
     implementation 'com.discord4j:discord4j-core:3.0.15'
