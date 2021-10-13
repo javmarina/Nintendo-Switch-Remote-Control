@@ -14,7 +14,7 @@ import java.net.URI;
 public class SignalingPeer {
 
     // Put your signaling server URI here
-    private static final String SIGNALING_SERVER = "";
+    private static final String SIGNALING_SERVER = "http://localhost:3000/";
 
     private static final String COMMAND_REGISTER_OK = "register-ok";
     private static final String COMMAND_REGISTER_INVALID = "register-invalid";
