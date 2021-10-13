@@ -35,7 +35,7 @@ Additional information can be found on the specific README files.
 * A USB-to-UART (TTL) adapter. Popular ones are based on FTDI and CH340 chip. Can be easily found online.
 * An HDMI capture card compatible with `libuvc` (in general, any with USB output). Device quality can dramatically affect streaming performance.
 * A deployed [signaling server](https://github.com/javmarina/Switch-Signaling-Server).
-* A PC with Java and JDK installed.
+* A PC with Java and JDK installed (Java 11 or newer required).
 
 ### TODO list
 
