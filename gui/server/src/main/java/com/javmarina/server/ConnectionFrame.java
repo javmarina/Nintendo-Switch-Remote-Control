@@ -81,7 +81,7 @@ public class ConnectionFrame implements RtcServer.Callback {
         }
 
         RtcUtils.getAudioDeviceModule(audioDeviceModule -> {
-            audioDeviceModule.setRecordingDevice(audioDevice);
+            audioDeviceModule.setRecordingDevice(audioDevice); // TODO: this doesn't currently work, defaults to first device
 
             final RtcServer rtcServer = new RtcServer(
                     sessionId,
