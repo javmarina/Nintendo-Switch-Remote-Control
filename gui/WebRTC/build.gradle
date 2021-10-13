@@ -3,7 +3,7 @@ apply plugin: 'java-library'
 repositories {
     mavenCentral()
     maven {
-        url "http://jsdp.sourceforge.net/maven2"
+        url "https://jsdp.sourceforge.net/maven2"
     }
 }
 
