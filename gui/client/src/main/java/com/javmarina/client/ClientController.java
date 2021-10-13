@@ -1,6 +1,7 @@
 package com.javmarina.client;
 
 import com.javmarina.client.services.ControllerService;
+import com.javmarina.webrtc.SdpUtils;
 import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
 import javafx.beans.binding.Bindings;
@@ -26,6 +27,8 @@ public class ClientController {
     @FXML
     private ChoiceBox<ControllerService> controllerInput;
     @FXML
+    private ChoiceBox<SdpUtils.CodecPreference> codecPreference;
+    @FXML
     private ChoiceBox<AudioDevice> audioOutput;
     @FXML
     private Button startButton;
@@ -44,6 +47,9 @@ public class ClientController {
                 sessionIdField.setText(oldValue);
             }
         });
+
+        codecPreference.setItems(FXCollections.observableArrayList(SdpUtils.CodecPreference.getAvailablePreferences()));
+        codecPreference.setValue(SdpUtils.CodecPreference.VP9);
 
         audioOutput.setConverter(new StringConverter<>() {
             @Override
@@ -84,6 +90,10 @@ public class ClientController {
 
     public ControllerService getSelectedControllerService() {
         return controllerInput.getValue();
+    }
+
+    public SdpUtils.CodecPreference getPreferredVideoCodec() {
+        return codecPreference.getValue();
     }
 
     public AudioDevice getSelectedAudioDevice() {

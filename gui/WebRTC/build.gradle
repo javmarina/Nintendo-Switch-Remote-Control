@@ -2,6 +2,9 @@ apply plugin: 'java-library'
 
 repositories {
     mavenCentral()
+    maven {
+        url "http://jsdp.sourceforge.net/maven2"
+    }
 }
 
 java {
@@ -11,7 +14,7 @@ java {
 }
 
 ext {
-    webRtcVersion = '0.2.0'
+    webRtcVersion = '0.3.0'
 }
 
 dependencies {
@@ -24,6 +27,7 @@ dependencies {
     implementation "dev.onvoid.webrtc:webrtc-java:$webRtcVersion:linux-x86_64"
 
     implementation 'org.json:json:20210307'
+    implementation 'net.sourceforge.jsdp:jsdp:1.1'
     implementation 'io.socket:socket.io-client:2.0.1'
 }
 
