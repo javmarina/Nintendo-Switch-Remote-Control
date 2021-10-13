@@ -16,10 +16,13 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
 public final class SdpUtils {
+
+    private static final Pattern SPLIT = Pattern.compile("\\r?\\n");
 
     public static RTCSessionDescription setCodecPreference(final RTCSessionDescription sessionDescription,
                                                            final CodecPreference codecPreference) {
@@ -45,9 +48,91 @@ public final class SdpUtils {
         };
     }
 
+    /**
+     * Convert SCTP SDP v21 format to SCTP SDP v5.
+     * webrtc-java generates a v21 SDP string, but jsdp doesn't accept it.
+     * The v5 string should be handled correctly by WebRTC endpoints.
+     * See https://blog.mozilla.org/webrtc/how-to-avoid-data-channel-breaking/
+     * @param sdp SDP v21 string
+     * @return SDP v5 string
+     */
+    private static String v21tov5format(final String sdp) {
+        final String[] lines = SPLIT.split(sdp);
+        int mIndex = -1;
+        int port = -1;
+        int sctpPort = -1;
+        int sctpIndex = -1;
+        String protocol = "";
+        for (int i = 0; i < lines.length; i++) {
+            final String line = lines[i];
+            if (line.startsWith("m=application") && line.contains("webrtc-datachannel")) {
+                // Expected something like: "m=application 54111 UDP/DTLS/SCTP webrtc-datachannel"
+                mIndex = i;
+                final String[] parts = line.split(" ");
+                port = Integer.parseInt(parts[1]);
+                protocol = parts[2];
+            } else if (mIndex >= 0) {
+                if (line.startsWith("a=sctp-port")) {
+                    sctpPort = Integer.parseInt(line.split(":")[1]);
+                    sctpIndex = i;
+                    break;
+                }
+            }
+        }
+        if (mIndex < 0 || sctpIndex < 0) {
+            // Seems like already using the old format
+            return sdp;
+        } else {
+            lines[mIndex] = "m=application " + port + " " + protocol + " " + sctpPort;
+            lines[sctpIndex] = "a=sctpmap:" + sctpPort + " webrtc-datachannel 256";
+            return String.join("\r\n", lines);
+        }
+    }
+
+    /**
+     * Convert SCTP SDP v5 format to SCTP SDP v21.
+     * @param sdp SDP v5 string
+     * @return SDP v21 string
+     * @see SdpUtils#v21tov5format(String)
+     */
+    private static String v5tov21format(final String sdp) {
+        final String[] lines = SPLIT.split(sdp);
+        int mIndex = -1;
+        int port = -1;
+        int sctpPort = -1;
+        int sctpIndex = -1;
+        String protocol = "";
+        for (int i = 0; i < lines.length; i++) {
+            final String line = lines[i];
+            if (line.startsWith("m=application")) {
+                // Expected something like: "m=application 63743 UDP/DTLS/SCTP 5000"
+                mIndex = i;
+                final String[] parts = line.split(" ");
+                port = Integer.parseInt(parts[1]);
+                protocol = parts[2];
+                sctpPort = Integer.parseInt(parts[3]);
+            } else if (mIndex >= 0) {
+                if (line.startsWith("a=sctpmap")) {
+                    // "a=sctpmap:5000 webrtc-datachannel 256"
+                    sctpIndex = i;
+                    break;
+                }
+            }
+        }
+        if (mIndex < 0 || sctpIndex < 0) {
+            // Seems like already using the new format
+            return sdp;
+        } else {
+            lines[mIndex] = "m=application " + port + " " + protocol + " webrtc-datachannel";
+            lines[sctpIndex] = "a=sctp-port:" + sctpPort;
+            return String.join("\r\n", lines);
+        }
+    }
+
     public static String setCodecPreference(final String sdp, final CodecPreference codecPreference) {
+        final String newSdp = v21tov5format(sdp);
         try {
-            final SessionDescription sessionDescription = SDPFactory.parseSessionDescription(sdp);
+            final SessionDescription sessionDescription = SDPFactory.parseSessionDescription(newSdp);
             final MediaDescription[] mediaDescriptions = sessionDescription.getMediaDescriptions();
             MediaDescription videoDescription = null;
             for (final MediaDescription mediaDescription : mediaDescriptions) {
@@ -92,6 +177,7 @@ public final class SdpUtils {
                     .map(codecInfo -> codecInfo.format)
                     .toArray(String[]::new)
             );
+            // TODO: v5tov21format(sessionDescription.toString())
             return sessionDescription.toString();
         } catch (final SDPException e) {
             return sdp;
