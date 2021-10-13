@@ -5,7 +5,6 @@ import com.javmarina.webrtc.RtcUtils;
 import com.javmarina.webrtc.WebRtcLoader;
 import dev.onvoid.webrtc.media.MediaDevices;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
