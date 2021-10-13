@@ -4,7 +4,7 @@ This Java project contains a client and server module, which can be compiled, an
 
 In order to use this project, you need both `client.jar` and `server.jar`. You can download them [here](https://github.com/javmarina/Nintendo-Switch-Remote-Control/releases/tag/latest), but note that they are compiled so that both programs use a signaling server running locally in port 3000.
 
-If you want to play remotely, you will need to deploy the signaling server to the cloud. The signaling server code is available [here](https://github.com/javmarina/Switch-Signaling-Server). When deployed, annotate the address, write it to the `SIGNALING_SERVER` in [SignalingPeer.java](https://github.com/javmarina/Nintendo-Switch-Remote-Control/blob/master/gui/WebRTC/src/main/java/com/javmarina/webrtc/signaling/SignalingPeer.java), and compile by running `gradle buildAll`. Both JARs will appear in the root folder.
+If you want to play remotely, you will need to deploy the signaling server to the cloud. The signaling server code is available [here](https://github.com/javmarina/Switch-Signaling-Server). When deployed, annotate the address, write it to the `SIGNALING_SERVER` in [SignalingPeer.java](https://github.com/javmarina/Nintendo-Switch-Remote-Control/blob/java-fx/gui/WebRTC/src/main/java/com/javmarina/webrtc/signaling/SignalingPeer.java), and compile by running `gradle buildAll`. Both JARs will appear in the root folder.
 
 The [Jamepad](https://github.com/williamahartman/Jamepad) library is used for reading controller input. The Discord bot is implemented using [Discord4J](https://github.com/Discord4J/Discord4J).
 
