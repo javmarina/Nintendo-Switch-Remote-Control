@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -113,6 +112,7 @@ public final class SdpUtils {
     }
 
     public enum CodecPreference {
+        // The order in which values are declared is the order in which it will be presented to the user
         H264("H264", (o1, o2) -> 0),
         VP8("VP8", (o1, o2) -> 0),
         VP9("VP9", (o1, o2) -> {
@@ -130,14 +130,15 @@ public final class SdpUtils {
             this.comparator = comparator;
         }
 
-        public static Set<CodecPreference> getAvailablePreferences() {
+        public static List<CodecPreference> getAvailablePreferences() {
             final List<RTCRtpCodecCapability> codecCapabilities =
                     new PeerConnectionFactory().getRtpReceiverCapabilities(MediaType.VIDEO).getCodecs();
             return Arrays.stream(CodecPreference.values())
                     .filter(codecPreference ->
                             codecCapabilities.stream().anyMatch(rtcRtpCodecCapability ->
                                     rtcRtpCodecCapability.getName().contains(codecPreference.name)))
-                    .collect(Collectors.toSet());
+                    .sorted()
+                    .collect(Collectors.toList());
         }
     }
 }
