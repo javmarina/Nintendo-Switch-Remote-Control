@@ -126,6 +126,7 @@ public abstract class RtcPeer {
     public void stop() {
         peerConnection.close();
         factory.dispose();
+        audioDeviceModule.dispose();
         signalingPeer.close();
     }
 
