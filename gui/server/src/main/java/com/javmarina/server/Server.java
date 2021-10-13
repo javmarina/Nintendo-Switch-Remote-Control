@@ -29,11 +29,8 @@ public final class Server extends Application {
 
     private ServerController serverController;
 
-    static {
-        WebRtcLoader.loadLibrary();
-    }
-
     public static void main(final String[] args) {
+        WebRtcLoader.loadLibrary();
         launch(args);
     }
 

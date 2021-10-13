@@ -33,11 +33,8 @@ public final class Client extends Application {
     public static final ResourceBundle RESOURCE_BUNDLE =
             ResourceBundle.getBundle("client", Locale.getDefault());
 
-    static {
-        WebRtcLoader.loadLibrary();
-    }
-
     public static void main(final String[] args) {
+        WebRtcLoader.loadLibrary();
         launch(args);
     }
 
