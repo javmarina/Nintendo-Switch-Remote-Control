@@ -27,6 +27,14 @@ public abstract class RtcPeer {
     protected static final byte COMMAND_PACKET = 0x33;
     protected static final byte COMMAND_PING = 0x44;
 
+    private enum State {
+        READY,
+        CONNECTED,
+        CLOSED
+    }
+
+    private State peerState = State.READY;
+
     protected static final String AUDIO_TRACK_NAME = "audioTrack";
     protected static final String VIDEO_TRACK_NAME = "videoTrack";
     protected static final String DATA_CHANNEL_NAME = "dataChannel";
@@ -65,7 +73,9 @@ public abstract class RtcPeer {
         peerConnection = factory.createPeerConnection(defaultConfiguration, new PeerConnectionObserver() {
             @Override
             public void onIceConnectionChange(final RTCIceConnectionState state) {
-                if (state == RTCIceConnectionState.DISCONNECTED || state == RTCIceConnectionState.CLOSED) {
+                if ((state == RTCIceConnectionState.DISCONNECTED || state == RTCIceConnectionState.CLOSED)
+                        && peerState == State.CONNECTED) {
+                    peerState = State.CLOSED;
                     onDisconnected();
                 }
             }
@@ -82,7 +92,8 @@ public abstract class RtcPeer {
 
             @Override
             public void onConnectionChange(final RTCPeerConnectionState state) {
-                if (state == RTCPeerConnectionState.CONNECTED) {
+                if (state == RTCPeerConnectionState.CONNECTED && peerState == State.READY) {
+                    peerState = State.CONNECTED;
                     onConnected();
                 }
             }
