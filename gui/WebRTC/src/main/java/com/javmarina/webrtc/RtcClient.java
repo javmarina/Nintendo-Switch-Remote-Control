@@ -33,6 +33,7 @@ import java.nio.ByteBuffer;
 public class RtcClient extends RtcPeer {
 
     private final PacketProvider packetProvider;
+    private final SdpUtils.CodecPreference codecPreference;
     private final RTCDataChannel dataChannel;
     private final ClientOut clientOutRunnable;
     private final Thread threadOut;
@@ -40,10 +41,12 @@ public class RtcClient extends RtcPeer {
 
     public RtcClient(final SessionId sessionId,
                      final PacketProvider packetProvider,
+                     final SdpUtils.CodecPreference codecPreference,
                      final AudioDeviceModule audioDeviceModule,
                      final Callback callback) {
         super(new SignalingPeer(sessionId, SignalingPeer.Role.CLIENT), audioDeviceModule);
         this.packetProvider = packetProvider;
+        this.codecPreference = codecPreference;
         this.callback = callback;
 
         final RTCDataChannelInit init = new RTCDataChannelInit();
@@ -89,29 +92,6 @@ public class RtcClient extends RtcPeer {
         videoTransceiverInit.direction = RTCRtpTransceiverDirection.RECV_ONLY;
         videoTransceiverInit.streamIds.add(STREAM_ID);
         final RTCRtpTransceiver videoTransceiver = peerConnection.addTransceiver(videoTrack, videoTransceiverInit);
-
-        /* Doesn't currently work
-        final List<RTCRtpCodecCapability> videoCodecs = factory.getRtpReceiverCapabilities(MediaType.VIDEO)
-                .getCodecs()
-                .stream()
-                .sorted((o1, o2) -> {
-                    final boolean is1 = o1.getName().contains("VP9");
-                    final boolean is2 = o2.getName().contains("VP9");
-                    if (is1 && is2) {
-                        return -Integer.compare(
-                                Integer.parseInt(o1.getSDPFmtp().get("profile-id")),
-                                Integer.parseInt(o2.getSDPFmtp().get("profile-id"))
-                        );
-                    } else if (is1) {
-                        return -1;
-                    } else if (is2) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                })
-                .collect(Collectors.toList());
-        videoTransceiver.setCodecPreferences(videoCodecs); */
     }
 
     @Override
@@ -162,10 +142,11 @@ public class RtcClient extends RtcPeer {
         peerConnection.createOffer(offerOptions, new CreateSessionDescriptionObserver() {
             @Override
             public void onSuccess(final RTCSessionDescription description) {
-                peerConnection.setLocalDescription(description, new SetSessionDescriptionObserver() {
+                final RTCSessionDescription newSessionDescription = SdpUtils.setCodecPreference(description, codecPreference);
+                peerConnection.setLocalDescription(newSessionDescription, new SetSessionDescriptionObserver() {
                     @Override
                     public void onSuccess() {
-                        signalingPeer.sendOffer(description);
+                        signalingPeer.sendOffer(newSessionDescription);
                     }
 
                     @Override

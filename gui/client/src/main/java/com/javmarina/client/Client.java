@@ -5,6 +5,7 @@ import com.javmarina.client.services.DefaultJamepadService;
 import com.javmarina.client.services.KeyboardService;
 import com.javmarina.client.services.bot.DiscordService;
 import com.javmarina.webrtc.RtcUtils;
+import com.javmarina.webrtc.SdpUtils;
 import com.javmarina.webrtc.WebRtcLoader;
 import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
@@ -54,11 +55,12 @@ public final class Client extends Application {
         clientController.setAudioOutputDevices(RtcUtils.getAudioRenderDevicesBlocking());
         clientController.setButtonAction(() -> {
             final ControllerService service = clientController.getSelectedControllerService();
+            final SdpUtils.CodecPreference codecPreference = clientController.getPreferredVideoCodec();
             final AudioDevice audioDevice = clientController.getSelectedAudioDevice();
             final SessionId sessionId = clientController.getSessionId();
 
             final ConnectionFrame connectionFrame = new ConnectionFrame(
-                    service, sessionId, audioDevice, primaryStage::show
+                    service, sessionId, codecPreference, audioDevice, primaryStage::show
             );
             try {
                 connectionFrame.show();

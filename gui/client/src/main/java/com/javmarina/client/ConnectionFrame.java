@@ -6,6 +6,7 @@ import com.javmarina.util.StoppableLoop;
 import com.javmarina.webrtc.FramerateEstimator;
 import com.javmarina.webrtc.RtcClient;
 import com.javmarina.webrtc.RtcUtils;
+import com.javmarina.webrtc.SdpUtils;
 import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.media.FourCC;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
@@ -41,6 +42,7 @@ public class ConnectionFrame implements RtcClient.Callback {
 
     private final ControllerService service;
     private final SessionId sessionId;
+    private final SdpUtils.CodecPreference codecPreference;
     private final AudioDevice audioDevice;
     private final Callback callback;
 
@@ -53,10 +55,12 @@ public class ConnectionFrame implements RtcClient.Callback {
 
     public ConnectionFrame(final ControllerService service,
                            final SessionId sessionId,
+                           final SdpUtils.CodecPreference codecPreference,
                            final AudioDevice audioDevice,
                            final Callback callback) {
         this.service = service;
         this.sessionId = sessionId;
+        this.codecPreference = codecPreference;
         this.audioDevice = audioDevice;
         this.callback = callback;
     }
@@ -104,6 +108,7 @@ public class ConnectionFrame implements RtcClient.Callback {
             rtcClient = new RtcClient(
                     sessionId,
                     service::getControllerStatus,
+                    codecPreference,
                     audioDeviceModule,
                     this
             );

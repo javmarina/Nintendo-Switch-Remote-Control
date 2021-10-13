@@ -14,10 +14,13 @@
     <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="%client.controllerInput" GridPane.columnIndex="0" GridPane.rowIndex="1" />
     <ChoiceBox fx:id="controllerInput" maxWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 
-    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="%client.audioOutput" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-    <ChoiceBox fx:id="audioOutput" maxWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="%client.codecPreference" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+    <ChoiceBox fx:id="codecPreference" maxWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 
-    <HBox alignment="CENTER" spacing="10" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="3">
+    <Label alignment="CENTER_RIGHT" maxWidth="1E308" text="%client.audioOutput" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+    <ChoiceBox fx:id="audioOutput" maxWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+
+    <HBox alignment="CENTER" spacing="10" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="4">
         <Button fx:id="startButton" minWidth="80.0" style="-fx-background-color: #457ecd; -fx-text-fill: #ffffff; -fx-font-weight: bold;" text="%client.start" />
     </HBox>
 
