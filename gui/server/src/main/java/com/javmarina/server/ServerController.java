@@ -16,6 +16,7 @@ import dev.onvoid.webrtc.media.video.VideoTrackSink;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
@@ -235,17 +236,31 @@ public class ServerController {
     }
 
     public void setSerialPorts(final List<SerialPort> serialPorts) {
+        final ObservableList<SerialPort> observableList = FXCollections.observableList(serialPorts);
+        FXCollections.sort(observableList, (o1, o2) -> {
+            if (o1 == null) {
+                return Integer.MIN_VALUE;
+            } else if (o2 == null) {
+                return Integer.MAX_VALUE;
+            } else {
+                return o1.getDescriptivePortName().compareTo(o2.getDescriptivePortName());
+            }
+        });
         serialPort.setItems(FXCollections.observableList(serialPorts));
         serialPort.getSelectionModel().selectFirst();
     }
 
     public void setVideoInputDevices(final List<VideoDevice> videoDevices) {
-        videoInput.setItems(FXCollections.observableList(videoDevices));
+        final ObservableList<VideoDevice> observableList = FXCollections.observableList(videoDevices);
+        FXCollections.sort(observableList, Comparator.comparing(VideoDevice::getName));
+        videoInput.setItems(observableList);
         videoInput.getSelectionModel().selectFirst();
     }
 
     public void setAudioInputDevices(final List<AudioDevice> audioDevices) {
-        audioInput.setItems(FXCollections.observableList(audioDevices));
+        final ObservableList<AudioDevice> observableList = FXCollections.observableList(audioDevices);
+        FXCollections.sort(observableList, Comparator.comparing(AudioDevice::getName));
+        audioInput.setItems(observableList);
         audioInput.getSelectionModel().selectFirst();
     }
 

@@ -6,6 +6,7 @@ import com.javmarina.webrtc.signaling.SessionId;
 import dev.onvoid.webrtc.media.audio.AudioDevice;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -13,6 +14,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -75,12 +77,16 @@ public class ClientController {
     }
 
     public void setControllerServices(final List<ControllerService> controllerServices) {
-        controllerInput.setItems(FXCollections.observableList(controllerServices));
+        final ObservableList<ControllerService> observableList = FXCollections.observableList(controllerServices);
+        FXCollections.sort(observableList, Comparator.comparing(ControllerService::toString));
+        controllerInput.setItems(observableList);
         controllerInput.getSelectionModel().selectFirst();
     }
 
     public void setAudioOutputDevices(final List<AudioDevice> audioDevices) {
-        audioOutput.setItems(FXCollections.observableList(audioDevices));
+        final ObservableList<AudioDevice> observableList = FXCollections.observableList(audioDevices);
+        FXCollections.sort(observableList, Comparator.comparing(AudioDevice::getName));
+        audioOutput.setItems(observableList);
         audioOutput.getSelectionModel().selectFirst();
     }
 
