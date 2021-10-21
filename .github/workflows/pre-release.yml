@@ -45,9 +45,8 @@ jobs:
         with:
           submodules: recursive
       - run: sudo apt-get install gcc-avr binutils-avr avr-libc
-      - run: cd firmware
-      - run: make
-      - run: mv Joystick.hex Arduino_UNO_R3.hex
+      - run: cd firmware & make
+      - run: mv firmware/Joystick.hex firmware/Arduino_UNO_R3.hex
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -56,4 +55,4 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            Arduino_UNO_R3.hex
+            firmware/Arduino_UNO_R3.hex
