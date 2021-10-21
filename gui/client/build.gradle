@@ -13,6 +13,7 @@ jar {
         )
     }
     from {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
     exclude 'META-INF/*.RSA'
