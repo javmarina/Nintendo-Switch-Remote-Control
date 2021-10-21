@@ -7,8 +7,8 @@ on:
       - "master"
 
 jobs:
-  pre-release:
-    name: "Pre Release"
+  pre-release-java:
+    name: "Pre Release (Java)"
     runs-on: "ubuntu-latest"
 
     steps:
@@ -35,3 +35,24 @@ jobs:
             LICENSE
             gui/client.jar
             gui/server.jar
+
+  pre-release-arduino:
+    name: "Pre Release (Arduino firmware)"
+    runs-on: "ubuntu-18.04"
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - run: sudo apt-get install gcc-avr binutils-avr avr-libc
+      - run: make
+      - run: mv firmware/Joystick.hex firmware/Arduino_UNO_R3.hex
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            firmware/Arduino_UNO_R3.hex
