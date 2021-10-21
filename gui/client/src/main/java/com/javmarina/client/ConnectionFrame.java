@@ -102,7 +102,8 @@ public class ConnectionFrame implements RtcClient.Callback {
         timeline.setCycleCount(Animation.INDEFINITE);
 
         RtcUtils.getAudioDeviceModule(audioDeviceModule -> {
-            audioDeviceModule.setPlayoutDevice(audioDevice); // TODO: this doesn't currently work, defaults to first device
+            audioDeviceModule.setPlayoutDevice(audioDevice);
+            audioDeviceModule.initPlayout();
 
             rtcClient = new RtcClient(
                     sessionId,

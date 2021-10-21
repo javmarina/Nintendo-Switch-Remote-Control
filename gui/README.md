@@ -12,7 +12,6 @@ Note that the server and client can run on the same PC.
 
 # Known issues
 
-- Audio device selection doesn't work. Regardless of the device you choose for audio capture (server side) and audio playback (client side), the first device that appears in the list will be selected. This issue is confirmed in Windows, don't know about other platforms.
 - When a connection (session) is finished, both the client and server programs have to be restarted in order to connect again. Connection will refuse if programs are not closed before.
 
 # Instructions
