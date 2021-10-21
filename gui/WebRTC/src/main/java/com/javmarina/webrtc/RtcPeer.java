@@ -134,13 +134,6 @@ public abstract class RtcPeer {
         });
     }
 
-    public void stop() {
-        peerConnection.close();
-        factory.dispose();
-        audioDeviceModule.dispose();
-        signalingPeer.close();
-    }
-
     public static void log(final String error) {
         log(new Exception(error));
     }

@@ -94,6 +94,13 @@ public class RtcClient extends RtcPeer {
         final RTCRtpTransceiver videoTransceiver = peerConnection.addTransceiver(videoTrack, videoTransceiverInit);
     }
 
+    public void stop() {
+        peerConnection.close(); // will call onDisconnected()
+        factory.dispose();
+        audioDeviceModule.dispose();
+        signalingPeer.close();
+    }
+
     @Override
     protected void onAnswerReceived(final RTCSessionDescription description) {
         peerConnection.setRemoteDescription(description, new SetSessionDescriptionObserver() {
