@@ -9,7 +9,7 @@ on:
 jobs:
   pre-release:
     name: "Pre Release"
-    runs-on: "ubuntu-18.04" # Required by Arduino firmware, until 20.04 is tested
+    runs-on: "ubuntu-latest"
 
     steps:
       - uses: actions/checkout@v2
