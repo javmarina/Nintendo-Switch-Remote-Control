@@ -1,5 +1,6 @@
 package com.javmarina.client.services.bot;
 
+import com.javmarina.client.Client;
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
@@ -76,6 +77,6 @@ public class DiscordService extends BotService {
 
     @Override
     public String toString() {
-        return "Discord bot";
+        return Client.RESOURCE_BUNDLE.getString("client.discord");
     }
 }

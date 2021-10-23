@@ -20,8 +20,6 @@ jobs:
         - xenial
         - bionic
       jdk:
-        - openjdk8
-        - openjdk10
         - openjdk11
       before_cache:
         - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock

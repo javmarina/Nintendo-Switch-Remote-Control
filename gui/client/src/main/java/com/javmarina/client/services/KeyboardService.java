@@ -2,11 +2,10 @@ package com.javmarina.client.services;
 
 import com.javmarina.client.Client;
 import com.javmarina.util.Packet;
+import javafx.scene.Scene;
+import javafx.scene.input.KeyCode;
 
-import java.awt.KeyboardFocusManager;
-import java.awt.event.KeyEvent;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.EnumSet;
 
 
 /**
@@ -15,48 +14,44 @@ import java.util.Set;
  */
 public class KeyboardService extends ControllerService {
 
-    private static final Set<Integer> pressedKeys = new HashSet<>(10);
+    private static final EnumSet<KeyCode> pressedKeys = EnumSet.noneOf(KeyCode.class);
 
-    public KeyboardService() {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyEvent -> {
-            synchronized (Client.class) {
-                switch (keyEvent.getID()) {
-                    case KeyEvent.KEY_PRESSED:
-                        pressedKeys.add(keyEvent.getKeyCode());
-                        break;
-                    case KeyEvent.KEY_RELEASED:
-                        pressedKeys.remove(keyEvent.getKeyCode());
-                        break;
-                }
-                return false;
-            }
-        });
+    private Scene scene;
+
+    public void setScene(final Scene newScene) {
+        if (scene != null) {
+            scene.setOnKeyReleased(null);
+            scene.setOnKeyPressed(null);
+        }
+        newScene.setOnKeyPressed(e -> pressedKeys.add(e.getCode()));
+        newScene.setOnKeyReleased(e -> pressedKeys.remove(e.getCode()));
+        scene = newScene;
     }
 
     @Override
     public Packet getPacket() {
         final Packet.Buttons buttons = new Packet.Buttons(
-                pressedKeys.contains(KeyEvent.VK_Y), // Y
-                pressedKeys.contains(KeyEvent.VK_B), // B
-                pressedKeys.contains(KeyEvent.VK_A) || pressedKeys.contains(KeyEvent.VK_ENTER), // A
-                pressedKeys.contains(KeyEvent.VK_X), // X
-                pressedKeys.contains(KeyEvent.VK_L) && !pressedKeys.contains(KeyEvent.VK_SHIFT), // L
-                pressedKeys.contains(KeyEvent.VK_R) && !pressedKeys.contains(KeyEvent.VK_SHIFT), // R
-                pressedKeys.contains(KeyEvent.VK_L) && pressedKeys.contains(KeyEvent.VK_SHIFT), // ZL
-                pressedKeys.contains(KeyEvent.VK_R) && pressedKeys.contains(KeyEvent.VK_SHIFT), // ZR
-                pressedKeys.contains(KeyEvent.VK_MINUS), // MINUS
-                pressedKeys.contains(KeyEvent.VK_PLUS), // PLUS
+                pressedKeys.contains(KeyCode.Y), // Y
+                pressedKeys.contains(KeyCode.B), // B
+                pressedKeys.contains(KeyCode.A) || pressedKeys.contains(KeyCode.ENTER), // A
+                pressedKeys.contains(KeyCode.X), // X
+                pressedKeys.contains(KeyCode.L) && !pressedKeys.contains(KeyCode.SHIFT), // L
+                pressedKeys.contains(KeyCode.R) && !pressedKeys.contains(KeyCode.SHIFT), // R
+                pressedKeys.contains(KeyCode.L) && pressedKeys.contains(KeyCode.SHIFT), // ZL
+                pressedKeys.contains(KeyCode.R) && pressedKeys.contains(KeyCode.SHIFT), // ZR
+                pressedKeys.contains(KeyCode.MINUS), // MINUS
+                pressedKeys.contains(KeyCode.PLUS), // PLUS
                 false,
                 false,
-                pressedKeys.contains(KeyEvent.VK_H), // HOME
-                pressedKeys.contains(KeyEvent.VK_C) // CAPTURE
+                pressedKeys.contains(KeyCode.H), // HOME
+                pressedKeys.contains(KeyCode.C) // CAPTURE
         );
 
         final Packet.Dpad dpad = new Packet.Dpad(
-                pressedKeys.contains(KeyEvent.VK_UP),
-                pressedKeys.contains(KeyEvent.VK_RIGHT),
-                pressedKeys.contains(KeyEvent.VK_DOWN),
-                pressedKeys.contains(KeyEvent.VK_LEFT)
+                pressedKeys.contains(KeyCode.UP),
+                pressedKeys.contains(KeyCode.RIGHT),
+                pressedKeys.contains(KeyCode.DOWN),
+                pressedKeys.contains(KeyCode.LEFT)
         );
 
         // No joystick support
@@ -65,6 +60,6 @@ public class KeyboardService extends ControllerService {
 
     @Override
     public String toString() {
-        return "Keyboard";
+        return Client.RESOURCE_BUNDLE.getString("client.keyboard");
     }
 }

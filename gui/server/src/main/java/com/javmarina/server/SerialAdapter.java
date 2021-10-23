@@ -40,7 +40,7 @@ public class SerialAdapter {
     private final SerialPort serialPort;
     private Status status = Status.OUT_OF_SYNC;
 
-    SerialAdapter(@Nullable final SerialPort serialPort, final int baudrate) {
+    public SerialAdapter(@Nullable final SerialPort serialPort, final int baudrate) {
         if (serialPort != null) {
             serialPort.setBaudRate(baudrate);
             serialPort.setNumDataBits(8);
@@ -66,7 +66,7 @@ public class SerialAdapter {
     4. Send a 0xCC byte and wait for the response (0x33).
     */
     @SuppressWarnings("ReuseOfLocalVariable")
-    void sync(final boolean forceSync) throws IOException {
+    public void sync(final boolean forceSync) throws IOException {
         if (serialPort == null) {
             status = Status.SYNCED;
             return;
@@ -136,13 +136,13 @@ public class SerialAdapter {
         throw new IOException("Couldn't sync with the AVR MCU");
     }
 
-    synchronized void closePort() {
+    public synchronized void closePort() {
         if (serialPort != null) {
             serialPort.closePort();
         }
     }
 
-    synchronized boolean isFake() {
+    public synchronized boolean isFake() {
         return serialPort == null;
     }
 
@@ -230,7 +230,7 @@ public class SerialAdapter {
      * @return {@code true} if successful (MCU replied with ACK), {@code false} otherwise.
      * Also returns {@code false} if the serial port is closed.
      */
-    synchronized boolean sendPacket(final Packet packet) {
+    public synchronized boolean sendPacket(final Packet packet) {
         if (serialPort != null && !serialPort.isOpen()) {
             return false;
         }
@@ -319,7 +319,7 @@ public class SerialAdapter {
 
     public static final class TestResults {
 
-        enum ErrorType {
+        public enum ErrorType {
             NONE,
             NO_ACKS,
             SYNC_ERROR

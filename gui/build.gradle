@@ -16,8 +16,9 @@ task clean(type: Delete) {
 
 task buildAll {
     dependsOn ":util:jar"
+    dependsOn ":WebRTC:jar"
     dependsOn ":client:jar"
     dependsOn ":server:jar"
-    tasks.getByPath(":client:jar").mustRunAfter(":util:jar")
-    tasks.getByPath(":server:jar").mustRunAfter(":util:jar")
+    tasks.getByPath(":client:jar").mustRunAfter(":WebRTC:jar").mustRunAfter(":util:jar")
+    tasks.getByPath(":server:jar").mustRunAfter(":WebRTC:jar").mustRunAfter(":util:jar")
 }

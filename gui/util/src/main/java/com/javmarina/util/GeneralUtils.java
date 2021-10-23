@@ -1,7 +1,6 @@
 package com.javmarina.util;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 /**
@@ -53,18 +52,5 @@ public final class GeneralUtils {
      */
     public static float lowPassFilter(final float value, final float sample, final float constant) {
         return value-constant*(value-sample);
-    }
-
-    /**
-     * Check if string is an integer.
-     * @param str input string.
-     * @return true if string is an integer (all characters are numeric)
-     */
-    public static boolean isStringInteger(@Nullable final String str) {
-        // null or empty
-        if (str == null || str.isEmpty()) {
-            return false;
-        }
-        return str.chars().mapToObj(i -> (char) i).allMatch(Character::isDigit);
     }
 }

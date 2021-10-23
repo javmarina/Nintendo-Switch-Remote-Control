@@ -1,18 +1,30 @@
-apply plugin: 'java'
-apply plugin: 'application'
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
+}
 
 mainClassName = 'com.javmarina.server.Server'
 
 jar {
     manifest {
         attributes(
-                'Main-Class': 'com.javmarina.server.Server'
+                'Main-Class': 'com.javmarina.server.Launcher'
         )
     }
     from {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
+    exclude 'META-INF/*.RSA'
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
     destinationDirectory.set(file("$rootDir"))
+}
+
+javafx {
+    version = "13.0.2"
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
 compileJava.options.encoding = "UTF-8"
@@ -22,9 +34,19 @@ repositories {
     mavenCentral()
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
+    }
+}
+
 dependencies {
     implementation 'com.intellij:annotations:+@jar'
-    //testCompile group: 'junit', name: 'junit', version: '4.11'
     implementation project(':util')
     implementation 'com.fazecast:jSerialComm:[2.0.0,3.0.0)'
+    implementation project(':WebRTC')
+
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:win"
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
 }
