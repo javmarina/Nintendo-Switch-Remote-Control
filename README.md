@@ -3,7 +3,7 @@
 
 # Nintendo-Switch-Remote-Control
 
-Remote control for the Nintendo Switch via UDP or with a single computer. **Pro Controller** emulation in AVR firmware
+Remote play for the Nintendo Switch via WebRTC (with video streaming). **Pro Controller** emulation in AVR firmware.
 
 This project uses the LUFA library and reverse-engineering of the Pro Controller for Nintendo Switch for remote control of the console. It consists on three main parts:
 * GUI: Java project with two programs, client and server.
@@ -12,13 +12,13 @@ This project uses the LUFA library and reverse-engineering of the Pro Controller
 
   The server receives the input and sends it to an AVR microcontroller which acts as a controller. The MCU is plugged into the Switch dock and the console recognizes it as a Pro Controller. If you have a USB-C adapter, you should also be able to use this in handheld mode/Switch Lite.
 
-  Finally, the server sends a real-time video and audio stream acquired from an HDMI capture card.
+  Finally, the server sends a real-time video and audio stream acquired from an HDMI capture card, over WebRTC (the technology used for Stadia and Google Meet).
 
 * Firmware: firmware that runs on the microcontroller. The server PC sends the received commands to the microcontroller via UART. When the Switch requests HID reports, the microcontroller sends them. It uses the LUFA library.
 
 * Small Python code for fast prototyping (`python` folder).
 
-The goal of this project is to provide a way to play Switch games remotely (two computers) or control the console locally (one computer).
+The goal of this project is to provide a way to play Switch games remotely (two computers), or control the console locally or automate tasks (one computer).
 
 A complete diagram is shown below:
 ![Hardware diagram](/images/diagram.png)
@@ -31,10 +31,9 @@ Additional information can be found on the specific README files.
 * Inside `firmware` folder [there are](/firmware/README.md) instructions for compiling and flashing the firmware for different boards, as well as a list of changes made to the original code.
 
 ### Prerequisites
-* A LUFA-compatible microcontroller such as the Teensy 2.0++, Arduino UNO R3, or the Arduino Micro
+* A LUFA-compatible microcontroller such as the Teensy 2.0++, **Arduino UNO R3**, or the Arduino Micro
 * A USB-to-UART (TTL) adapter. Popular ones are based on FTDI and CH340 chip. Can be easily found online.
 * An HDMI capture card compatible with `libuvc` (in general, any with USB output). Device quality can dramatically affect streaming performance.
-* A deployed [signaling server](https://github.com/javmarina/Switch-Signaling-Server).
 * A PC with Java and JDK installed (Java 11 or newer required).
 
 ### TODO list

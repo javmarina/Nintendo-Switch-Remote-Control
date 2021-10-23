@@ -5,12 +5,11 @@ on:
   push:
     branches:
       - "master"
-      - "java-fx"
 
 jobs:
   pre-release:
     name: "Pre Release"
-    runs-on: "ubuntu-18.04" # Required by Arduino firmware, until 20.04 is tested
+    runs-on: "ubuntu-20.04"
 
     steps:
       - uses: actions/checkout@v2
@@ -42,9 +41,9 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest-java-fx"
+          automatic_release_tag: "latest"
           prerelease: true
-          title: "Development Build (JavaFX)"
+          title: "Development Build"
           files: |
             LICENSE
             gui/client.jar

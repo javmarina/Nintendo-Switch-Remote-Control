@@ -4,7 +4,7 @@ This Java project contains a client and server module, which can be compiled, an
 
 In order to use this project, you need both `client.jar` and `server.jar`. You can download them [here](https://github.com/javmarina/Nintendo-Switch-Remote-Control/releases/tag/latest). You can also modify the code and compile the JARs by running `gradle buildAll`. Both JARs will appear in the root folder.
 
-The signaling server is provided and running on the cloud. Its code is available [here](https://github.com/javmarina/Switch-Signaling-Server). You can also deploy your own server and edit the `SIGNALING_SERVER` field in [SignalingPeer.java](https://github.com/javmarina/Nintendo-Switch-Remote-Control/blob/java-fx/gui/WebRTC/src/main/java/com/javmarina/webrtc/signaling/SignalingPeer.java).
+The signaling server is provided and running on the cloud. Its code is available [here](https://github.com/javmarina/Switch-Signaling-Server). You can also deploy your own server and edit the `SIGNALING_SERVER` field in [SignalingPeer.java](https://github.com/javmarina/Nintendo-Switch-Remote-Control/blob/master/gui/WebRTC/src/main/java/com/javmarina/webrtc/signaling/SignalingPeer.java).
 
 The [Jamepad](https://github.com/williamahartman/Jamepad) library is used for reading controller input. The Discord bot is implemented using [Discord4J](https://github.com/Discord4J/Discord4J).
 
