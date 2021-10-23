@@ -2,9 +2,9 @@
 
 This Java project contains a client and server module, which can be compiled, and additional utility modules: 'util' module that acts as a dependency of the other two and the 'WebRTC' module with WebRTC-specific code. I used IntelliJ Idea.
 
-In order to use this project, you need both `client.jar` and `server.jar`. You can download them [here](https://github.com/javmarina/Nintendo-Switch-Remote-Control/releases/tag/latest), but note that they are compiled so that both programs use a signaling server running locally in port 3000.
+In order to use this project, you need both `client.jar` and `server.jar`. You can download them [here](https://github.com/javmarina/Nintendo-Switch-Remote-Control/releases/tag/latest). You can also modify the code and compile the JARs by running `gradle buildAll`. Both JARs will appear in the root folder.
 
-If you want to play remotely, you will need to deploy the signaling server to the cloud. The signaling server code is available [here](https://github.com/javmarina/Switch-Signaling-Server). When deployed, annotate the address, write it to the `SIGNALING_SERVER` in [SignalingPeer.java](https://github.com/javmarina/Nintendo-Switch-Remote-Control/blob/java-fx/gui/WebRTC/src/main/java/com/javmarina/webrtc/signaling/SignalingPeer.java), and compile by running `gradle buildAll`. Both JARs will appear in the root folder.
+The signaling server is provided and running on the cloud. Its code is available [here](https://github.com/javmarina/Switch-Signaling-Server). You can also deploy your own server and edit the `SIGNALING_SERVER` field in [SignalingPeer.java](https://github.com/javmarina/Nintendo-Switch-Remote-Control/blob/java-fx/gui/WebRTC/src/main/java/com/javmarina/webrtc/signaling/SignalingPeer.java).
 
 The [Jamepad](https://github.com/williamahartman/Jamepad) library is used for reading controller input. The Discord bot is implemented using [Discord4J](https://github.com/Discord4J/Discord4J).
 
@@ -25,10 +25,6 @@ Please follow the instructions in the exact same order as below.
  6. Open client program, configure options (particularly, write the same session ID), and click on "Start". Connection should be established soon.
  
 If you can't get the setup running, [this issue](https://github.com/javmarina/Nintendo-Switch-Remote-Control/issues/2) might be helpful. Remember to set the correct baudrate for serial communication, which is 1 Mbps by default and is saved inside the compiled firmware. You can edit `BAUD` in [avr.h](/firmware/include/avr.h), recompile and reflash.
-
-# Signaling server
-
-Right now, no real signaling server is provided by default. You have to deploy and host your own one. If you use the provided JARs, a server must be running locally.
 
 # Discord bot configuration
  

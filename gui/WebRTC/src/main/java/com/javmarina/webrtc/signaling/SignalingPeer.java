@@ -5,7 +5,6 @@ import dev.onvoid.webrtc.RTCIceCandidate;
 import dev.onvoid.webrtc.RTCSessionDescription;
 import io.socket.client.IO;
 import io.socket.client.Socket;
-import io.socket.engineio.client.transports.Polling;
 import org.json.JSONObject;
 
 import java.net.URI;
@@ -14,7 +13,7 @@ import java.net.URI;
 public class SignalingPeer {
 
     // Put your signaling server URI here
-    private static final String SIGNALING_SERVER = "http://localhost:3000/";
+    private static final String SIGNALING_SERVER = "http://ec2-3-129-8-187.us-east-2.compute.amazonaws.com:8080/";
 
     private static final String COMMAND_REGISTER_OK = "register-ok";
     private static final String COMMAND_REGISTER_INVALID = "register-invalid";
@@ -45,7 +44,6 @@ public class SignalingPeer {
 
     public void start(final Callback callback) {
         final IO.Options options = IO.Options.builder()
-                .setTransports(new String[]{Polling.NAME})
                 .build();
         final URI uri = URI.create(SIGNALING_SERVER);
         socket = IO.socket(uri, options);
