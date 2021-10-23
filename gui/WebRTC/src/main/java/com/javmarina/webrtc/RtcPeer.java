@@ -30,6 +30,7 @@ public abstract class RtcPeer {
     private enum State {
         READY,
         CONNECTED,
+        DISCONNECTED,
         CLOSED
     }
 
@@ -73,10 +74,16 @@ public abstract class RtcPeer {
         peerConnection = factory.createPeerConnection(defaultConfiguration, new PeerConnectionObserver() {
             @Override
             public void onIceConnectionChange(final RTCIceConnectionState state) {
-                if ((state == RTCIceConnectionState.DISCONNECTED || state == RTCIceConnectionState.CLOSED)
-                        && peerState == State.CONNECTED) {
-                    peerState = State.CLOSED;
+                if (state == RTCIceConnectionState.DISCONNECTED && peerState == State.CONNECTED) {
+                    peerState = State.DISCONNECTED;
                     onDisconnected();
+                }
+                if (state == RTCIceConnectionState.CLOSED &&
+                        (peerState == State.DISCONNECTED || peerState == State.CONNECTED)) {
+                    // peerState can be CONNECTED if this peer explicitly closes the connection, for example
+                    // by calling RtcClient.stop()
+                    peerState = State.CLOSED;
+                    onClosed();
                 }
             }
 
@@ -152,6 +159,7 @@ public abstract class RtcPeer {
     }
 
     protected abstract void onDisconnected();
+    protected abstract void onClosed();
     protected abstract void onInvalidSessionId();
     protected abstract void onValidRegister();
 }

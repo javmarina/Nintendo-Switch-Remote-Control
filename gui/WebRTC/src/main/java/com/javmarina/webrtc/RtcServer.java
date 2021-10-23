@@ -21,6 +21,8 @@ import dev.onvoid.webrtc.media.video.VideoDeviceSource;
 import dev.onvoid.webrtc.media.video.VideoTrack;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class RtcServer extends RtcPeer {
@@ -139,6 +141,21 @@ public class RtcServer extends RtcPeer {
         signalingPeer.close();
         videoSource.stop();
         callback.onSessionStopped();
+        new Timer().schedule(
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        peerConnection.close();
+                        factory.dispose();
+                    }
+                },
+                50
+        );
+    }
+
+    @Override
+    protected void onClosed() {
+        // No need to do anything
     }
 
     @Override

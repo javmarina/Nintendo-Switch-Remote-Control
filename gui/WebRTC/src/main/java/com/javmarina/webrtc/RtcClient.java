@@ -134,6 +134,12 @@ public class RtcClient extends RtcPeer {
 
     @Override
     protected void onDisconnected() {
+        // Peer connection is closed when the RtcClient decides (when stop() is called),
+        // so this method is never called
+    }
+
+    @Override
+    protected void onClosed() {
         clientOutRunnable.stop(callback::onSessionStopped);
     }
 
