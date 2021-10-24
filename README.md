@@ -30,6 +30,20 @@ Additional information can be found on the specific README files.
 
 * Inside `firmware` folder [there are](/firmware/README.md) instructions for compiling and flashing the firmware for different boards, as well as a list of changes made to the original code.
 
+### Is it fast/usable?
+
+Depends on your setup. My goal has been to optimize the software, which is the part I can control, but performance can also be affected by the hardware.
+
+* Critical software parts, such as controller input, real-time video streaming and serial communication, use native libraries. Java is used for the user interface (in particular, JavaFX, which is fairly efficient).
+
+* Serial communication runs at 1 Mbps by default, which is the maximum baud rate the Arduino Uno R3 can safely work with. This means one controller packet is sent in under 0.1 ms.
+
+* For audio and video streaming, WebRTC is used. WebRTC is the state-of-the-art videoconference technology, used by Google Meet and, more importantly, Stadia. WebRTC has sub-500-millisecond latency, is open-source and has become an industry standard.
+
+* There is an option to select the video codec for the remote play. Users can take advantage of recent codecs, such as VP9 or AV1, with improved quality and reduced bandwidth.
+
+Therefore, if you experience high latency and can't play games, your hardware setup is probably to blame. The most critical components are the **HDMI capture card** and the **internet connection**. Low quality HDMI capture devices introduce high latency that can affect the user experience. A high bandwith and low latency internet connection is also desirable.
+
 ### Prerequisites
 * A LUFA-compatible microcontroller such as the Teensy 2.0++, **Arduino UNO R3**, or the Arduino Micro
 * A USB-to-UART (TTL) adapter. Popular ones are based on FTDI and CH340 chip. Can be easily found online.
