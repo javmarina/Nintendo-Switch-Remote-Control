@@ -516,7 +516,7 @@ if __name__ == "__main__":
     while index < 0 or index >= len(available_ports):
         index = int(input("Introduce port index: "))
 
-    ser = serial.Serial(port=available_ports[index], baudrate=args.baudrate, timeout=1)
+    ser = serial.Serial(port=available_ports[index].device, baudrate=args.baudrate, timeout=1)
 
     # Attempt to sync with the MCU
     if not sync():
