@@ -93,7 +93,7 @@ COMMAND_SYNC_2 = 0xCC
 COMMAND_SYNC_START = 0xFF
 
 # Responses from MCU
-RESP_USB_ACK = 0x90
+# RESP_USB_ACK = 0x90
 RESP_UPDATE_ACK = 0x91
 RESP_UPDATE_NACK = 0x92
 RESP_SYNC_START = 0xFF
@@ -212,7 +212,7 @@ def send_packet(packet=None, debug=False):
 
         # Wait for USB ACK or UPDATE NACK
         byte_in = read_byte()
-        commandSuccess = (byte_in == RESP_USB_ACK)
+        commandSuccess = (byte_in == RESP_UPDATE_ACK)
     else:
         commandSuccess = True
     return commandSuccess
