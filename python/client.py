@@ -2,6 +2,7 @@
 import argparse
 import math
 import time
+from typing import Tuple, List, Optional
 
 import serial.tools.list_ports
 
@@ -104,23 +105,26 @@ RESP_SYNC_OK = 0x33
 # Compute x and y based on angle and intensity
 
 
-def angle(angle, intensity):
+def angle(angle: float, intensity: float) -> Tuple[float, float]:
+    """
+    Compute x and y based on angle and intensity
+    """
     # y is negative because on the Y input, UP = 0 and DOWN = 255
     x = int((math.cos(math.radians(angle)) * 0x7F) * intensity / 0xFF) + 0x80
     y = -int((math.sin(math.radians(angle)) * 0x7F) * intensity / 0xFF) + 0x80
     return x, y
 
 
-def lstick_angle(angle, intensity):
+def lstick_angle(angle: int, intensity: int) -> int:
     return (intensity + (angle << 8)) << 24
 
 
-def rstick_angle(angle, intensity):
+def rstick_angle(angle: int, intensity: int) -> int:
     return (intensity + (angle << 8)) << 44
 
 
 # Precision wait
-def p_wait(waitTime):
+def p_wait(waitTime: float):
     t0 = time.perf_counter()
     t1 = t0
     while t1 - t0 < waitTime:
@@ -128,7 +132,7 @@ def p_wait(waitTime):
 
 
 # Wait for data to be available on the serial port
-def wait_for_data(sleepTime=0.1):
+def wait_for_data(sleepTime: float = 0.1):
     t0 = time.perf_counter()
     t1 = t0
     inWaiting = ser.in_waiting
@@ -138,14 +142,18 @@ def wait_for_data(sleepTime=0.1):
         t1 = time.perf_counter()
 
 
-# Read X bytes from the serial port (returns list)
-def read_bytes(size):
+def read_bytes(size: int) -> List[int]:
+    """
+    Read X bytes from the serial port (returns list)
+    """
     bytes_in = ser.read(size)
     return list(bytes_in)
 
 
-# Read 1 byte from the serial port (returns int)
-def read_byte():
+def read_byte() -> int:
+    """
+    Read 1 byte from the serial port (returns int)
+    """
     bytes_in = read_bytes(1)
     if len(bytes_in) != 0:
         byte_in = bytes_in[0]
@@ -154,8 +162,10 @@ def read_byte():
     return byte_in
 
 
-# Discard all incoming bytes and read the last (latest) (returns int)
-def read_byte_latest():
+def read_byte_latest() -> int:
+    """
+    Discard all incoming bytes and read the last (latest) (returns int)
+    """
     inWaiting = ser.in_waiting
     if inWaiting == 0:
         inWaiting = 1
@@ -167,21 +177,25 @@ def read_byte_latest():
     return byte_in
 
 
-# Write bytes to the serial port
-def write_bytes(bytes_out):
+def write_bytes(bytes_out: List[int]):
+    """
+    # Write bytes to the serial port
+    """
     ser.write(bytearray(bytes_out))
-    return
 
 
-# Write byte to the serial port
-def write_byte(byte_out):
+def write_byte(byte_out: int):
+    """
+    Write byte to the serial port
+    """
     write_bytes([byte_out])
-    return
 
 
-# Compute CRC8
-# https://www.microchip.com/webdoc/AVRLibcReferenceManual/group__util__crc_1gab27eaaef6d7fd096bd7d57bf3f9ba083.html
-def crc8_ccitt(old_crc, new_data):
+def crc8_ccitt(old_crc: int, new_data: int) -> int:
+    """
+    Compute CRC8
+    https://www.microchip.com/webdoc/AVRLibcReferenceManual/group__util__crc_1gab27eaaef6d7fd096bd7d57bf3f9ba083.html
+    """
     data = old_crc ^ new_data
 
     for i in range(8):
@@ -194,8 +208,10 @@ def crc8_ccitt(old_crc, new_data):
     return data
 
 
-# Send a raw packet and wait for a response (CRC will be added automatically)
-def send_packet(packet=None, debug=False):
+def send_packet(packet: Optional[List[int]] = None, debug: bool = False) -> bool:
+    """
+    Send a raw packet and wait for a response (CRC will be added automatically)
+    """
     if packet is None:
         packet = [0x00, 0x00, 0x08, 0x80, 0x80, 0x80, 0x80, 0x00]
     if not debug:
@@ -218,8 +234,10 @@ def send_packet(packet=None, debug=False):
     return commandSuccess
 
 
-# Convert DPAD value to actual DPAD value used by Switch
-def decrypt_dpad(dpad):
+def decrypt_dpad(dpad: int) -> int:
+    """
+    Convert DPAD value to actual DPAD value used by Switch
+    """
     if dpad == DIR_U:
         dpadDecrypt = A_DPAD_U
     elif dpad == DIR_R:
@@ -241,8 +259,10 @@ def decrypt_dpad(dpad):
     return dpadDecrypt
 
 
-# Convert CMD to a packet
-def cmd_to_packet(command):
+def cmd_to_packet(command: int) -> List[int]:
+    """
+    Convert CMD to a packet
+    """
     cmdCopy = command
     low = (cmdCopy & 0xFF)
     cmdCopy = cmdCopy >> 8
@@ -266,14 +286,18 @@ def cmd_to_packet(command):
     return packet
 
 
-# Send a formatted controller command to the MCU
-def send_cmd(command=NO_INPUT):
+def send_cmd(command: int = NO_INPUT) -> bool:
+    """
+    Send a formatted controller command to the MCU
+    """
     commandSuccess = send_packet(cmd_to_packet(command))
     return commandSuccess
 
 
-# Test all buttons except for home and capture
 def testbench_btn():
+    """
+    Test all buttons except for home and capture
+    """
     send_cmd(BTN_A)
     p_wait(0.5)
     send_cmd()
@@ -308,8 +332,10 @@ def testbench_btn():
     p_wait(0.001)
 
 
-# Test DPAD U / R / D / L
 def testbench_dpad():
+    """
+    Test DPAD U / R / D / L
+    """
     send_cmd(DPAD_U)
     p_wait(0.5)
     send_cmd()
@@ -328,8 +354,10 @@ def testbench_dpad():
     p_wait(0.001)
 
 
-# Test DPAD Diagonals - Does not register on switch due to dpad buttons
 def testbench_dpad_diagonals():
+    """
+    Test DPAD Diagonals - Does not register on switch due to dpad buttons
+    """
     send_cmd(DPAD_U_R)
     p_wait(0.5)
     send_cmd()
@@ -348,8 +376,10 @@ def testbench_dpad_diagonals():
     p_wait(0.001)
 
 
-# Test Left Analog Stick
 def testbench_lstick():
+    """
+    Test Left Analog Stick
+    """
     # Test U/R/D/L
     send_cmd(BTN_LCLICK)
     p_wait(0.5)
@@ -385,8 +415,10 @@ def testbench_lstick():
     p_wait(0.5)
 
 
-# Test Right Analog Stick
 def testbench_rstick():
+    """
+    Test Right Analog Stick
+    """
     # Test U/R/D/L
     send_cmd(BTN_RCLICK)
     p_wait(0.5)
@@ -422,8 +454,10 @@ def testbench_rstick():
     p_wait(0.5)
 
 
-# Test Packet Speed
-def testbench_packet_speed(count=100):
+def testbench_packet_speed(count: int = 100):
+    """
+    Test Packet Speed
+    """
     sum = 0
     min = 999
     max = 0
@@ -461,11 +495,13 @@ def testbench():
     testbench_lstick()
     testbench_rstick()
     testbench_packet_speed()
-    return
 
 
-# Force MCU to sync
-def force_sync():
+def force_sync() -> bool:
+    """
+    Force MCU to sync
+    """
+
     # Send 9x 0xFF's to fully flush out buffer on device
     # Device will send back 0xFF (RESP_SYNC_START) when it is ready to sync
     write_bytes([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
@@ -492,8 +528,10 @@ def force_sync():
     return False
 
 
-# Start MCU syncing process
-def sync():
+def sync() -> bool:
+    """
+    Start MCU syncing process
+    """
     # Try sending a packet
     inSync = send_packet()
     if not inSync:
