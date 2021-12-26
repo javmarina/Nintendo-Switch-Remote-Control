@@ -471,20 +471,25 @@ def force_sync():
     write_bytes([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
 
     # Wait for serial data and read the last byte sent
-    wait_for_data()
-    byte_in = read_byte_latest()
+    timestamp = time.perf_counter()
+    available = 0
+    while time.perf_counter() - timestamp < 0.018:
+        now = ser.in_waiting
+        if now > available:
+            available = now
+            timestamp = time.perf_counter()
 
-    # Begin sync...
-    inSync = False
-    if byte_in == RESP_SYNC_START:
-        write_byte(COMMAND_SYNC_1)
-        byte_in = read_byte()
-        if byte_in == RESP_SYNC_1:
-            write_byte(COMMAND_SYNC_2)
+    if 1 <= available <= 9:
+        byte_in = read_byte_latest()
+        if byte_in == RESP_SYNC_START:
+            write_byte(COMMAND_SYNC_1)
             byte_in = read_byte()
-            if byte_in == RESP_SYNC_OK:
-                inSync = True
-    return inSync
+            if byte_in == RESP_SYNC_1:
+                write_byte(COMMAND_SYNC_2)
+                byte_in = read_byte()
+                if byte_in == RESP_SYNC_OK:
+                    return True
+    return False
 
 
 # Start MCU syncing process
@@ -496,6 +501,7 @@ def sync():
         inSync = force_sync()
         if inSync:
             inSync = send_packet()
+    print("[sync()]", "Synced!" if inSync else "Not synced")
     return inSync
 
 
