@@ -212,7 +212,10 @@ public class ConnectionFrame implements RtcServer.Callback {
     }
 
     private void close() {
-        stage.close();
+        if (stage != null) {
+            // stage can be null if show() didn't complete
+            stage.close();
+        }
         callback.onClosed();
     }
 
