@@ -146,7 +146,11 @@ def read_bytes(size: int) -> List[int]:
     """
     Read X bytes from the serial port (returns list)
     """
+    print("Reading {:d} byte(s) from serial port".format(size))
     bytes_in = ser.read(size)
+    print("Read {:d} bytes: {:s}".format(len(bytes_in), str([hex(i) for i in bytes_in])))
+    if len(bytes_in) < size:
+        print("Warning! We received less bytes than expected")
     return list(bytes_in)
 
 
@@ -158,6 +162,7 @@ def read_byte() -> int:
     if len(bytes_in) != 0:
         byte_in = bytes_in[0]
     else:
+        print("[read_byte()] Error: requested one byte but received none!")
         byte_in = 0
     return byte_in
 
@@ -167,12 +172,16 @@ def read_byte_latest() -> int:
     Discard all incoming bytes and read the last (latest) (returns int)
     """
     inWaiting = ser.in_waiting
+    print("[read_byte_latest()] {:d} byte(s) in input buffer, reading last one and discarding the rest".format(inWaiting))
     if inWaiting == 0:
         inWaiting = 1
     bytes_in = read_bytes(inWaiting)
+    if inWaiting > len(bytes_in) > 0:
+        print("[read_byte_latest()] Error: requested {:d} byte(s) but received {:d}!".format(inWaiting, len(bytes_in)))
     if len(bytes_in) != 0:
         byte_in = bytes_in[0]
     else:
+        print("[read_byte_latest()] Error: requested {:d} byte(s) but received none!".format(inWaiting))
         byte_in = 0
     return byte_in
 
@@ -181,7 +190,9 @@ def write_bytes(bytes_out: List[int]):
     """
     # Write bytes to the serial port
     """
-    ser.write(bytearray(bytes_out))
+    print("Writing {:s} to serial port".format(str([hex(i) for i in bytes_out])))
+    count = ser.write(bytearray(bytes_out))
+    print("Wrote {:d} bytes out of {:d}".format(count, len(bytes_out)))
 
 
 def write_byte(byte_out: int):
@@ -504,27 +515,46 @@ def force_sync() -> bool:
 
     # Send 9x 0xFF's to fully flush out buffer on device
     # Device will send back 0xFF (RESP_SYNC_START) when it is ready to sync
+    print("First, write nine 0xFF bytes to flush out buffer on device")
     write_bytes([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
 
     # Wait for serial data and read the last byte sent
     timestamp = time.perf_counter()
     available = 0
-    while time.perf_counter() - timestamp < 0.018:
+    timeout = 0.018
+    while time.perf_counter() - timestamp < timeout:
         now = ser.in_waiting
         if now > available:
+            print("{:d} byte(s) in the input buffer, waiting {:.1f} ms for more bytes".format(now, 1000 * timeout))
             available = now
             timestamp = time.perf_counter()
 
+    print("Eventually we received {:d} byte(s)".format(available))
+
     if 1 <= available <= 9:
         byte_in = read_byte_latest()
+        print("Last received byte is", hex(byte_in))
         if byte_in == RESP_SYNC_START:
+            print("Sending COMMAND_SYNC_1 command...")
             write_byte(COMMAND_SYNC_1)
             byte_in = read_byte()
+            print("Received byte {:s} as response".format(hex(byte_in)))
             if byte_in == RESP_SYNC_1:
+                print("Sending COMMAND_SYNC_2 command...")
                 write_byte(COMMAND_SYNC_2)
                 byte_in = read_byte()
+                print("Received byte {:s} as response".format(hex(byte_in)))
                 if byte_in == RESP_SYNC_OK:
+                    print("RESP_SYNC_OK, sync completed!")
                     return True
+                else:
+                    print("[SYNC ERROR] We expected response to be 0x33")
+            else:
+                print("[SYNC ERROR] We expected response to be 0xCC")
+        else:
+            print("[SYNC ERROR] We expected last byte to be 0xFF")
+    else:
+        print("[SYNC ERROR] We expected between 1 and 9 bytes")
     return False
 
 
@@ -536,6 +566,7 @@ def sync() -> bool:
     inSync = send_packet()
     if not inSync:
         # Not in sync: force re-sync and send a packet
+        print("[sync()] Not synced, forcing sync...")
         inSync = force_sync()
         if inSync:
             inSync = send_packet()
