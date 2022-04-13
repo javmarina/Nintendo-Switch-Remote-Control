@@ -179,7 +179,8 @@ def read_byte_latest() -> int:
     if inWaiting > len(bytes_in) > 0:
         print("[read_byte_latest()] Error: requested {:d} byte(s) but received {:d}!".format(inWaiting, len(bytes_in)))
     if len(bytes_in) != 0:
-        byte_in = bytes_in[0]
+        byte_in = bytes_in[-1]
+        print("[read_byte_latest()] Input buffer contained: {:s}".format(str([hex(i) for i in bytes_in])))
     else:
         print("[read_byte_latest()] Error: requested {:d} byte(s) but received none!".format(inWaiting))
         byte_in = 0
@@ -513,9 +514,12 @@ def force_sync() -> bool:
     Force MCU to sync
     """
 
+    print("First, clear input buffer")
+    ser.reset_input_buffer()
+
     # Send 9x 0xFF's to fully flush out buffer on device
     # Device will send back 0xFF (RESP_SYNC_START) when it is ready to sync
-    print("First, write nine 0xFF bytes to flush out buffer on device")
+    print("Then, write nine 0xFF bytes to flush out buffer on device")
     write_bytes([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
 
     # Wait for serial data and read the last byte sent
