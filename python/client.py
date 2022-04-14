@@ -534,9 +534,9 @@ def force_sync() -> bool:
             timestamp = time.perf_counter()
 
     print("Eventually we received {:d} byte(s)".format(available))
+    byte_in = read_byte_latest()
 
     if 1 <= available <= 9:
-        byte_in = read_byte_latest()
         print("Last received byte is", hex(byte_in))
         if byte_in == RESP_SYNC_START:
             print("Sending COMMAND_SYNC_1 command...")
