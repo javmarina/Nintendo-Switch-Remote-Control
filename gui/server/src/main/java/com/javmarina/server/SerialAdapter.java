@@ -40,10 +40,10 @@ public class SerialAdapter {
     @Nullable
     private final SerialPort serialPort;
     private Status status = Status.OUT_OF_SYNC;
+    private boolean isBaudrateInvalid = false;
 
     public SerialAdapter(@Nullable final SerialPort serialPort, final int baudrate) {
         if (serialPort != null) {
-            serialPort.setBaudRate(baudrate);
             serialPort.setNumDataBits(8);
             serialPort.setParity(SerialPort.NO_PARITY);
             serialPort.setNumStopBits(SerialPort.ONE_STOP_BIT);
@@ -58,8 +58,15 @@ public class SerialAdapter {
                 serialPort.allowElevatedPermissionsRequest();
             }
             serialPort.openPort();
+            if (!serialPort.setBaudRate(baudrate)) {
+                this.isBaudrateInvalid = true;
+            }
         }
         this.serialPort = serialPort;
+    }
+
+    public boolean isBaudrateInvalid() {
+        return isBaudrateInvalid;
     }
 
     /*

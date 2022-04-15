@@ -60,6 +60,17 @@ public class ConnectionFrame implements RtcServer.Callback {
 
         panelController = loader.getController();
 
+        if (!serialAdapter.isFake() && serialAdapter.isBaudrateInvalid()) {
+            final Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setContentText(RESOURCE_BUNDLE.getString("connection.serialInvalidBaudrate"));
+            alert.setHeaderText(null);
+            alert.showAndWait();
+
+            serialAdapter.closePort();
+            close();
+            return;
+        }
+
         try {
             panelController.setSerialInfo(RESOURCE_BUNDLE.getString("connection.serialSyncing"));
             serialAdapter.sync(true);
