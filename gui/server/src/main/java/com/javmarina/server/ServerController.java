@@ -43,6 +43,8 @@ public class ServerController {
     private static final Pattern NUMERIC_PATTERN = Pattern.compile("[0-9]*");
 
     private static final int DEFAULT_BAUDRATE = 1000000; // 1 Mbps
+    private static final int MAX_BAUDRATE = 1000000;
+    private static final int MIN_BAUDRATE = 9600;
     private static final String KEY_BAUDRATE = "key_baudrate";
 
     private static final Comparator<VideoCaptureCapability> CAPABILITY_COMPARATOR = (o1, o2) -> {
@@ -94,9 +96,12 @@ public class ServerController {
         baudrateField.setText(prefs.get(KEY_BAUDRATE, String.valueOf(DEFAULT_BAUDRATE)));
 
         openServerButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {
+            if (baudrateField.getText().length() > String.valueOf(MAX_BAUDRATE).length()) {
+                return true;
+            }
             final int baud = baudrateField.getText().length() == 0 ?
                     0 : Integer.parseInt(baudrateField.getText());
-            return baud < 9600 || baud > 1000000
+            return baud < MIN_BAUDRATE || baud > MAX_BAUDRATE
                     || videoInput.getValue() == null
                     || videoCapability.getValue() == null
                     || audioInput.getValue() == null;
