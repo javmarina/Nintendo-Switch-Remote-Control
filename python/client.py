@@ -3,6 +3,7 @@ import argparse
 import math
 import time
 from typing import Tuple, List, Optional
+import warnings
 
 import serial.tools.list_ports
 
@@ -596,10 +597,20 @@ if __name__ == "__main__":
         index = int(input("Introduce port index: "))
 
     ser = serial.Serial(port=available_ports[index].device, baudrate=args.baudrate, timeout=1)
+    # In theory, an unsupported baud rate should raise an exception. However, these don't seem to
+    # happen for some platforms/devices. Thus, we check if the selected baud rate is not standard,
+    # and if the baudrate attribute was not set correctly in the object
+    if args.baudrate not in ser.BAUDRATES:
+        warnings.warn("Selected baud rate {:d} might be unsupported. Supported values are: {:s}".format(
+            args.baudrate, str(ser.BAUDRATES)))
+    if ser.baudrate != args.baudrate:
+        warnings.warn("Could not set desired baud rate ({:d}), device was configured with {:d} instead".format(
+            args.baudrate, ser.baudrate))
 
     # Attempt to sync with the MCU
     if not sync():
         print("Could not sync!")
+        exit(-1)
 
     if not send_cmd(BTN_A + DPAD_U_R + LSTICK_U + RSTICK_D_L):
         print("Packet Error!")
