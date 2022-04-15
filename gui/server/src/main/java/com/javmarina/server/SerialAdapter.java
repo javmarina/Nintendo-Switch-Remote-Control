@@ -3,6 +3,7 @@ package com.javmarina.server;
 import com.fazecast.jSerialComm.SerialPort;
 import com.javmarina.util.Crc;
 import com.javmarina.util.GeneralUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jetbrains.annotations.Nullable;
 import com.javmarina.util.Packet;
 
@@ -51,6 +52,11 @@ public class SerialAdapter {
                     SerialPort.TIMEOUT_WRITE_BLOCKING | SerialPort.TIMEOUT_READ_BLOCKING,
                     READ_TIMEOUT,
                     WRITE_TIMEOUT);
+            if (SystemUtils.IS_OS_WINDOWS) {
+                // Allow elevated privileges. If user is using an FTDI device,
+                // we will be able to reduce latency timer
+                serialPort.allowElevatedPermissionsRequest();
+            }
             serialPort.openPort();
         }
         this.serialPort = serialPort;

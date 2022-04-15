@@ -43,7 +43,8 @@ java {
 dependencies {
     implementation 'com.intellij:annotations:+@jar'
     implementation project(':util')
-    implementation 'com.fazecast:jSerialComm:[2.0.0,3.0.0)'
+    implementation 'com.fazecast:jSerialComm:2.9.1'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation project(':WebRTC')
 
     runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:win"
