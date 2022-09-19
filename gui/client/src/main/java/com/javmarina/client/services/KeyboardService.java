@@ -31,31 +31,75 @@ public class KeyboardService extends ControllerService {
     @Override
     public Packet getPacket() {
         final Packet.Buttons buttons = new Packet.Buttons(
-                pressedKeys.contains(KeyCode.Y), // Y
-                pressedKeys.contains(KeyCode.B), // B
-                pressedKeys.contains(KeyCode.A) || pressedKeys.contains(KeyCode.ENTER), // A
-                pressedKeys.contains(KeyCode.X), // X
-                pressedKeys.contains(KeyCode.L) && !pressedKeys.contains(KeyCode.SHIFT), // L
-                pressedKeys.contains(KeyCode.R) && !pressedKeys.contains(KeyCode.SHIFT), // R
-                pressedKeys.contains(KeyCode.L) && pressedKeys.contains(KeyCode.SHIFT), // ZL
-                pressedKeys.contains(KeyCode.R) && pressedKeys.contains(KeyCode.SHIFT), // ZR
-                pressedKeys.contains(KeyCode.MINUS), // MINUS
-                pressedKeys.contains(KeyCode.PLUS), // PLUS
+                pressedKeys.contains(KeyCode.LEFT), // Y
+                pressedKeys.contains(KeyCode.DOWN), // B
+                pressedKeys.contains(KeyCode.RIGHT), // A
+                pressedKeys.contains(KeyCode.UP), // X
+                pressedKeys.contains(KeyCode.Q), // L
+                pressedKeys.contains(KeyCode.E), // R
+                pressedKeys.contains(KeyCode.DIGIT1) || pressedKeys.contains(KeyCode.SHIFT), // ZL
+                pressedKeys.contains(KeyCode.DIGIT2), // ZR
+                pressedKeys.contains(KeyCode.BACK_SPACE), // MINUS
+                pressedKeys.contains(KeyCode.ENTER), // PLUS
                 false,
                 false,
-                pressedKeys.contains(KeyCode.H), // HOME
-                pressedKeys.contains(KeyCode.C) // CAPTURE
+                pressedKeys.contains(KeyCode.R), // HOME
+                pressedKeys.contains(KeyCode.Y) // CAPTURE
         );
 
         final Packet.Dpad dpad = new Packet.Dpad(
-                pressedKeys.contains(KeyCode.UP),
-                pressedKeys.contains(KeyCode.RIGHT),
-                pressedKeys.contains(KeyCode.DOWN),
-                pressedKeys.contains(KeyCode.LEFT)
+                pressedKeys.contains(KeyCode.T),
+                pressedKeys.contains(KeyCode.H),
+                pressedKeys.contains(KeyCode.G),
+                pressedKeys.contains(KeyCode.F)
         );
 
-        // No joystick support
-        return new Packet(buttons, dpad, Packet.Joystick.centered(), Packet.Joystick.centered());
+        int lxzaqw = 0;
+        int lyzaqw = 0;
+        int rxzaqw = 0;
+        int ryzaqw = 0;
+
+        if (pressedKeys.contains(KeyCode.A) && !pressedKeys.contains(KeyCode.D)) {
+           lxzaqw = 32767;
+        } else if (pressedKeys.contains(KeyCode.D) && !pressedKeys.contains(KeyCode.A)) {
+           lxzaqw = -32767;
+        } else if (!(pressedKeys.contains(KeyCode.D) || pressedKeys.contains(KeyCode.A))) {
+           lxzaqw = 0;
+        }
+
+        if (pressedKeys.contains(KeyCode.S) && !pressedKeys.contains(KeyCode.W)) {
+           lyzaqw = 32767;
+        } else if (pressedKeys.contains(KeyCode.W) && !pressedKeys.contains(KeyCode.S)) {
+           lyzaqw = -32767;
+        } else if (!(pressedKeys.contains(KeyCode.W) || pressedKeys.contains(KeyCode.S))) {
+           lyzaqw = 0;
+        }
+
+        if (pressedKeys.contains(KeyCode.J) && !pressedKeys.contains(KeyCode.L)) {
+           rxzaqw = 32767;
+        } else if (pressedKeys.contains(KeyCode.L) && !pressedKeys.contains(KeyCode.J)) {
+           rxzaqw = -32767;
+        } else if (!(pressedKeys.contains(KeyCode.L) || pressedKeys.contains(KeyCode.J))) {
+           rxzaqw = 0;
+        }
+
+        if (pressedKeys.contains(KeyCode.K) && !pressedKeys.contains(KeyCode.I)) {
+           ryzaqw = 32767;
+        } else if (pressedKeys.contains(KeyCode.I) && !pressedKeys.contains(KeyCode.K)) {
+           ryzaqw = -32767;
+        } else if (!(pressedKeys.contains(KeyCode.I) || pressedKeys.contains(KeyCode.K))) {
+           ryzaqw = 0;
+        }
+
+        final Packet.Joystick leftJoystick = new Packet.Joystick(
+                    lxzaqw,
+                    lyzaqw);
+
+        final Packet.Joystick rightJoystick = new Packet.Joystick(
+                    rxzaqw,
+                    ryzaqw);
+
+        return new Packet(buttons, dpad, leftJoystick, rightJoystick);
     }
 
     @Override
