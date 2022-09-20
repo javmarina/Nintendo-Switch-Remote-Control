@@ -41,8 +41,8 @@ public class KeyboardService extends ControllerService {
                 pressedKeys.contains(KeyCode.DIGIT2), // ZR
                 pressedKeys.contains(KeyCode.BACK_SPACE), // MINUS
                 pressedKeys.contains(KeyCode.ENTER), // PLUS
-                false,
-                false,
+                pressedKeys.contains(KeyCode.U),
+                pressedKeys.contains(KeyCode.O),
                 pressedKeys.contains(KeyCode.R), // HOME
                 pressedKeys.contains(KeyCode.Y) // CAPTURE
         );
