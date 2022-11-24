@@ -15,7 +15,7 @@ import dev.onvoid.webrtc.RTCSessionDescription;
 import dev.onvoid.webrtc.SetSessionDescriptionObserver;
 import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 import dev.onvoid.webrtc.media.audio.AudioOptions;
-import dev.onvoid.webrtc.media.audio.AudioSource;
+import dev.onvoid.webrtc.media.audio.AudioTrackSource;
 import dev.onvoid.webrtc.media.audio.AudioTrack;
 import dev.onvoid.webrtc.media.video.VideoDeviceSource;
 import dev.onvoid.webrtc.media.video.VideoTrack;
@@ -45,7 +45,7 @@ public class RtcServer extends RtcPeer {
         audioOptions.echoCancellation = false;
         audioOptions.autoGainControl = false;
         audioOptions.noiseSuppression = false;
-        final AudioSource audioSource = factory.createAudioSource(audioOptions);
+        final AudioTrackSource audioSource = factory.createAudioSource(audioOptions);
         final AudioTrack audioTrack = factory.createAudioTrack(AUDIO_TRACK_NAME, audioSource);
         final RTCRtpSender audioSender = peerConnection.addTrack(audioTrack, List.of(STREAM_ID));
 

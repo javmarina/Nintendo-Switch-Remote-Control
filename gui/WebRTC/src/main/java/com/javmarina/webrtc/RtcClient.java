@@ -21,9 +21,10 @@ import dev.onvoid.webrtc.media.MediaStreamTrack;
 import dev.onvoid.webrtc.media.audio.AudioDeviceModule;
 import dev.onvoid.webrtc.media.audio.AudioOptions;
 import dev.onvoid.webrtc.media.audio.AudioSource;
+import dev.onvoid.webrtc.media.audio.AudioTrackSource;
 import dev.onvoid.webrtc.media.audio.AudioTrack;
 import dev.onvoid.webrtc.media.video.VideoDeviceSource;
-import dev.onvoid.webrtc.media.video.VideoSource;
+import dev.onvoid.webrtc.media.video.VideoTrackSource;
 import dev.onvoid.webrtc.media.video.VideoTrack;
 import dev.onvoid.webrtc.media.video.VideoTrackSink;
 
@@ -79,14 +80,14 @@ public class RtcClient extends RtcPeer {
     }
 
     private void createTransceivers() {
-        final AudioSource audioSource = factory.createAudioSource(new AudioOptions());
+        final AudioTrackSource audioSource = factory.createAudioSource(new AudioOptions());
         final AudioTrack audioTrack = factory.createAudioTrack(AUDIO_TRACK_NAME, audioSource);
         final RTCRtpTransceiverInit audioTransceiverInit = new RTCRtpTransceiverInit();
         audioTransceiverInit.direction = RTCRtpTransceiverDirection.RECV_ONLY;
         audioTransceiverInit.streamIds.add(STREAM_ID);
         final RTCRtpTransceiver audioTransceiver = peerConnection.addTransceiver(audioTrack, audioTransceiverInit);
 
-        final VideoSource videoSource = new VideoDeviceSource();
+        final VideoTrackSource videoSource = new VideoDeviceSource();
         final VideoTrack videoTrack = factory.createVideoTrack(VIDEO_TRACK_NAME, videoSource);
         final RTCRtpTransceiverInit videoTransceiverInit = new RTCRtpTransceiverInit();
         videoTransceiverInit.direction = RTCRtpTransceiverDirection.RECV_ONLY;

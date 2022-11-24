@@ -9,12 +9,12 @@ repositories {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(18))
     }
 }
 
 ext {
-    webRtcVersion = '0.3.0'
+    webRtcVersion = '0.7.0'
 }
 
 dependencies {
@@ -26,9 +26,9 @@ dependencies {
     implementation "dev.onvoid.webrtc:webrtc-java:$webRtcVersion:macos-x86_64"
     implementation "dev.onvoid.webrtc:webrtc-java:$webRtcVersion:linux-x86_64"
 
-    implementation 'org.json:json:20210307'
+    implementation 'org.json:json:20220924'
     implementation 'net.sourceforge.jsdp:jsdp:1.1'
-    implementation 'io.socket:socket.io-client:2.0.1'
+    implementation 'io.socket:socket.io-client:2.1.0'
 }
 
 test {
